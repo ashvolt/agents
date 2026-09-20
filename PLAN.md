@@ -46,14 +46,17 @@ responsible agent design needs to lean on.
 
 | # | Problem | Agent fit | Cost of a wrong answer | Picked? |
 |---|---------|-----------|------------------------|---------|
-| 1 | Artwork preflight triage — DPI, bleed, cut line, transparency, colour mode, tiny text | Vision plus deterministic checks plus judgment | Bad print, reprint cost | TBD |
-| 2 | IP / content policy screening — trademark, copyright, prohibited content | Recall-first classification, tiered escalation | Legal exposure | TBD |
-| 3 | Reprint / refund adjudication — defect photo vs approved proof | Multimodal comparison plus policy plus money | Direct dollar loss | TBD |
-| 4 | Support deflection — order status, address change, cancel window | Straight tool-calling | Low | fallback |
+| 1 | Artwork preflight triage — DPI, bleed, cut line, transparency, colour mode, tiny text | Vision plus deterministic checks plus judgment | Bad print, reprint cost | **PICKED** |
+| 2 | IP / content policy screening — trademark, copyright, prohibited content | Recall-first classification, tiered escalation | Legal exposure | no |
+| 3 | Reprint / refund adjudication — defect photo vs approved proof | Multimodal comparison plus policy plus money | Direct dollar loss | no |
+| 4 | Support deflection — order status, address change, cancel window | Straight tool-calling | Low | no |
 
-Decision deferred to the **Day 5 capstone gate** (section 4). By then I will have built
-enough agents to judge which of these is tractable in the time available, instead of
-guessing today.
+**Decided 2026-09-20: artwork preflight triage.** The deciding factor was the eval set.
+Defects can be injected programmatically, so gold labels are correct by construction — no
+hand-labelling and no circular grading. The other three all require labels that would have
+to be invented, and an eval set you invented cannot tell you whether the agent is good.
+
+Full brief: [capstone/docs/brief.md](capstone/docs/brief.md).
 
 ### Integrity note
 
@@ -142,45 +145,71 @@ deployment, runbook, on-call story.
 
 ## 4. Schedule
 
-Compressed for the deadline. Days are working days, roughly full days.
+> **Revised 2026-09-20 — the ladder is abandoned.** The original plan taught L0 through L5
+> as standalone levels and then started the capstone. That ordering is safer but slower,
+> and the deadline does not allow it. L1-L5 are now learned *inside* the capstone, each
+> one at the point where the evals show it is needed.
+>
+> L0 stays in `levels/` as written. It is worth two hours and nothing else works without
+> it. Everything above L0 is now capstone work.
 
-| Day | Work | Deliverable |
-|-----|------|-------------|
-| 1 | L0 + L1 | Hand-rolled tool loop that runs |
-| 2 | L2 + L3 | Agent with real tools, survives failure injection |
-| 3 | L4 | Pattern comparison with measured results |
-| 4 | L5 | Eval harness plus CI gate, green |
-| 5 | **Capstone gate** | Problem chosen. Brief, ROI model, architecture, data plan |
-| 6 | Synthetic dataset plus eval set | ~200 labelled cases, gold labels written by me |
-| 7-8 | Capstone v0 | End-to-end happy path, measured against the eval set |
-| 9-10 | Capstone v1 | Tools and MCP (L6), decide on multi-agent (L7), harden |
-| 11-12 | Production pass (L8) | Tracing, budgets, guardrails, HITL queue, deploy |
-| 13 | Eval plus red team | Adversarial cases, failure taxonomy, documented limits |
-| 14 | Portfolio | README, architecture doc, demo recording, application writeup |
+The rule that replaces the ladder: **nothing ships unless it beats the previous number.**
+The eval harness comes first, a baseline exists before any tuning, and every addition —
+tools, a loop, state, a pattern — has to earn its place against that baseline. This is a
+harder way to learn, because the first bug is in real code rather than in a toy. It is
+also how the job works.
 
-**Slip rule:** if a day runs over, cut capstone scope. Never cut the eval harness or the
-production pass. A narrow agent with real evals beats a broad agent with none.
+| Day | Work | Level content absorbed | Deliverable |
+|-----|------|------------------------|-------------|
+| 1 | L0 exercise | L0 | Pricing, stop reasons, token counting. Two hours. |
+| 1 | **Capstone gate** | — | Brief, ROI, architecture, data plan. **Done.** |
+| 2 | Synthetic dataset generator | L5 (data) | ~200 cases, labels correct by construction, held-out split |
+| 2 | Eval harness + metrics | L5 (core) | Runs a callable against the set, reports the metric from section 5 of the brief |
+| 3 | v0 agent: full tool loop | L0, L1, L2 | Tool definitions, the loop, structured verdict, validation |
+| 3 | **First baseline number** | L5 | Plus the `--no-tools` control arm, to measure what tools actually bought |
+| 4-5 | Hill-climb against the eval | L3, L4 | State and patterns added only where a run proves they help; rejected ideas recorded too |
+| 6-7 | Production pass | L8 | Tracing, budgets, guardrails, prompt-injection defence, HITL queue |
+| 8 | MCP + CI gate | L6 | Tools exposed over MCP; the eval gate runs in CI and can go red |
+| 9 | Red team | L5, L8 | Adversarial cases including injection via image content; failure taxonomy |
+| 10 | Portfolio | — | README, architecture doc, demo recording, application writeup |
+
+**Slip rule, unchanged:** if a day runs over, cut capstone scope. Never cut the eval
+harness or the production pass. A narrow agent with real evals beats a broad agent with
+none.
+
+**What the compression costs:** no safe practice reps. The tool loop gets debugged inside
+real work with a real eval set watching. Accepted deliberately on 2026-09-20.
 
 ---
 
-## 5. Capstone gate — Day 5 checklist
+## 5. Capstone gate — CLEARED 2026-09-20
 
-The capstone build does not start until all of these exist on paper:
+All ten items exist on paper in [capstone/docs/brief.md](capstone/docs/brief.md).
+Section numbers below point into that document.
 
-- [ ] **Problem statement** — one paragraph, in operations language, not AI language
-- [ ] **User** — art reviewer, support rep, ops manager? Name the seat.
-- [ ] **Baseline** — what happens today, how long it takes, what it costs
-- [ ] **ROI model** — cost per decision, volume assumption, expected deflection rate, with
+- [x] **Problem statement** (brief §1) — one paragraph, in operations language, not AI language
+- [x] **User** (brief §2) — art reviewer, support rep, ops manager? Name the seat.
+- [x] **Baseline** (brief §3) — what happens today, how long it takes, what it costs
+- [x] **ROI model** (brief §4) — cost per decision, volume assumption, expected deflection rate, with
       the arithmetic written out and every assumption labelled as an assumption
-- [ ] **Success metric** — one number, with a target, that a manager would care about
-- [ ] **Failure modes** — ranked by what a wrong answer costs. This drives the
+- [x] **Success metric** (brief §5) — one number, with a target, that a manager would care about
+- [x] **Failure modes** (brief §6) — ranked by what a wrong answer costs. This drives the
       precision/recall choice.
-- [ ] **HITL design** — what the agent decides alone, what it must escalate, and the
+- [x] **HITL design** (brief §7) — what the agent decides alone, what it must escalate, and the
       confidence threshold between them
-- [ ] **Data plan** — how synthetic cases get generated and labelled, and where they are
+- [x] **Data plan** (brief §9) — how synthetic cases get generated and labelled, and where they are
       knowingly unrealistic
-- [ ] **Architecture sketch** — components, tools, data flow, trust boundaries
-- [ ] **Non-goals** — written down, so scope creep has something to bounce off
+- [x] **Architecture sketch** (brief §10) — components, tools, data flow, trust boundaries
+- [x] **Non-goals** (brief §11) — written down, so scope creep has something to bounce off
+
+Headline from the brief: **auto-approve at least 60% of clean files with a
+false-approve rate at or below 1%.** One number, one hard constraint. The eval
+gate treats a rise in approval rate bought with false approvals as a regression.
+
+Brief §8 adds an eleventh item the checklist did not ask for: the split between
+deterministic checks (code) and judgement checks (the model). That split is the
+technical core of the project and the `--no-tools` control arm exists to measure it
+rather than assert it.
 
 ---
 

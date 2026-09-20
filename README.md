@@ -44,13 +44,8 @@ Integration tests are marked and deselected by default. Run them deliberately.
 | Level | Topic | Status |
 |-------|-------|--------|
 | [L0](levels/L0_raw_api/) | Raw API: messages, params, stop reasons, token accounting, cost | in progress |
-| L1 | The tool loop, written by hand | not started |
-| L2 | Structured output and failure handling | not started |
-| L3 | A single real agent with state and tools | not started |
-| L4 | Patterns: routing, ReAct, reflection, planner-executor | not started |
-| L5 | Evals: datasets, judges, regression gates | not started |
-| L6-L8 | MCP, multi-agent, production — folded into the capstone | not started |
-| Capstone | Production agent for a print-ops problem | not started |
+| L1-L8 | Tool loops, structured output, state, patterns, evals, MCP, production | folded into the capstone |
+| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | brief written |
 
 Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill in),
 `test_exercise.py` (the bar), and `NOTES.md` (what I got wrong, in my own words).
@@ -60,3 +55,5 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | Date | Entry |
 |------|-------|
 | 2026-09-20 | Plan written, repo scaffolded, L0 started |
+| 2026-09-20 | Ladder abandoned for the deadline. L1-L8 now learned inside the capstone, driven by evals. |
+| 2026-09-20 | Capstone picked: artwork preflight triage. Brief written, gate cleared. |
