@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agents"
+version = "0.1.0"
+description = "Level 0 to pro agent engineering, ending in a production-ready agent"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=0.40",
+    "pydantic>=2.9",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["shared*", "levels*", "capstone*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["levels", "capstone"]
+markers = [
+    "integration: hits the real Anthropic API and costs money (deselect with '-m \"not integration\"')",
+]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
