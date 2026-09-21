@@ -45,7 +45,7 @@ Integration tests are marked and deselected by default. Run them deliberately.
 |-------|-------|--------|
 | [L0](levels/L0_raw_api/) | Raw API: messages, params, stop reasons, token accounting, cost | in progress |
 | L1-L8 | Tool loops, structured output, state, patterns, evals, MCP, production | folded into the capstone |
-| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | brief written |
+| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | brief + [architecture](capstone/docs/architecture.md) written |
 
 Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill in),
 `test_exercise.py` (the bar), and `NOTES.md` (what I got wrong, in my own words).
@@ -57,3 +57,4 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | 2026-09-20 | Plan written, repo scaffolded, L0 started |
 | 2026-09-20 | Ladder abandoned for the deadline. L1-L8 now learned inside the capstone, driven by evals. |
 | 2026-09-20 | Capstone picked: artwork preflight triage. Brief written, gate cleared. |
+| 2026-09-21 | Architecture doc + editable excalidraw diagram written. Local env set up; L0 in progress. |
