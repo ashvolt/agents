@@ -100,9 +100,10 @@ flowchart TB
 
     subgraph AG["PREFLIGHT AGENT - Claude + tool loop"]
         SP[system prompt + tool defs<br/>byte-stable, so the prompt cache hits]
-        DET["DETERMINISTIC - Python, exact, ~free<br/>inspect_file, get_product_spec, check_bleed"]
-        JUD["JUDGEMENT - the model earns its place<br/>vision pass: text size, safe zone,<br/>thin lines, contrast, transparency"]
-        SP --> DET --> JUD
+        B1["BUCKET 1 - metadata, exact, ~free<br/>inspect_file, get_product_spec, check_bleed"]
+        B2["BUCKET 2 - pixel analysis, exact, ~free<br/>analyse_pixels: stroke width, dE, alpha<br/>detect_text: CPU detector, boxes to pt"]
+        B3["BUCKET 3 - judgement, Claude vision<br/>safe zone: deliberate or mistake?<br/>+ gestalt 'this looks wrong'"]
+        SP --> B1 --> B2 --> B3
     end
 
     AG --> V["STRUCTURED VERDICT<br/>verdict, issues[], customer_message?, confidence"]
@@ -112,8 +113,9 @@ flowchart TB
     AG --> TR[trace: tokens, latency, cost, tool calls, outcome]
 
     style TRUST fill:#ffc9c9,stroke:#e03131
-    style DET fill:#a5d8ff,stroke:#1971c2
-    style JUD fill:#ffd8a8,stroke:#f08c00
+    style B1 fill:#a5d8ff,stroke:#1971c2
+    style B2 fill:#a5d8ff,stroke:#1971c2
+    style B3 fill:#ffd8a8,stroke:#f08c00
     style AP fill:#b2f2bb,stroke:#2f9e44
     style RF fill:#ffd8a8,stroke:#f08c00
     style ES fill:#ffc9c9,stroke:#e03131
@@ -121,15 +123,27 @@ flowchart TB
 
 ## 5. The core design decision — code vs model
 
-Preflight splits cleanly in two, and **the split is the most important thing in this
-project.**
+Preflight splits into **three** buckets, and getting each check into the right one is
+**the most important thing in this project.** Full reasoning and the rejected alternative
+are in [brief.md §8](brief.md).
 
-**Deterministic — code, not the model.** Measurable exactly from file metadata, every
-time, for a fraction of a cent: `LOW_RESOLUTION`, `MISSING_BLEED`, `WRONG_COLOR_MODE`,
-`ASPECT_MISMATCH`, `UNREADABLE_FILE`.
+| Bucket | Runs on | Checks |
+|---|---|---|
+| **1. Metadata** | Python, exact, ~free | `LOW_RESOLUTION`, `MISSING_BLEED`, `WRONG_COLOR_MODE`, `ASPECT_MISMATCH`, `UNREADABLE_FILE` |
+| **2. Pixel analysis** | Python + CPU detector, exact, ~free | `THIN_LINES`, `LOW_CONTRAST`, `UNINTENDED_TRANSPARENCY`, `TEXT_TOO_SMALL` |
+| **3. Judgement** | Claude vision | `CONTENT_IN_SAFE_ZONE`, plus the gestalt "this looks like a mistake" |
 
-**Judgement — the model.** Not expressible as a threshold: `TEXT_TOO_SMALL`,
-`CONTENT_IN_SAFE_ZONE`, `THIN_LINES`, `LOW_CONTRAST`, `UNINTENDED_TRANSPARENCY`.
+Bucket 2 is the one worth arguing about. Four checks were originally filed under
+judgement; they are measurement problems wearing a judgement costume. Stroke width is a
+morphological erosion. Contrast is a ΔE. Transparency is the alpha channel.
+`TEXT_TOO_SMALL` is arithmetic *once you know where the text is* — and a purpose-built
+text detector (PaddleOCR, Tesseract, CRAFT) finds text better than a vision-language
+model, on CPU, for free, deterministically.
+
+What survives into bucket 3 is the case where the measurement is trivial and the question
+is not: ink inside the cut margin is a bounding-box test, but deciding whether it is a
+background gradient running off the edge *on purpose* or a logo about to lose its top
+third is the part Python cannot do.
 
 Asking a language model to compute DPI is slower, pricier and less accurate than four
 lines of Python. Asking Python whether a logo is "too close to the edge to look
@@ -139,6 +153,12 @@ the thing worth demonstrating.
 **This gets measured, not asserted.** The eval harness ships a `--no-tools` control arm:
 same cases, deterministic tools disabled. The gap between the two runs is the measured
 value of the split.
+
+**A self-hosted vision model was considered and rejected** on arithmetic: at 4,000
+files/day, Haiku vision runs ~$2.3K/year against ~$7K/year for a single GPU before
+redundancy or ops. Crossover is near 30K files/day. Calibrated confidence — which
+threshold-based escalation depends on — is the second reason. Numbers in
+[brief.md §8](brief.md).
 
 ## 6. The three verdicts, and which one is autonomous
 
@@ -259,10 +279,18 @@ one that names them.
   in several directions at once, and the interactions matter.
 - **No adversarial files** until the red-team pass adds them.
 - **The product spec table is invented**, not sourced from a real print operation.
-- **Whether one vision pass covers all judgement checks** is unmeasured. It may need to be
-  several calls, which changes the cost model.
+- **Buckets 1 and 2 can grade themselves.** If the generator injects a defect at the same
+  threshold the checker tests, the test passes by construction and measures nothing.
+  Mitigated by injecting at values that straddle the limit (0.5×, 0.9×, 1.1×, 2×) rather
+  than at one comfortable value — see [brief.md §9](brief.md). This is a mitigation, not a
+  cure: generator and checker still share my assumptions about what the defect *is*.
+- **The text detector is unchosen.** PaddleOCR vs Tesseract vs CRAFT, decided by measured
+  recall at small point sizes — the regime that matters and the one detectors are weakest
+  in.
 - **The confidence threshold for escalation** is not yet tuned — it will be fit on the eval
   set, never guessed.
+- **The image token estimate (~1,600/image) is calculated, not measured.** Replaced by a
+  `messages.count_tokens` number before the first sweep.
 
 ## 12. Explicit non-goals
 

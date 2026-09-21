@@ -297,6 +297,18 @@ a local model earns a slot is as the **L2 hostile mock** — a cheap generator o
 and adversarial output to test the repair path. A plain stub that returns garbage 30% of
 the time serves the same purpose for free, so this is optional.
 
+**Re-examined 2026-09-21, specifically for the capstone's vision pass**, and the answer
+held — but on arithmetic this time rather than on the scope argument above. At the assumed
+4,000 files/day, Haiku 4.5 vision costs ~$2.3K/year against ~$7K/year for a single L4-class
+GPU before redundancy or operator time. Self-hosting is *more* expensive here; the
+crossover is near 30K files/day. Calibration is the second reason: escalation is
+threshold-based, and a confidently-wrong small VLM goes straight through the 1%
+false-approve constraint. Full numbers in [capstone/docs/brief.md §8](capstone/docs/brief.md).
+
+One genuine local-model slot did open up, and it is not a language model: a CPU **text
+detector** (PaddleOCR / Tesseract / CRAFT) for locating text boxes, which beats any VLM at
+that job for free. See the bucket-2 reassignment below.
+
 Everything around the model is open source anyway: pytest, pydantic, ruff,
 OpenTelemetry for tracing, MCP as an open protocol.
 
@@ -327,16 +339,20 @@ one squashed commit. Do not tidy the history.
 
 ## 9. Open questions
 
-1. **Vision** — capstone options 1 and 3 depend on image input. Confirm availability
-   before the Day 5 gate.
-2. **Demo surface** — CLI only, or a thin web UI? A reviewer queue with real screenshots is
+1. **Demo surface** — CLI only, or a thin web UI? A reviewer queue with real screenshots is
    far more persuasive than terminal output, and costs about a day.
-3. **Deployment target** — does "deployed" mean a live URL, or a container plus a convincing
+2. **Deployment target** — does "deployed" mean a live URL, or a container plus a convincing
    runbook? A live URL is more impressive and adds a day.
-4. **Job posting** — not available yet. If it surfaces, re-tune the plan to the stack and
+3. **Job posting** — not available yet. If it surfaces, re-tune the plan to the stack and
    signals it screens for.
+4. **Text detector choice** — PaddleOCR, Tesseract or CRAFT for `TEXT_TOO_SMALL`. Decided
+   by measured recall at small point sizes, which is both the regime that matters and the
+   one detectors are weakest in.
 
 *(Resolved: API budget — see section 8. Project ceiling is $50-100.)*
+*(Resolved 2026-09-21: vision — every current Claude model accepts image input. Per-image
+cost estimated at ~1,600 tokens; to be replaced with a measured `count_tokens` number
+before the first sweep.)*
 
 ---
 
@@ -346,3 +362,8 @@ one squashed commit. Do not tidy the history.
 |------|-------|--------|-------|
 | 2026-09-20 | — | plan drafted | awaiting approval |
 | 2026-09-20 | — | cost + licensing settled | section 8 added; budget question closed |
+| 2026-09-21 | — | architecture doc written | `capstone/docs/architecture.md` + editable excalidraw diagram |
+| 2026-09-21 | — | **design decision revised** | the code/model split went from 2 buckets to 3. Four checks moved out of judgement into deterministic pixel analysis. Vision now handles one check plus gestalt. |
+| 2026-09-21 | — | self-hosted VLM rejected | on arithmetic: local costs more than Haiku below ~30K files/day. Recorded with numbers in brief §8. |
+| 2026-09-21 | L5 | eval circularity trap caught | deterministic defects must be injected straddling the threshold, not at one value. brief §9. Caught on paper, before any data existed. |
+| 2026-09-21 | L0 | in progress | local env running; 15 free tests red, `MODEL_PRICING` + `estimate_cost` next |
