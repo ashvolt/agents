@@ -180,25 +180,38 @@ class SweepReport:
 
     def render(self) -> str:
         ok = "PASS" if self.passes else "FAIL"
+        breach = "OK" if self.meets_constraint else "*** BREACH ***"
+        mix = f"({self.n_clean} clean / {self.n_defective} defective)"
+        verdicts = (
+            f"APPROVE {self.approved} / REQUEST_FIX {self.request_fix}"
+            f" / ESCALATE {self.escalated}"
+        )
         lines = [
             f"--- {self.arm}  [{ok}] ---",
-            f"  cases              {self.n_cases}  ({self.n_clean} clean / {self.n_defective} defective)",
-            f"  auto-approve rate  {self.auto_approve_rate:6.1%}   (SC-001 target >= {APPROVE_RATE_TARGET:.0%})",
-            f"  FALSE-APPROVE rate {self.false_approve_rate:6.1%}   (SC-002 limit  <= {FALSE_APPROVE_LIMIT:.0%})"
-            f"  {'OK' if self.meets_constraint else '*** BREACH ***'}",
+            f"  cases              {self.n_cases}  {mix}",
+            f"  auto-approve rate  {self.auto_approve_rate:6.1%}"
+            f"   (SC-001 target >= {APPROVE_RATE_TARGET:.0%})",
+            f"  FALSE-APPROVE rate {self.false_approve_rate:6.1%}"
+            f"   (SC-002 limit  <= {FALSE_APPROVE_LIMIT:.0%})  {breach}",
             f"  false-reject rate  {self.false_reject_rate:6.1%}",
             f"  escalation rate    {self.escalation_rate:6.1%}",
-            f"  verdicts           APPROVE {self.approved} / REQUEST_FIX {self.request_fix} / ESCALATE {self.escalated}",
+            f"  verdicts           {verdicts}",
         ]
         if self.borderline_recall is not None:
             lines.append(
                 f"  borderline recall  {self.borderline_recall:6.1%} "
                 f"({self.borderline_detected}/{self.borderline_injected} within 10% of threshold)"
             )
-        lines.append(f"  cost/file          ${self.cost_per_file_usd:.4f}   total ${self.total_cost_usd:.2f}")
-        lines.append(f"  latency p95        {self.p95_latency_ms} ms   mean {self.mean_latency_ms} ms")
+        lines.append(
+            f"  cost/file          ${self.cost_per_file_usd:.4f}"
+            f"   total ${self.total_cost_usd:.2f}"
+        )
+        lines.append(
+            f"  latency p95        {self.p95_latency_ms} ms"
+            f"   mean {self.mean_latency_ms} ms"
+        )
         if self.billed_input_tokens:
-            flag = "  *** zero cache reads: silent invalidator ***" if self.cache_suspect else ""
+            flag = "  *** zero cache reads ***" if self.cache_suspect else ""
             lines.append(f"  cache hit rate     {self.cache_hit_rate:6.1%}{flag}")
         if self.crash_count:
             lines.append(f"  CRASHES            {self.crash_count}  (SC-007 requires 0)")
