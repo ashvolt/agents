@@ -224,18 +224,16 @@ def test_deterministic_codes_are_the_nine_computable_ones() -> None:
 # --------------------------------------------------------------------------------------
 
 
-def test_clean_label_cannot_carry_defects() -> None:
-    with pytest.raises(ValidationError, match="clean case"):
-        GoldLabel(
-            case_id="c1",
-            is_clean=True,
-            injected=(InjectedDefect(code=IssueCode.THIN_LINES, magnitude=0.5),),
-        )
-
-
-def test_defective_label_must_record_what_was_injected() -> None:
-    with pytest.raises(ValidationError, match="must record"):
-        GoldLabel(case_id="c1", is_clean=False)
+@pytest.mark.parametrize(
+    ("magnitude", "is_defect"),
+    [(0.5, False), (0.9, False), (1.0, False), (1.1, True), (2.0, True)],
+)
+def test_magnitude_direction_is_uniform(magnitude: float, is_defect: bool) -> None:
+    # magnitude is severity relative to the threshold, defined so every check reads the
+    # same way regardless of whether the underlying quantity wants to be big (DPI) or
+    # small (aspect deviation). > 1.0 is always past the limit.
+    p = InjectedDefect(code=IssueCode.LOW_RESOLUTION, magnitude=magnitude)
+    assert p.is_defect is is_defect
 
 
 @pytest.mark.parametrize(
@@ -249,19 +247,46 @@ def test_borderline_window_is_point_nine_to_one_point_one(
     assert InjectedDefect(code=IssueCode.LOW_RESOLUTION, magnitude=magnitude).borderline is expected
 
 
-def test_label_exposes_injected_codes_and_borderline_flag() -> None:
+def test_is_clean_is_derived_not_asserted() -> None:
+    # The label cannot drift from the pixels, because nobody gets to set is_clean.
+    clean = GoldLabel(
+        case_id="c1",
+        perturbations=(InjectedDefect(code=IssueCode.LOW_RESOLUTION, magnitude=0.9),),
+    )
+    assert clean.is_clean
+    assert not clean.expected_not_approve
+
+
+def test_a_sub_threshold_perturbation_is_a_near_miss_not_a_defect() -> None:
+    # 0.9x the limit is a *clean* file sitting just inside spec. Reporting an issue on it
+    # is a false reject, and it stays in the set precisely to measure that.
     label = GoldLabel(
         case_id="c1",
-        is_clean=False,
-        injected=(
-            InjectedDefect(code=IssueCode.LOW_RESOLUTION, magnitude=0.9),
+        perturbations=(InjectedDefect(code=IssueCode.THIN_LINES, magnitude=0.9),),
+    )
+    assert label.near_miss_codes == {IssueCode.THIN_LINES}
+    assert label.injected_codes == frozenset()
+
+
+def test_label_exposes_defect_codes_and_borderline_flag() -> None:
+    label = GoldLabel(
+        case_id="c1",
+        perturbations=(
+            InjectedDefect(code=IssueCode.LOW_RESOLUTION, magnitude=1.1),
             InjectedDefect(code=IssueCode.THIN_LINES, magnitude=2.0),
         ),
         split=Split.HOLDOUT,
     )
     assert label.injected_codes == {IssueCode.LOW_RESOLUTION, IssueCode.THIN_LINES}
-    assert label.has_borderline
+    assert label.has_borderline  # the 1.1 one
     assert label.expected_not_approve
+    assert not label.is_clean
+
+
+def test_label_with_no_perturbations_is_clean() -> None:
+    label = GoldLabel(case_id="c1")
+    assert label.is_clean
+    assert label.injected_codes == frozenset()
 
 
 # --------------------------------------------------------------------------------------

@@ -286,13 +286,24 @@ class Verdict(BaseModel):
 # --------------------------------------------------------------------------------------
 
 
-class InjectedDefect(BaseModel):
-    """What the generator did to a file, and how hard.
+class Perturbation(BaseModel):
+    """One thing the generator did to a file, and how hard.
 
-    `magnitude` is a multiple of the spec threshold. FR-019 requires defects straddling
-    the limit rather than sitting at one comfortable value, and recording the multiple is
-    what makes that auditable: a generator that only ever emits 0.5 and 2.0 is visible in
-    the data, and borderline recall can be reported separately from the easy cases.
+    `magnitude` is **severity relative to the spec threshold**, defined so that the
+    direction is uniform across checks that naturally point opposite ways — DPI wants
+    more, aspect deviation wants less:
+
+        magnitude > 1.0  -> past the limit. A defect.
+        magnitude <= 1.0 -> within spec. Clean, but possibly only just.
+
+    So for LOW_RESOLUTION, magnitude = required_dpi / measured_dpi; for ASPECT_MISMATCH,
+    magnitude = measured_deviation / tolerance. Both read the same way.
+
+    FR-019 requires perturbations straddling the limit rather than sitting at one
+    comfortable value. Recording the multiple is what makes that auditable: a generator
+    that only ever emits 0.5 and 2.0 is visible in the data, and borderline recall gets
+    reported separately from the easy cases — which matters, because the borderline band
+    is where false approves actually come from.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -301,25 +312,42 @@ class InjectedDefect(BaseModel):
     magnitude: float = Field(gt=0)
 
     @property
+    def is_defect(self) -> bool:
+        """True when this perturbation pushed the file past the spec limit."""
+        return self.magnitude > 1.0
+
+    @property
     def borderline(self) -> bool:
+        """Within 10% of the threshold on either side — the band that decides SC-002."""
         return 0.9 <= self.magnitude <= 1.1
 
 
+# Backwards-compatible alias: the tasks and data-model refer to InjectedDefect.
+InjectedDefect = Perturbation
+
+
 class GoldLabel(BaseModel):
+    """Ground truth for one generated case. Correct by construction (FR-018).
+
+    `is_clean` is *derived* from the perturbations rather than asserted independently, so
+    the label and the pixels cannot drift apart. A file perturbed to 0.9x the limit is
+    clean — and is exactly the kind of clean file a nervous agent will wrongly reject, so
+    it stays in the set and counts toward the false-reject metric.
+    """
+
     model_config = ConfigDict(frozen=True)
 
     case_id: str
-    is_clean: bool
-    injected: tuple[InjectedDefect, ...] = ()
+    perturbations: tuple[Perturbation, ...] = ()
     split: Split = Split.TRAIN
 
-    @model_validator(mode="after")
-    def _clean_means_no_defects(self) -> GoldLabel:
-        if self.is_clean and self.injected:
-            raise ValueError("a clean case cannot carry injected defects")
-        if not self.is_clean and not self.injected:
-            raise ValueError("a defective case must record what was injected")
-        return self
+    @property
+    def defects(self) -> tuple[Perturbation, ...]:
+        return tuple(p for p in self.perturbations if p.is_defect)
+
+    @property
+    def is_clean(self) -> bool:
+        return not self.defects
 
     @property
     def expected_not_approve(self) -> bool:
@@ -328,11 +356,17 @@ class GoldLabel(BaseModel):
 
     @property
     def injected_codes(self) -> frozenset[IssueCode]:
-        return frozenset(d.code for d in self.injected)
+        """Codes that a correct system must report. Sub-threshold ones are not required."""
+        return frozenset(p.code for p in self.defects)
+
+    @property
+    def near_miss_codes(self) -> frozenset[IssueCode]:
+        """Perturbed toward the limit but still within spec. Reporting these is a false positive."""
+        return frozenset(p.code for p in self.perturbations if not p.is_defect)
 
     @property
     def has_borderline(self) -> bool:
-        return any(d.borderline for d in self.injected)
+        return any(p.borderline for p in self.perturbations)
 
 
 # --------------------------------------------------------------------------------------
@@ -416,6 +450,7 @@ __all__ = [
     "Evidence",
     "GoldLabel",
     "InjectedDefect",
+    "Perturbation",
     "Issue",
     "IssueCode",
     "OrderMetadata",
