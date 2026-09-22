@@ -7,7 +7,12 @@
 Every task names the file it touches and the check that proves it done.
 Phase order enforces Constitution Principle II — **evals exist before the agent does.**
 
-**Status legend:** `[ ]` not started · `[~]` in progress · `[x]` done
+**Status legend:** `[ ]` not started · `[~]` partial · `[x]` done · `[!]` blocked
+
+**Progress as of 2026-09-22:** Phases 0-4 built and green (80 offline tests, ruff clean).
+Phase 2 produced the baseline numbers. T067/T068 are **blocked** on a valid
+`ANTHROPIC_API_KEY` — the agent has never completed a sweep, so no agent number exists
+yet. Phases 5-9 not started.
 
 ---
 
@@ -20,8 +25,8 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 | T003 | Write implementation plan | `specs/001-.../plan.md` | constitution check PASS | `[x]` |
 | T004 | Record Phase 0 decisions | `specs/001-.../research.md` | every rejected option has arithmetic | `[x]` |
 | T005 | Define data model | `specs/001-.../data-model.md` | every entity + invariants | `[x]` |
-| T006 | Add `pillow`, `numpy` to deps | `pyproject.toml` | `pip install -e ".[dev]"` clean | `[ ]` |
-| T007 | Gitignore generated artefacts | `.gitignore` | `capstone/data/cases/`, `capstone/evals/runs/`, `traces/` ignored | `[ ]` |
+| T006 | Add `pillow`, `numpy` to deps | `pyproject.toml` | `pip install -e ".[dev]"` clean | `[x]` |
+| T007 | Gitignore generated artefacts | `.gitignore` | `capstone/data/cases/`, `capstone/evals/runs/`, `traces/` ignored | `[x]` |
 
 ---
 
@@ -29,18 +34,18 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T010 | Enums: `IssueCode`, `Severity`, `VerdictType`, `EscalationReason` | `capstone/src/schemas.py` | importable, 11 issue codes | `[ ]` |
-| T011 | `Evidence`, `Issue` models + invariant | `capstone/src/schemas.py` | empty evidence rejected | `[ ]` |
-| T012 | `Verdict` model + **4 cross-field validators** | `capstone/src/schemas.py` | `APPROVE` with issues raises | `[ ]` |
-| T013 | `ProductSpec`, `OrderMetadata`, `PreflightCase` | `capstone/src/schemas.py` | unknown product raises | `[ ]` |
-| T014 | `GoldLabel`, `InjectedDefect`, `Trace`, `TraceStep` | `capstone/src/schemas.py` | round-trips through JSON | `[ ]` |
-| T015 | Schema unit tests — **the Principle IV guardrail** | `capstone/tests/test_schemas.py` | every invariant has a failing-case test | `[ ]` |
-| T016 | Product spec table (5 products) | `capstone/src/product_specs.py` | `get_spec()` raises on unknown id | `[ ]` |
-| T017 | `[P]` Synthetic art renderer (clean files) | `capstone/data/generate.py` | produces valid PNGs at spec DPI | `[ ]` |
-| T018 | Defect injectors, **straddled magnitudes** (FR-019) | `capstone/data/generate.py` | each injector accepts a magnitude multiplier | `[ ]` |
-| T019 | Case assembly + gold labels + sealed split | `capstone/data/generate.py` | ~200 cases, 40/40/20 mix, holdout sealed | `[ ]` |
+| T010 | Enums: `IssueCode`, `Severity`, `VerdictType`, `EscalationReason` | `capstone/src/schemas.py` | importable, 11 issue codes | `[x]` |
+| T011 | `Evidence`, `Issue` models + invariant | `capstone/src/schemas.py` | empty evidence rejected | `[x]` |
+| T012 | `Verdict` model + **4 cross-field validators** | `capstone/src/schemas.py` | `APPROVE` with issues raises | `[x]` |
+| T013 | `ProductSpec`, `OrderMetadata`, `PreflightCase` | `capstone/src/schemas.py` | unknown product raises | `[x]` |
+| T014 | `GoldLabel`, `InjectedDefect`, `Trace`, `TraceStep` | `capstone/src/schemas.py` | round-trips through JSON | `[x]` |
+| T015 | Schema unit tests — **the Principle IV guardrail** | `capstone/tests/test_schemas.py` | every invariant has a failing-case test | `[x]` |
+| T016 | Product spec table (5 products) | `capstone/src/product_specs.py` | `get_spec()` raises on unknown id | `[x]` |
+| T017 | `[P]` Synthetic art renderer (clean files) | `capstone/data/generate.py` | produces valid PNGs at spec DPI | `[x]` |
+| T018 | Defect injectors, **straddled magnitudes** (FR-019) | `capstone/data/generate.py` | each injector accepts a magnitude multiplier | `[x]` |
+| T019 | Case assembly + gold labels + sealed split | `capstone/data/generate.py` | ~200 cases, 40/40/20 mix, holdout sealed | `[x]` |
 | T020 | Generator tests | `capstone/tests/test_generator.py` | magnitudes straddle; labels match injections | `[ ]` |
-| T021 | Generate the dataset | `capstone/data/cases.jsonl` | file on disk, holdout never read by tuning code | `[ ]` |
+| T021 | Generate the dataset | `capstone/data/cases.jsonl` | file on disk, holdout never read by tuning code | `[x]` |
 
 **Phase 1 exit:** ~200 labelled cases, generator tested offline, holdout sealed.
 
@@ -50,14 +55,14 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T030 | Metric functions | `capstone/evals/metrics.py` | `false_approve_rate` uses approved-defective/approved | `[ ]` |
+| T030 | Metric functions | `capstone/evals/metrics.py` | `false_approve_rate` uses approved-defective/approved | `[x]` |
 | T031 | `[P]` Metric unit tests on hand-built fixtures | `capstone/tests/test_harness.py` | known inputs → known metrics | `[ ]` |
-| T032 | Harness: run any `Callable[[PreflightCase], Verdict]` | `capstone/evals/harness.py` | train/holdout selectable | `[ ]` |
-| T033 | `--no-tools` control arm flag | `capstone/evals/harness.py` | both arms in one report | `[ ]` |
-| T034 | `SweepReport` output + JSONL run log | `capstone/evals/harness.py` | report reproducible from the log | `[ ]` |
-| T035 | Baseline A: `always_escalate` | `capstone/evals/baselines.py` | proves the metric moves; approve rate 0 | `[ ]` |
-| T036 | **Cost model measurement — resolves OQ-1** | `capstone/evals/cost_probe.py` | measured $/file at list, +batch, +cache | `[ ]` |
-| T037 | Amend SC-003 or the architecture per T036 | `spec.md`, `capstone/docs/brief.md` | written down either way | `[ ]` |
+| T032 | Harness: run any `Callable[[PreflightCase], Verdict]` | `capstone/evals/harness.py` | train/holdout selectable | `[x]` |
+| T033 | `--no-tools` control arm flag | `capstone/evals/harness.py` | both arms in one report | `[x]` |
+| T034 | `SweepReport` output + JSONL run log | `capstone/evals/harness.py` | report reproducible from the log | `[x]` |
+| T035 | Baseline A: `always_escalate` | `capstone/evals/baselines.py` | proves the metric moves; approve rate 0 | `[x]` |
+| T036 | **Cost model measurement — resolves OQ-1** | `capstone/evals/cost_probe.py` | measured $/file at list, +batch, +cache | `[~]` |
+| T037 | Amend SC-003 or the architecture per T036 | `spec.md`, `capstone/docs/brief.md` | written down either way | `[x]` |
 
 **Phase 2 exit:** a number exists before the agent does. OQ-1 resolved in writing.
 
@@ -67,19 +72,19 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T040 | `[P]` `LOW_RESOLUTION` | `capstone/tools/bucket1_metadata.py` | effective DPI at ordered size | `[ ]` |
-| T041 | `[P]` `WRONG_COLOR_MODE` | `capstone/tools/bucket1_metadata.py` | mode vs accepted set | `[ ]` |
-| T042 | `[P]` `ASPECT_MISMATCH` | `capstone/tools/bucket1_metadata.py` | within tolerance | `[ ]` |
-| T043 | `[P]` `MISSING_BLEED` | `capstone/tools/bucket1_metadata.py` | extent vs trim + bleed | `[ ]` |
-| T044 | `[P]` `UNREADABLE_FILE` | `capstone/tools/bucket1_metadata.py` | corrupt/empty/unsupported → issue, never raise | `[ ]` |
+| T040 | `[P]` `LOW_RESOLUTION` | `capstone/tools/bucket1_metadata.py` | effective DPI at ordered size | `[x]` |
+| T041 | `[P]` `WRONG_COLOR_MODE` | `capstone/tools/bucket1_metadata.py` | mode vs accepted set | `[x]` |
+| T042 | `[P]` `ASPECT_MISMATCH` | `capstone/tools/bucket1_metadata.py` | within tolerance | `[x]` |
+| T043 | `[P]` `MISSING_BLEED` | `capstone/tools/bucket1_metadata.py` | extent vs trim + bleed | `[x]` |
+| T044 | `[P]` `UNREADABLE_FILE` | `capstone/tools/bucket1_metadata.py` | corrupt/empty/unsupported → issue, never raise | `[x]` |
 | T045 | Bucket 1 tests incl. **borderline magnitudes** | `capstone/tests/test_bucket1.py` | 0.9× and 1.1× both correct | `[ ]` |
-| T046 | `[P]` `THIN_LINES` (erosion / distance transform) | `capstone/tools/bucket2_pixels.py` | min stroke in pt | `[ ]` |
-| T047 | `[P]` `LOW_CONTRAST` (ΔE adjacent regions) | `capstone/tools/bucket2_pixels.py` | ΔE vs spec | `[ ]` |
-| T048 | `[P]` `UNINTENDED_TRANSPARENCY` (alpha) | `capstone/tools/bucket2_pixels.py` | alpha where disallowed | `[ ]` |
-| T049 | Text detector interface + deterministic stub (D-3) | `capstone/tools/text_detect.py` | `detect_text() -> list[TextBox]` | `[ ]` |
-| T050 | `TEXT_TOO_SMALL` from boxes + ordered size | `capstone/tools/bucket2_pixels.py` | px height → pt at size | `[ ]` |
+| T046 | `[P]` `THIN_LINES` (erosion / distance transform) | `capstone/tools/bucket2_pixels.py` | min stroke in pt | `[x]` |
+| T047 | `[P]` `LOW_CONTRAST` (ΔE adjacent regions) | `capstone/tools/bucket2_pixels.py` | ΔE vs spec | `[x]` |
+| T048 | `[P]` `UNINTENDED_TRANSPARENCY` (alpha) | `capstone/tools/bucket2_pixels.py` | alpha where disallowed | `[x]` |
+| T049 | Text detector interface + deterministic stub (D-3) | `capstone/tools/text_detect.py` | `detect_text() -> list[TextBox]` | `[x]` |
+| T050 | `TEXT_TOO_SMALL` from boxes + ordered size | `capstone/tools/bucket2_pixels.py` | px height → pt at size | `[x]` |
 | T051 | Bucket 2 tests incl. borderline | `capstone/tests/test_bucket2.py` | per-check recall measured | `[ ]` |
-| T052 | Baseline B: `rules_only` (buckets 1+2, no model) | `capstone/evals/baselines.py` | **the number the agent must beat** | `[ ]` |
+| T052 | Baseline B: `rules_only` (buckets 1+2, no model) | `capstone/evals/baselines.py` | **the number the agent must beat** | `[x]` |
 
 **Phase 3 exit:** `rules_only` has a score. Per-issue and borderline recall recorded.
 
@@ -89,15 +94,15 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T060 | Frozen system prompt + vision framing (D-7, Principle V) | `capstone/src/prompts.py` | module-level constants, byte-stable | `[ ]` |
-| T061 | Tool JSON schemas + dispatch registry | `capstone/tools/registry.py` | deterministic tool ordering | `[ ]` |
-| T062 | `finalize()` — the single verdict chokepoint (D-6) | `capstone/src/agent.py` | one `APPROVE` branch, guarded | `[ ]` |
-| T063 | The tool loop: `stop_reason` handling, `tool_result` blocks | `capstone/src/agent.py` | checks `stop_reason` before content | `[ ]` |
-| T064 | Structured output validation + one repair retry | `capstone/src/agent.py` | invalid twice → `SCHEMA_INVALID` escalate | `[ ]` |
-| T065 | Bucket 3 vision call with measurements as context (D-5) | `capstone/src/agent.py` | deterministic findings passed in | `[ ]` |
-| T066 | Failure-path tests — **Principle IV proof** | `capstone/tests/test_agent_failure_paths.py` | injected crash/timeout/refusal/truncation/garbage → never `APPROVE` | `[ ]` |
-| T067 | First agent sweep | `capstone/evals/runs/` | number recorded in the commit message | `[ ]` |
-| T068 | `--no-tools` control arm sweep | `capstone/evals/runs/` | gap vs T067 = measured value of the split | `[ ]` |
+| T060 | Frozen system prompt + vision framing (D-7, Principle V) | `capstone/src/prompts.py` | module-level constants, byte-stable | `[x]` |
+| T061 | Tool JSON schemas + dispatch registry | `capstone/tools/registry.py` | deterministic tool ordering | `[x]` |
+| T062 | `finalize()` — the single verdict chokepoint (D-6) | `capstone/src/agent.py` | one `APPROVE` branch, guarded | `[x]` |
+| T063 | The tool loop: `stop_reason` handling, `tool_result` blocks | `capstone/src/agent.py` | checks `stop_reason` before content | `[x]` |
+| T064 | Structured output validation + one repair retry | `capstone/src/agent.py` | invalid twice → `SCHEMA_INVALID` escalate | `[x]` |
+| T065 | Bucket 3 vision call with measurements as context (D-5) | `capstone/src/agent.py` | deterministic findings passed in | `[x]` |
+| T066 | Failure-path tests — **Principle IV proof** | `capstone/tests/test_agent_failure_paths.py` | injected crash/timeout/refusal/truncation/garbage → never `APPROVE` | `[x]` |
+| T067 | First agent sweep | `capstone/evals/runs/` | number recorded in the commit message | `[!]` |
+| T068 | `--no-tools` control arm sweep | `capstone/evals/runs/` | gap vs T067 = measured value of the split | `[!]` |
 
 **Phase 4 exit:** agent beats `rules_only`, or the reason it does not is written down.
 
@@ -120,13 +125,13 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T080 | `Trace` emit + JSONL sink | `capstone/ops/tracing.py` | every run traced incl. cache tokens | `[ ]` |
-| T081 | Budgets: steps, tokens, wall-clock, cost | `capstone/ops/budgets.py` | cap → `BUDGET_EXHAUSTED` escalate | `[ ]` |
+| T080 | `Trace` emit + JSONL sink | `capstone/ops/tracing.py` | every run traced incl. cache tokens | `[~]` |
+| T081 | Budgets: steps, tokens, wall-clock, cost | `capstone/ops/budgets.py` | cap → `BUDGET_EXHAUSTED` escalate | `[x]` |
 | T082 | HITL escalation queue carrying findings | `capstone/ops/hitl.py` | queue entry has full reasoning | `[ ]` |
 | T083 | Idempotency by `order_id` (FR-014) | `capstone/src/agent.py` | second run, same verdict, no dup side effect | `[ ]` |
 | T084 | Graceful degradation (model down / rate limited) | `capstone/src/agent.py` | deterministic checks still run, `degraded=True` | `[ ]` |
-| T085 | Runbook | `capstone/docs/runbook.md` | alerts, rollback, on-call | `[ ]` |
-| T086 | Documented limits (Principle VII) | `capstone/docs/limits.md` | where it fails, named | `[ ]` |
+| T085 | Runbook | `capstone/docs/runbook.md` | alerts, rollback, on-call | `[x]` |
+| T086 | Documented limits (Principle VII) | `capstone/docs/limits.md` | where it fails, named | `[x]` |
 
 ---
 
