@@ -11,6 +11,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import anthropic
+
+from shared.env import api_key, default_model
+
 # You will need these. Import them yourself:
 #     from shared.env import api_key, default_model
 
@@ -23,7 +27,11 @@ from typing import Any
 # You need at least claude-opus-5, claude-sonnet-5, and claude-haiku-4-5. Look the numbers
 # up rather than recalling them — pricing changes, and being wrong here means every cost
 # estimate downstream is wrong.
-MODEL_PRICING: dict[str, tuple[float, float]] = {}
+MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "claude-haiku-4-5": (1.0, 5.0),
+    "claude-opus-5": (5.0, 25.0),
+    "claude-sonnet-5": (2.0, 10.0)
+}
 
 
 def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -32,7 +40,13 @@ def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     Raise ValueError for a model that is not in MODEL_PRICING — silently returning 0.0 for
     an unknown model is how a cost dashboard ends up lying to you.
     """
-    raise NotImplementedError
+    if model not in MODEL_PRICING:
+        raise ValueError(f"Model {model} is not in MODEL_PRICING")
+
+    input_price, output_price = MODEL_PRICING[model]
+    input_cost = (input_tokens / 1_000_000) * input_price
+    output_cost = (output_tokens / 1_000_000) * output_price
+    return input_cost + output_cost
 
 
 # --------------------------------------------------------------------------------------
@@ -58,7 +72,18 @@ def summarize_stop(response: Any) -> str:
     This function must never raise on a well-formed response. Getting the guard wrong here
     is the single most common way a working agent crashes in production.
     """
-    raise NotImplementedError
+    reason = getattr(response, "stop_reason", None)
+    if reason == "end_turn":
+        return "completed normally"
+    if reason == "max_tokens":
+        return "truncated at max_tokens"
+    if reason == "tool_use":
+        return "stopped to call a tool"
+    if reason == "refusal":
+        details = getattr(response, "stop_details", None)
+        category = getattr(details, "category", None) or "unknown"
+        return f"refused ({category})"
+    return f"unhandled stop_reason: {reason}"
 
 
 # --------------------------------------------------------------------------------------

@@ -19,6 +19,9 @@ runs/
 traces/
 evals/out/
 *.jsonl.gz
+capstone/data/cases/
+capstone/evals/runs/
+capstone/data/redteam_cases/
 
 # OS / editor
 .DS_Store
