@@ -1,0 +1,273 @@
+"""The eval harness.
+
+Runs any `Callable[[PreflightCase], Verdict]` against the labelled set and scores it.
+Built before the agent, per Constitution Principle II: a baseline has to exist before
+anything can claim to improve on it.
+
+Two rules the harness enforces rather than trusts:
+
+1. **The holdout split is not readable by default.** `--split holdout` exists, but
+   `load_cases()` returns train only unless asked, so a tuning loop cannot reach it by
+   forgetting a flag.
+2. **A crashing callable does not crash the sweep.** An exception becomes an ESCALATE
+   verdict with `termination="error"` and is counted by SC-007. A harness that dies on
+   the first bad case cannot measure reliability.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import time
+import traceback
+from collections.abc import Callable, Iterable
+from datetime import UTC, datetime
+from pathlib import Path
+
+from capstone.evals.metrics import SweepReport, score
+from capstone.src.schemas import (
+    EscalationReason,
+    GoldLabel,
+    OrderMetadata,
+    PreflightCase,
+    RunResult,
+    Split,
+    Trace,
+    TraceStep,
+    Verdict,
+    VerdictType,
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_MANIFEST = REPO_ROOT / "capstone" / "data" / "cases.jsonl"
+RUNS_DIR = REPO_ROOT / "capstone" / "evals" / "runs"
+
+TriageFn = Callable[[PreflightCase], Verdict]
+
+# A triage function reports its own token/cost accounting by dropping a Trace here keyed
+# by case_id; the harness picks it up and attaches real latency. Keeping it out of the
+# Verdict means the output contract stays exactly what the spec says it is, with no
+# observability fields smuggled into the thing the model is asked to produce.
+TRACE_SINK: dict[str, Trace] = {}
+
+
+def attach_trace(trace: Trace) -> None:
+    """Hand a trace to the harness for the case currently being run."""
+    TRACE_SINK[trace.case_id] = trace
+
+
+def load_cases(
+    manifest: Path | None = None,
+    split: Split | None = Split.TRAIN,
+) -> list[tuple[PreflightCase, GoldLabel]]:
+    """Load cases and labels.
+
+    `split=Split.TRAIN` is the default on purpose. Reading the holdout requires saying so
+    explicitly, because the number it produces is only meaningful once.
+    """
+    manifest = manifest or DEFAULT_MANIFEST
+    if not manifest.exists():
+        raise FileNotFoundError(
+            f"no dataset at {manifest}. Run: python -m capstone.data.generate -n 200"
+        )
+
+    out: list[tuple[PreflightCase, GoldLabel]] = []
+    with manifest.open(encoding="utf-8") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            label = GoldLabel.model_validate(row["label"])
+            if split is not None and label.split is not split:
+                continue
+            case = PreflightCase(
+                case_id=row["case_id"],
+                image_path=REPO_ROOT / row["image_path"],
+                order=OrderMetadata.model_validate(row["order"]),
+            )
+            out.append((case, label))
+    return out
+
+
+def _error_verdict(exc: BaseException) -> Verdict:
+    """Constitution Principle IV: a crash is an escalation, never an approval."""
+    return Verdict(
+        verdict=VerdictType.ESCALATE,
+        confidence=0.0,
+        escalation_reason=EscalationReason.INTERNAL_ERROR,
+        degraded=True,
+        checks_completed=[],
+    )
+
+
+def run_one(triage: TriageFn, case: PreflightCase, label: GoldLabel) -> RunResult:
+    """Run one case. Never raises."""
+    started = datetime.now(UTC)
+    t0 = time.perf_counter()
+    trace: Trace | None = None
+    try:
+        verdict = triage(case)
+        termination = "completed"
+        detail: dict = {}
+    except Exception as exc:  # noqa: BLE001 - the harness must survive any callable
+        verdict = _error_verdict(exc)
+        termination = "error"
+        detail = {"exception": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()}
+
+    latency_ms = int((time.perf_counter() - t0) * 1000)
+
+    # A triage function may attach its own trace via `attach_trace`; otherwise synthesise
+    # a minimal one so cost and latency are still accounted for.
+    attached = TRACE_SINK.pop(case.case_id, None)
+    if attached is None:
+        trace = Trace(
+            case_id=case.case_id,
+            order_id=case.order.order_id,
+            started_at=started,
+            ended_at=datetime.now(UTC),
+            latency_ms=latency_ms,
+            verdict=verdict.verdict,
+            termination=termination,
+        )
+    else:
+        trace = attached
+        trace.latency_ms = latency_ms
+        trace.verdict = verdict.verdict
+        trace.ended_at = datetime.now(UTC)
+        if termination == "error":
+            trace.termination = "error"
+
+    if detail:
+        trace.steps.append(
+            TraceStep(
+                index=len(trace.steps),
+                kind="validation",
+                name="harness_error",
+                duration_ms=latency_ms,
+                ok=False,
+                detail=detail,
+            )
+        )
+
+    return RunResult(case_id=case.case_id, verdict=verdict, label=label, trace=trace)
+
+
+def sweep(
+    triage: TriageFn,
+    cases: Iterable[tuple[PreflightCase, GoldLabel]] | None = None,
+    *,
+    arm: str = "default",
+    split: Split | None = Split.TRAIN,
+    limit: int | None = None,
+    progress: bool = False,
+) -> tuple[SweepReport, list[RunResult]]:
+    """Run the set and score it."""
+    pairs = list(cases) if cases is not None else load_cases(split=split)
+    if limit:
+        pairs = pairs[:limit]
+
+    results: list[RunResult] = []
+    for i, (case, label) in enumerate(pairs, 1):
+        results.append(run_one(triage, case, label))
+        if progress and i % 25 == 0:
+            print(f"  ... {i}/{len(pairs)}")
+
+    return score(results, arm=arm), results
+
+
+def write_run(report: SweepReport, results: list[RunResult], out_dir: Path | None = None) -> Path:
+    """Persist a run so the report is reproducible from the log rather than from memory."""
+    out_dir = out_dir or RUNS_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    path = out_dir / f"{stamp}-{report.arm}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "report": report.to_dict(),
+                "results": [
+                    {
+                        "case_id": r.case_id,
+                        "verdict": r.verdict.model_dump(mode="json"),
+                        "label": r.label.model_dump(mode="json"),
+                        "false_approve": r.is_false_approve,
+                        "false_reject": r.is_false_reject,
+                        "termination": r.trace.termination,
+                        "cost_usd": r.trace.cost_usd,
+                        "latency_ms": r.trace.latency_ms,
+                    }
+                    for r in results
+                ],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+# --------------------------------------------------------------------------------------
+# CLI
+# --------------------------------------------------------------------------------------
+
+
+def _resolve_arm(name: str, no_tools: bool) -> tuple[str, TriageFn]:
+    from capstone.evals import baselines
+
+    if name == "always_escalate":
+        return "always_escalate", baselines.always_escalate
+    if name == "always_approve":
+        return "always_approve", baselines.always_approve
+    if name == "rules_only":
+        return "rules_only", baselines.rules_only
+    if name == "agent":
+        from capstone.src.agent import make_triage_fn
+
+        label = "agent--no-tools" if no_tools else "agent"
+        return label, make_triage_fn(use_tools=not no_tools)
+    raise SystemExit(f"unknown arm {name!r}")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="Run the preflight eval set.")
+    ap.add_argument(
+        "arm",
+        nargs="?",
+        default="rules_only",
+        choices=["always_escalate", "always_approve", "rules_only", "agent"],
+    )
+    ap.add_argument(
+        "--no-tools",
+        action="store_true",
+        help="control arm: disable deterministic tools so the model works unaided",
+    )
+    ap.add_argument(
+        "--split",
+        default="train",
+        choices=["train", "holdout", "all"],
+        help="holdout is scored ONCE, at the end of the project (T110)",
+    )
+    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--save", action="store_true", help="write the run to capstone/evals/runs/")
+    args = ap.parse_args()
+
+    split = None if args.split == "all" else Split(args.split)
+    if split is Split.HOLDOUT:
+        print("*** Scoring the HOLDOUT split. This number is only meaningful once. ***\n")
+
+    arm_name, fn = _resolve_arm(args.arm, args.no_tools)
+    report, results = sweep(fn, arm=arm_name, split=split, limit=args.limit, progress=True)
+    print(report.render())
+
+    if args.save:
+        path = write_run(report, results)
+        print(f"\nwrote {path}")
+
+    raise SystemExit(0 if report.passes else 1)
+
+
+if __name__ == "__main__":
+    main()
+
+
+__all__ = ["TriageFn", "load_cases", "run_one", "sweep", "write_run"]
