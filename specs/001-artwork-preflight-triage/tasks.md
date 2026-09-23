@@ -9,10 +9,17 @@ Phase order enforces Constitution Principle II — **evals exist before the agen
 
 **Status legend:** `[ ]` not started · `[~]` partial · `[x]` done · `[!]` blocked
 
-**Progress as of 2026-09-22:** Phases 0-4 built and green (80 offline tests, ruff clean).
-Phase 2 produced the baseline numbers. T067/T068 are **blocked** on a valid
-`ANTHROPIC_API_KEY` — the agent has never completed a sweep, so no agent number exists
-yet. Phases 5-9 not started.
+**Progress as of 2026-09-23:** Phases 0-5 complete, plus T110 (holdout scored once).
+178 offline tests, ruff clean. Both success criteria met — see
+[capstone/docs/results.md](../../capstone/docs/results.md).
+
+Headline: holdout 82.0% auto-approve, 0 false approves in 41 approvals, both arms. The
+deterministic pipeline passes without the model; the model's measured contribution is a
+3.4 pp reduction in escalation rate, worth ~$164/day against the brief's assumptions and
+resting on 3 cases.
+
+Not started: Phase 6 (HITL queue, idempotency, degradation), Phase 7 (red team — SC-006
+has no measurement behind it), Phase 8 (MCP, CI gate), Phase 9 (portfolio writeup).
 
 ---
 
@@ -101,8 +108,8 @@ yet. Phases 5-9 not started.
 | T064 | Structured output validation + one repair retry | `capstone/src/agent.py` | invalid twice → `SCHEMA_INVALID` escalate | `[x]` |
 | T065 | Bucket 3 vision call with measurements as context (D-5) | `capstone/src/agent.py` | deterministic findings passed in | `[x]` |
 | T066 | Failure-path tests — **Principle IV proof** | `capstone/tests/test_agent_failure_paths.py` | injected crash/timeout/refusal/truncation/garbage → never `APPROVE` | `[x]` |
-| T067 | First agent sweep | `capstone/evals/runs/` | number recorded in the commit message | `[!]` |
-| T068 | `--no-tools` control arm sweep | `capstone/evals/runs/` | gap vs T067 = measured value of the split | `[!]` |
+| T067 | First agent sweep | `capstone/evals/runs/` | number recorded in the commit message | `[x]` |
+| T068 | Control arm: `rules_only` vs agent, same cases | `capstone/evals/runs/` | gap = measured value of the split | `[x]` |
 
 **Phase 4 exit:** agent beats `rules_only`, or the reason it does not is written down.
 
@@ -112,10 +119,10 @@ yet. Phases 5-9 not started.
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T070 | Tune confidence threshold on train (OQ-2) | `capstone/src/agent.py` | threshold fitted, not guessed | `[ ]` |
-| T071 | Prompt iteration, one change per sweep | `capstone/src/prompts.py` | each change has a before/after number | `[ ]` |
-| T072 | Evaluate: does bucket 3 want its own call? (OQ-4) | `capstone/src/agent.py` | measured, decided, recorded | `[ ]` |
-| T073 | Rejected-change log | `capstone/docs/hillclimb.md` | every rejected idea keeps its number | `[ ]` |
+| T070 | ~~Tune confidence threshold (OQ-2)~~ **dead end** — every false approve came back at 0.92-0.98 confidence | `capstone/src/agent.py` | recorded in results.md | `[x]` |
+| T071 | Threshold sweep: safe-zone + no-text gate | `capstone/tools/bucket2_pixels.py` | operating curve in results.md S5 | `[x]` |
+| T072 | Tool loop vs single call (OQ-4, and the L4 cargo-cult question) | `capstone/src/agent.py` | single call wins on both axes | `[x]` |
+| T073 | Rejected-change log | `capstone/docs/results.md` S4 | three rejected approaches keep their numbers | `[x]` |
 
 **Phase 5 exit:** SC-001 ≥ 60% and SC-002 ≤ 1% on the train split.
 
@@ -162,7 +169,7 @@ yet. Phases 5-9 not started.
 
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
-| T110 | Score the sealed holdout — **once** | `capstone/evals/runs/holdout.json` | headline number, whatever it says | `[ ]` |
+| T110 | Score the sealed holdout — **once** | `capstone/evals/runs/` | **done: 82.0% / 0 false approves, both arms** | `[x]` |
 | T111 | Update architecture doc to as-built | `capstone/docs/architecture.md` | diagrams match the code | `[ ]` |
 | T112 | Regenerate excalidraw diagrams | `capstone/docs/architecture.excalidraw` | as-built | `[ ]` |
 | T113 | Portfolio writeup | `portfolio/writeup.md` | problem → decisions → numbers → limits | `[ ]` |
