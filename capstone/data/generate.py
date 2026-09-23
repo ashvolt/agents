@@ -24,7 +24,7 @@ import argparse
 import json
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -80,6 +80,10 @@ class CasePlan:
     perturbations: tuple[Perturbation, ...]
     split: Split
     seed: int
+    # Which edge a CONTENT_IN_SAFE_ZONE mark intrudes from. Always "left" in every dataset
+    # generated before 2026-09-23; `--intrusion-edges any` varies it so a check that has
+    # quietly learned "intrusions are on the left" gets caught.
+    intrusion_edge: str = "left"
 
     def magnitude_for(self, code: IssueCode) -> float:
         """1.0 means 'exactly at the limit'; absent means 'comfortably inside'."""
@@ -286,9 +290,21 @@ def render(plan: CasePlan) -> tuple[Image.Image, float]:
     if plan.has(IssueCode.CONTENT_IN_SAFE_ZONE):
         intrusion = safe_px * plan.magnitude_for(IssueCode.CONTENT_IN_SAFE_ZONE)
         mark_w = max(6, int(safe_px * 1.5) or 6)
-        x0 = trim[0] + safe_px - intrusion
-        draw.rectangle((x0, sy0 + (sy1 - sy0) * 0.4, x0 + mark_w, sy0 + (sy1 - sy0) * 0.6),
-                       fill=accent)
+        mid_y = (sy0 + (sy1 - sy0) * 0.4, sy0 + (sy1 - sy0) * 0.6)
+        mid_x = (sx0 + (sx1 - sx0) * 0.4, sx0 + (sx1 - sx0) * 0.6)
+        if plan.intrusion_edge == "right":
+            x1 = trim[2] - safe_px + intrusion
+            box = (x1 - mark_w, mid_y[0], x1, mid_y[1])
+        elif plan.intrusion_edge == "top":
+            y0 = trim[1] + safe_px - intrusion
+            box = (mid_x[0], y0, mid_x[1], y0 + mark_w)
+        elif plan.intrusion_edge == "bottom":
+            y1 = trim[3] - safe_px + intrusion
+            box = (mid_x[0], y1 - mark_w, mid_x[1], y1)
+        else:  # "left" - the original placement, unchanged
+            x0 = trim[0] + safe_px - intrusion
+            box = (x0, mid_y[0], x0 + mark_w, mid_y[1])
+        draw.rectangle(box, fill=accent)
 
     return img, dpi
 
@@ -468,13 +484,22 @@ def generate(
     out_dir: Path | None = None,
     manifest: Path | None = None,
     clean_fraction: float = 0.40,
+    intrusion_edges: str = "left",
 ) -> Path:
-    """Render the dataset and write the manifest. Returns the manifest path."""
+    """Render the dataset and write the manifest. Returns the manifest path.
+
+    `intrusion_edges="any"` picks the safe-zone intrusion edge per case from the case's own
+    seed, after planning, so every other property of every case is identical to the
+    `"left"` dataset with the same seed. Only the mark moves.
+    """
     root = Path(__file__).resolve().parent
     out_dir = out_dir or root / "cases"
     manifest = manifest or root / "cases.jsonl"
 
     plans = plan_cases(n, seed=seed, clean_fraction=clean_fraction)
+    if intrusion_edges == "any":
+        edges = ("left", "right", "top", "bottom")
+        plans = [replace(p, intrusion_edge=random.Random(p.seed).choice(edges)) for p in plans]
     rows: list[dict] = []
 
     for plan in plans:
@@ -494,6 +519,8 @@ def generate(
                 "rendered_dpi": round(dpi, 3),
             }
         )
+        if plan.intrusion_edge != "left":  # keeps earlier manifests byte-identical
+            rows[-1]["intrusion_edge"] = plan.intrusion_edge
 
     with manifest.open("w", encoding="utf-8") as fh:
         for row in rows:
@@ -516,6 +543,12 @@ def main() -> None:
     )
     ap.add_argument("--out", type=str, default=None, help="manifest filename")
     ap.add_argument("--cases-dir", type=str, default=None, help="directory for the images")
+    ap.add_argument(
+        "--intrusion-edges",
+        choices=["left", "any"],
+        default="left",
+        help="where safe-zone intrusions are drawn. 'left' reproduces every earlier dataset",
+    )
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parent
@@ -525,6 +558,7 @@ def main() -> None:
         clean_fraction=args.clean_fraction,
         manifest=root / args.out if args.out else None,
         out_dir=root / args.cases_dir if args.cases_dir else None,
+        intrusion_edges=args.intrusion_edges,
     )
 
     import collections

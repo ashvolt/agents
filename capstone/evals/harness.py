@@ -240,6 +240,10 @@ def _resolve_arm(name: str, no_tools: bool) -> tuple[str, TriageFn]:
         return "always_approve", baselines.always_approve
     if name == "rules_only":
         return "rules_only", baselines.rules_only
+    if name == "cv_decider":
+        from capstone.src.deciders import make_cv_decider_triage
+
+        return "cv_decider", make_cv_decider_triage()
     if name in ("agent", "agent_fast"):
         from capstone.src.agent import make_triage_fn
 
@@ -255,7 +259,9 @@ def main() -> None:
         "arm",
         nargs="?",
         default="rules_only",
-        choices=["always_escalate", "always_approve", "rules_only", "agent", "agent_fast"],
+        choices=[
+            "always_escalate", "always_approve", "rules_only", "cv_decider", "agent", "agent_fast"
+        ],
     )
     ap.add_argument(
         "--no-tools",

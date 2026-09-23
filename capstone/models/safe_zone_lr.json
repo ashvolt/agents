@@ -1,0 +1,52 @@
+{
+  "name": "safe_zone_lr",
+  "features": [
+    "margin_depth_max",
+    "margin_span_of_deepest",
+    "margin_area_ratio",
+    "margin_objects",
+    "edge_asymmetry"
+  ],
+  "impute": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mean": [
+    0.15819719101123594,
+    0.02641910112359551,
+    0.006206702247191012,
+    0.15168539325842698,
+    0.012460674157303373
+  ],
+  "scale": [
+    0.4252530654930197,
+    0.06451669651748362,
+    0.01731064388731293,
+    0.35871567394032805,
+    0.031272648845878846
+  ],
+  "coef": [
+    1.6489862175685572,
+    -0.3247804517259563,
+    0.1720802809622641,
+    0.6136420804658995,
+    1.1784057263912204
+  ],
+  "intercept": -5.693530997386164,
+  "threshold": 0.1759,
+  "provenance": {
+    "trained_on": "capstone/data/cases_large.jsonl",
+    "split": "train",
+    "in_scope_cases": 178,
+    "in_scope_defective": 11,
+    "guarded_excluded": 8,
+    "oof_lowest_defect_p": 0.3518,
+    "oof_highest_clean_p": 0.2868,
+    "threshold_rule": "0.5 x oof_lowest_defect_p",
+    "sklearn": "1.9.1",
+    "fitted_at": "2026-09-23T15:33:32Z"
+  }
+}

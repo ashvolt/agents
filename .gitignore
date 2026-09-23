@@ -20,6 +20,10 @@ traces/
 evals/out/
 *.jsonl.gz
 capstone/data/cases/
+# Fresh holdouts (2026-09-23). Manifests are committed; images regenerate byte-for-byte
+# from the seed in the manifest's generate command - see capstone/docs/decider.md.
+capstone/data/holdout_v2/
+capstone/data/shifted_v2/
 capstone/evals/runs/
 capstone/data/redteam_cases/
 

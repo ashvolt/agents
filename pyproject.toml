@@ -13,6 +13,12 @@ dependencies = [
     "python-dotenv>=1.0",
     "pillow>=11.0",
     "numpy>=2.0",
+    # CV feature extraction for the no-vision-model decider. Headless: no GUI, no Qt.
+    # Earns its place with connectedComponentsWithStats - see capstone/tools/features.py.
+    "opencv-python-headless>=4.10",
+    # Fits the decider (capstone/evals/train_decider.py). Inference does not import it;
+    # the model ships as JSON coefficients.
+    "scikit-learn>=1.5",
 ]
 
 [project.optional-dependencies]
