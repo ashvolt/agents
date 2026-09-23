@@ -101,6 +101,32 @@ def test_band_is_judged_by_the_edge_it_spans_not_the_corner_it_touches() -> None
     assert result["margin_depth_max"] == 0.0
 
 
+def test_flat_band_has_no_protrusion() -> None:
+    img = canvas()
+    ImageDraw.Draw(img).rectangle((0, 0, W, 50), fill=INK)
+    assert margin(img)["band_protrusions"] == 0
+
+
+@pytest.mark.parametrize("edge", ["top", "bottom", "left"])
+def test_element_merged_into_a_band_is_reported_as_a_protrusion(edge: str) -> None:
+    # Found on the shifted holdout: a mark overlapping a full-width border merges into it
+    # and was filed as background. Its depth is unmeasurable; its existence is not.
+    img = canvas()
+    d = ImageDraw.Draw(img)
+    if edge == "top":
+        d.rectangle((0, 0, W, 50), fill=INK)
+        d.rectangle((450, 30, 490, 90), fill=INK)
+    elif edge == "bottom":
+        d.rectangle((0, H - 51, W, H), fill=INK)
+        d.rectangle((450, H - 91, 490, H - 31), fill=INK)
+    else:
+        d.rectangle((0, 0, 50, H), fill=INK)
+        d.rectangle((30, 300, 90, 340), fill=INK)
+    result = margin(img)
+    assert result["band_protrusions"] == 1
+    assert result["margin_objects"] == 0  # it is not a free-standing object
+
+
 def test_element_well_inside_the_safe_area_is_ignored() -> None:
     img = canvas()
     ImageDraw.Draw(img).rectangle((300, 250, 500, 400), fill=INK)
@@ -160,6 +186,7 @@ def features(**overrides: object) -> ArtworkFeatures:
         "margin_span_of_deepest": 0.0,
         "margin_area_ratio": 0.0,
         "safe_zone_px": 37.5,
+        "band_protrusions": 0,
         "advisory_count": 0,
     }
     return ArtworkFeatures.model_validate({**base, **overrides})
@@ -171,6 +198,10 @@ def test_no_guard_on_an_ordinary_file() -> None:
 
 def test_no_text_found_is_always_escalated() -> None:
     assert "no text" in (guard_reason(features(text_lines=0, text_ratio=None)) or "")
+
+
+def test_band_protrusion_is_always_escalated() -> None:
+    assert "background band" in (guard_reason(features(band_protrusions=1)) or "")
 
 
 def test_stroke_within_half_a_pixel_of_the_limit_is_undecidable() -> None:
@@ -300,6 +331,9 @@ def test_guard_escalates_without_asking_the_decider(tmp_path: Path) -> None:
     verdict, p = decide(saved_case(tmp_path, canvas()), stub, threshold=0.2)  # no text
     assert verdict.verdict is VerdictType.ESCALATE
     assert p is None and stub.calls == 0
+    # the escalation names what it is about, so the reviewer does not start from zero
+    assert verdict.issues[0].code is IssueCode.TEXT_TOO_SMALL
+    assert "guard:" in (verdict.issues[0].evidence.note or "")
 
 
 def test_blocking_rule_finding_is_final_and_skips_the_decider(tmp_path: Path) -> None:

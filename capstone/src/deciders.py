@@ -71,7 +71,31 @@ class Decider(Protocol):
 
 
 def guard_reason(features: ArtworkFeatures) -> str | None:
-    """Why this file cannot be decided from its measurements, or None if it can.
+    """Why this file cannot be decided from its measurements, or None if it can."""
+    found = _guard(features)
+    return found[1] if found else None
+
+
+def guard_issue(features: ArtworkFeatures) -> Issue | None:
+    """The guard as an advisory finding a reviewer can act on, or None.
+
+    An escalation that only says "undecidable" leaves the reviewer to rediscover what the
+    pipeline already knew. Naming the code also lets per-issue recall credit the catch.
+    """
+    found = _guard(features)
+    if found is None:
+        return None
+    code, reason = found
+    return Issue(
+        code=code,
+        severity=Severity.ADVISORY,
+        message=f"Needs a human look: {reason}.",
+        evidence=Evidence(note=f"guard: {reason}"),
+    )
+
+
+def _guard(features: ArtworkFeatures) -> tuple[IssueCode, str] | None:
+    """The guards, in order. Returns the issue code each one is about and why.
 
     - **No text found.** The detector's failure modes all fail toward finding nothing, so
       an empty result is ambiguous between "no text" and "text I could not see"
@@ -80,17 +104,31 @@ def guard_reason(features: ArtworkFeatures) -> str | None:
       nearest pixel, so the true width could sit on either side (limits.md S4). On the
       train split this is exactly one THIN_LINES defect at 1.1x and two clean files at
       0.9x, all measuring 1.00x. No feature separates them, because the pixels do not.
+    - **An element merged into a background band.** Its outer edge is inside the band, so
+      how far it reaches toward the blade is not in the pixels (features.py
+      `_band_bumps`). Found on the shifted holdout, where it hid 7 of 10 top/bottom
+      intrusions.
     """
     if features.text_lines == 0:
-        return "text detector found no text; its misses cannot be told from absence"
-    for name, value, half_pixel in (
-        ("stroke width", features.stroke_ratio, features.stroke_half_pixel),
-        ("text height", features.text_ratio, features.text_half_pixel),
+        return (
+            IssueCode.TEXT_TOO_SMALL,
+            "text detector found no text; its misses cannot be told from absence",
+        )
+    if features.band_protrusions:
+        return (
+            IssueCode.CONTENT_IN_SAFE_ZONE,
+            "an element is merged into a background band at the edge; its position "
+            "relative to the cut cannot be measured",
+        )
+    for code, name, value, half_pixel in (
+        (IssueCode.THIN_LINES, "stroke width", features.stroke_ratio, features.stroke_half_pixel),
+        (IssueCode.TEXT_TOO_SMALL, "text height", features.text_ratio, features.text_half_pixel),
     ):
         if value is not None and half_pixel is not None and value < 1.0 + half_pixel:
             return (
+                code,
                 f"{name} measures {value:.2f}x the minimum, within half a pixel of the "
-                "limit; the true value could be on either side"
+                "limit; the true value could be on either side",
             )
     return None
 
@@ -223,13 +261,14 @@ def decide(case: PreflightCase, decider: Decider, threshold: float) -> tuple[Ver
 
     advisory = [i for i in issues if i.severity is Severity.ADVISORY]
 
-    reason = guard_reason(features)
-    if reason is not None:
+    guarded = guard_issue(features)
+    if guarded is not None:
+        others = [i for i in advisory if i.code is not guarded.code]
         return (
             Verdict(
                 verdict=VerdictType.ESCALATE,
                 confidence=0.5,
-                issues=advisory,
+                issues=[guarded, *others],
                 escalation_reason=EscalationReason.JUDGEMENT_WITHOUT_CORROBORATION,
                 checks_completed=checks + ["guard"],
             ),
@@ -294,6 +333,7 @@ __all__ = [
     "Decider",
     "LogisticModel",
     "decide",
+    "guard_issue",
     "guard_reason",
     "make_cv_decider_triage",
     "measure",

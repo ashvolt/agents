@@ -24,6 +24,8 @@ capstone/data/cases/
 # from the seed in the manifest's generate command - see capstone/docs/decider.md.
 capstone/data/holdout_v2/
 capstone/data/shifted_v2/
+capstone/data/holdout_v3/
+capstone/data/shifted_v3/
 capstone/evals/runs/
 capstone/data/redteam_cases/
 

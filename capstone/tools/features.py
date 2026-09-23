@@ -51,6 +51,11 @@ MARGIN_MIN_AREA_PX = 4
 # shorter than that and still inside the keep-out margin is an element near the blade.
 FULL_EDGE_SPAN = 0.9
 
+# A band is locally thicker than its own median by at least this many pixels (or a tenth
+# of the safe zone, whichever is larger) before the excess counts as something attached
+# to it. Synthetic bands are perfectly flat; real ones are not, so this is a floor.
+BAND_BUMP_MIN_PX = 2.0
+
 
 class ArtworkFeatures(BaseModel):
     """Everything a decider is allowed to know about one file.
@@ -93,6 +98,9 @@ class ArtworkFeatures(BaseModel):
     margin_span_of_deepest: float
     margin_area_ratio: float
     safe_zone_px: float
+    # elements merged into a full-edge background band and bulging into the margin. Their
+    # true edge is hidden inside the band, so their depth cannot be measured at all.
+    band_protrusions: int
 
     # how many advisory findings the rules raised — the rules' own uncertainty
     advisory_count: int
@@ -150,6 +158,7 @@ def measure_margin_objects(
         "margin_span_of_deepest": 0.0,
         "margin_area_ratio": 0.0,
         "safe_zone_px": 0.0,
+        "band_protrusions": 0,
     }
     safe_px = spec.safe_zone_in * dpi
     if dpi <= 0 or safe_px < 1:
@@ -173,13 +182,15 @@ def measure_margin_objects(
     for box in exclude or []:
         foreground[max(0, box.y0 - 1) : box.y1 + 1, max(0, box.x0 - 1) : box.x1 + 1] = 0
 
-    count, _labels, stats, _centroids = cv2.connectedComponentsWithStats(foreground, connectivity=8)
+    count, labels, stats, _centroids = cv2.connectedComponentsWithStats(foreground, connectivity=8)
 
     ring_area = width * height - (width - 2 * inset_x) * (height - 2 * inset_y)
     objects = 0
     deepest = 0.0
     deepest_span = 0.0
     area_in_margin = 0.0
+    protrusions = 0
+    bump_px = max(BAND_BUMP_MIN_PX, 0.1 * safe_px)
 
     for idx in range(1, count):  # 0 is the background label
         x, y, w, h, area = (int(v) for v in stats[idx])
@@ -199,7 +210,10 @@ def measure_margin_objects(
         # A band spanning ANY edge it sits on is background, even though it is short
         # along the perpendicular edge it also touches at the corner. Judging a corner
         # band by its shorter side called every full-width border an intrusion.
-        if not near or max(spans) >= FULL_EDGE_SPAN:
+        if not near:
+            continue
+        if max(spans) >= FULL_EDGE_SPAN:
+            protrusions += _band_bumps(labels, idx, sides, inset_x, inset_y, bump_px)
             continue
         best_depth = max(near)
         best_span = spans[near.index(best_depth)]
@@ -215,7 +229,46 @@ def measure_margin_objects(
         "margin_span_of_deepest": round(deepest_span, 4),
         "margin_area_ratio": round(area_in_margin / ring_area, 6) if ring_area > 0 else 0.0,
         "safe_zone_px": round(safe_px, 2),
+        "band_protrusions": protrusions,
     }
+
+
+def _band_bumps(
+    labels: np.ndarray,
+    idx: int,
+    sides: tuple[tuple[int, float, float], ...],
+    inset_x: float,
+    inset_y: float,
+    bump_px: float,
+) -> int:
+    """Count edges on which band `idx` bulges into the keep-out margin.
+
+    Found on the shifted holdout (2026-09-23): an element overlapping a full-width border
+    merges with it into one component, is filed as background, and is never measured.
+    Seven of ten top/bottom intrusions went through that way while left/right scored
+    10/10. The element's outer edge is hidden inside the band, so its depth is not
+    recoverable - but its *inner* edge still shows as the band being locally thicker than
+    itself. That is enough to say "something is attached here", not how far it reaches.
+    """
+    height, width = labels.shape
+    bumps = 0
+    for side, (distance, _inset, span) in enumerate(sides):
+        if distance != 0 or span < FULL_EDGE_SPAN:
+            continue  # only bands lying along this edge
+        if side in (0, 1):  # left / right: thickness per row
+            depth = min(width, int(np.ceil(inset_x)))
+            strip = labels[:, :depth] if side == 0 else labels[:, width - depth :]
+            thickness = (strip == idx).sum(axis=1)
+        else:  # top / bottom: thickness per column
+            depth = min(height, int(np.ceil(inset_y)))
+            strip = labels[:depth, :] if side == 2 else labels[height - depth :, :]
+            thickness = (strip == idx).sum(axis=0)
+        present = thickness[thickness > 0]
+        if present.size == 0:
+            continue
+        if int((thickness > np.median(present) + bump_px).sum()) >= 2:
+            bumps += 1
+    return bumps
 
 
 # --------------------------------------------------------------------------------------
