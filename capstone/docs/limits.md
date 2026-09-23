@@ -59,15 +59,35 @@ contains none — but a model that ignores that caveat will approve a file it sh
 Choosing a production detector is OQ-3 and is decided by measured recall at small point
 sizes, not by popularity.
 
-## 4. Sub-pixel strokes are indistinguishable
+## 4. Stroke width has a quantisation band, and it causes false rejects
 
-At low DPI a stroke thinner than one pixel still rasterises to one pixel. A defect at
-1.1x past the limit and one at 2.0x past it produce identical pixels, so per-magnitude
-recall flattens at the bottom end.
+Measured 2026-09-23. At 300 DPI one pixel is **0.24 pt**, and the 0.5 pt minimum stroke is
+2.08 px. Every nominal width from **0.40 to 0.60 pt rounds to 2 px**, which measures back
+as 0.48 pt:
 
-This is physically real — a press cannot print half a pixel either — but it means
-`THIN_LINES` recall on the most severe cases is not better than on the marginal ones, and
-the eval cannot distinguish them.
+| nominal | drawn | measures | flagged |
+|---|---|---|---|
+| 0.45 pt | 2 px | 0.48 pt | yes — correct |
+| 0.50 pt | 2 px | 0.48 pt | yes — **false reject** |
+| 0.55 pt | 2 px | 0.48 pt | yes — **false reject** |
+| 0.60 pt | 2 px | 0.48 pt | yes — **false reject** |
+| 0.65 pt | 3 px | 0.72 pt | no |
+
+So **a legitimate 0.55 pt stroke is reported as too thin.** The file really does contain a
+2 px stroke; the check cannot resolve finer than one pixel.
+
+This is not fixed by loosening the threshold. Loosening it to absorb the band would let
+genuine 0.40 pt defects through, and Principle I says take the recoverable error: a false
+reject costs the customer one round trip, a false approve costs a misprint.
+
+**The band widens as resolution falls.** At 150 DPI one pixel is 0.48 pt, the 0.5 pt
+minimum is 1.04 px, and almost every thin stroke lands inside it — so on low-DPI products
+this check is close to useless in both directions. `vinyl-banner` (72 DPI minimum,
+2.0 pt strokes) is the worst case in the current spec table.
+
+Related: a defect at 1.1x past the limit and one at 2.0x past it can produce identical
+pixels, so per-magnitude recall flattens at the bottom end and the eval cannot distinguish
+severity there.
 
 ## 5. Bleed and proportion are entangled
 
