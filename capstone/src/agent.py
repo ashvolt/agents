@@ -382,7 +382,10 @@ class PreflightAgent:
         report = (
             "Measurements already taken for this file. These are exact and you should not "
             "re-derive or second-guess them; anything listed under 'issues' is proven.\n\n"
-            + json.dumps(payloads, indent=2, sort_keys=True)
+            # Compact separators, not indent=2: pretty-printing this costs ~130 tokens a
+            # file for whitespace the model does not read. sort_keys stays, because a
+            # stable key order is what lets the prefix cache match at all.
+            + json.dumps(payloads, separators=(",", ":"), sort_keys=True)
         )
         return report, measured, names
 
