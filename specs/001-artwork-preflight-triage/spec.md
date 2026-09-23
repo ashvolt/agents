@@ -2,7 +2,7 @@
 
 **Feature branch:** `001-artwork-preflight-triage`
 **Created:** 2026-09-22
-**Status:** Draft
+**Status:** Implemented and measured — see [results.md](../../capstone/docs/results.md)
 **Constitution:** [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.0.0
 **Business case:** [capstone/docs/brief.md](../../capstone/docs/brief.md)
 
@@ -172,6 +172,20 @@ do not stall silently.
 
 ## 5. Success Criteria
 
+**Measured on the held-out split, 2026-09-23** (88 cases, scored once):
+
+| ID | Target | rules_only | agent_fast | |
+|---|---|---|---|---|
+| SC-001 | ≥60% auto-approve | 82.0% | 82.0% | PASS |
+| SC-002 | ≤1% false-approve | 0.0% | 0.0% | PASS |
+| SC-003 | ≤$0.01/file | $0.0000 | $0.0066 | PASS* |
+| SC-004 | p95 ≤20s | 0.2s | 11.1s | PASS |
+| SC-007 | 0 crashes | 0 | 0 | PASS |
+
+\* SC-003 passes because the synthetic images are small (~452 tokens vs ~1,600 for
+realistic artwork). Unproven for production — limits.md §6. SC-005, SC-006 and SC-008 have
+no measurement: the red-team suite does not exist.
+
 | ID | Criterion | Target |
 |---|---|---|
 | **SC-001** | Auto-approve rate on clean files | ≥ 60% |
@@ -231,9 +245,9 @@ SC-001 and SC-002 are the headline pair. SC-002 is not tradeable.
 | ID | Question | Resolution path |
 |---|---|---|
 | ~~**OQ-1**~~ | ~~SC-003 unreachable at list price?~~ **Resolved 2026-09-23.** Measured: $0.0073/file at 2 model calls, $0.0146 at 4. SC-003 holds at the 2-call shape, so **turn count is the lever**, not model choice. Caveat: it holds because the synthetic images are small (~452 tokens vs ~1,600 for realistic artwork) — see research.md D-9 and limits.md §6. | Closed. Turn-count tuning moves to Phase 5. |
-| **OQ-2** | Confidence threshold for escalation. | Fit on the training split. Never guessed. |
+| ~~**OQ-2**~~ | ~~Confidence threshold for escalation.~~ **Dead end, 2026-09-23.** Every false approve arrived at confidence 0.92–0.98, so no floor below 0.98 helps and 0.98 escalates everything. Replaced by two deterministic gates (safe-zone asymmetry, no-text). | Closed. |
 | **OQ-3** | Text detector choice: PaddleOCR / Tesseract / CRAFT. | Measured recall at small point sizes. |
-| **OQ-4** | Does one vision call cover bucket 3, or does the gestalt check want its own? | Measure both. |
+| ~~**OQ-4**~~ **Resolved 2026-09-23** — the tool loop itself was worse and costlier than a single call; removed. Original question moot. | Does one vision call cover bucket 3, or does the gestalt check want its own? | Measure both. |
 | **OQ-5** | Does the generated customer message need its own quality eval? | Hand-review a sample first; promote to an eval only if hand-review finds variance. |
 
 ## 10. Assumptions
