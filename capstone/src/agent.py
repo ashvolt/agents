@@ -52,6 +52,7 @@ from capstone.src.schemas import (
 from capstone.tools.registry import (
     SUBMIT_VERDICT,
     dispatch,
+    issues_from_payload,
     measurement_tools,
     verdict_tool,
 )
@@ -218,8 +219,20 @@ def _issue_from_payload(raw: dict[str, Any]) -> Issue | None:
     return Issue(code=code, severity=severity, message=message, evidence=evidence)
 
 
-def parse_verdict(payload: dict[str, Any], checks: list[str], all_checks_ran: bool) -> Verdict:
-    """Turn `submit_verdict` input into a validated Verdict via `finalize`."""
+def parse_verdict(
+    payload: dict[str, Any],
+    checks: list[str],
+    all_checks_ran: bool,
+    measured: list[Issue] | None = None,
+) -> Verdict:
+    """Turn `submit_verdict` input into a validated Verdict via `finalize`.
+
+    `measured` holds the issues the deterministic tools proved. They are merged in and
+    they win: Principle III says code is authoritative where code is exact, so the model
+    may ADD findings or escalate, but it may not talk one away. Measured on 50 cases, the
+    model relaying tool findings lost recall the tools had already achieved
+    (TEXT_TOO_SMALL 2/3 -> 1/3, WRONG_COLOR_MODE 1/1 -> 0/1).
+    """
     try:
         verdict_type = VerdictType(payload["verdict"])
         confidence = float(payload.get("confidence", 0.0))
@@ -251,15 +264,45 @@ def parse_verdict(payload: dict[str, Any], checks: list[str], all_checks_ran: bo
             degraded=False,
         )
 
+    # Deterministic findings are merged in and cannot be dropped by the model.
+    seen = {i.code for i in issues}
+    for m in measured or []:
+        if m.code not in seen:
+            issues.append(m)
+            seen.add(m.code)
+
+    # A proven blocking defect is a fix request, whatever the model concluded. Without
+    # this the model can measure a problem, read the measurement, and still approve.
+    blocking_measured = [m for m in (measured or []) if m.severity is Severity.BLOCKING]
+    if blocking_measured and verdict_type is VerdictType.APPROVE:
+        verdict_type = VerdictType.REQUEST_FIX
+
+    message = payload.get("customer_message")
+    if verdict_type is VerdictType.REQUEST_FIX and not (message or "").strip():
+        message = _fallback_customer_message(issues)
+
     return finalize(
         verdict=verdict_type,
         issues=issues,
         confidence=confidence,
-        customer_message=payload.get("customer_message"),
+        customer_message=message,
         escalation_reason=reason,
         checks_completed=checks,
         all_checks_ran=all_checks_ran,
     )
+
+
+def _fallback_customer_message(issues: list[Issue]) -> str:
+    """Compose a fix request when the model overrode APPROVE but wrote no message."""
+    blocking = [i for i in issues if i.severity is Severity.BLOCKING]
+    lines = ["We found the following before printing your artwork:", ""]
+    for issue in blocking:
+        lines.append(f"- {issue.message}")
+        detail = issue.evidence.describe()
+        if detail:
+            lines.append(f"  ({detail})")
+    lines += ["", "Send an updated file and we'll re-check it right away."]
+    return "\n".join(lines)
 
 
 # --------------------------------------------------------------------------------------
@@ -376,6 +419,7 @@ class PreflightAgent:
 
         tools = self._tools()
         repair_used = 0
+        measured: list[Issue] = []
 
         while True:
             try:
@@ -460,7 +504,7 @@ class PreflightAgent:
                         "inspect_file",
                         "analyse_pixels",
                     } <= set(checks)
-                    verdict = parse_verdict(dict(block.input), checks, all_ran)
+                    verdict = parse_verdict(dict(block.input), checks, all_ran, measured)
                     trace.termination = "completed"
                     trace.injection_suspected = bool(
                         dict(block.input).get("injection_suspected")
@@ -468,12 +512,15 @@ class PreflightAgent:
                     return verdict, trace
 
                 t1 = time.perf_counter()
-                result = dispatch(
+                result, tool_payload = dispatch(
                     block.name,
                     dict(block.input),
                     image_path=case.image_path,
                     order=case.order,
                 )
+                for found in issues_from_payload(tool_payload):
+                    if found.code not in {m.code for m in measured}:
+                        measured.append(found)
                 if block.name not in checks:
                     checks.append(block.name)
                 trace.steps.append(

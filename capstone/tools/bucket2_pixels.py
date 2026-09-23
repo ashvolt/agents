@@ -363,6 +363,81 @@ def check_text_size(boxes: list[TextBox], spec: ProductSpec, dpi: float) -> list
 # --------------------------------------------------------------------------------------
 
 
+def measure_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> dict[str, object]:
+    """Describe ink inside the keep-out margin. Evidence for bucket 3, not a verdict.
+
+    Whether ink sits inside the cut margin is a bounding-box test and therefore
+    computable. Whether that ink is a background deliberately running off the edge or a
+    logo about to lose its top third is not — that is the judgement the model is for.
+
+    Measuring it here matters because the model was failing at the *detection* half:
+    asked to both find safe-zone intrusions and judge them, it missed 4 of 7 at
+    confidence 0.95+. Handing it the measurement leaves only the part it is good at.
+
+    The uniformity signal is the useful one. A background bleeding off the edge covers
+    the margin evenly on every side; an intruding element is a dense patch on one side.
+    """
+    safe_px = spec.safe_zone_in * dpi
+    mask = ink_mask(image)
+    if mask.size == 0 or safe_px < 1:
+        return {"measurable": False, "reason": "no ink or safe zone smaller than a pixel"}
+
+    height, width = mask.shape
+    band = max(1, int(round(safe_px)))
+    if height <= 2 * band or width <= 2 * band:
+        return {"measurable": False, "reason": "safe zone larger than the artwork"}
+
+    edges = {
+        "top": mask[:band, :],
+        "bottom": mask[-band:, :],
+        "left": mask[:, :band],
+        "right": mask[:, -band:],
+    }
+    coverage = {name: round(float(region.mean()), 4) for name, region in edges.items()}
+
+    # Asymmetry between OPPOSING edges is the signal, not overall spread. Artwork that
+    # deliberately bleeds off the edge runs off both sides equally; an element intruding
+    # into the margin lands on one side only. Comparing all four edges against each other
+    # does not work, because a design with a banner across the top saturates top/bottom
+    # while leaving left/right low, and that is perfectly correct artwork.
+    horizontal = abs(coverage["left"] - coverage["right"])
+    vertical = abs(coverage["top"] - coverage["bottom"])
+    asymmetry = round(max(horizontal, vertical), 4)
+
+    interior = mask[band:-band, band:-band]
+    interior_coverage = round(float(interior.mean()), 4) if interior.size else 0.0
+
+    if asymmetry >= 0.06:
+        reading = "asymmetric - one edge carries markedly more ink than the one opposite"
+    elif asymmetry >= 0.02:
+        reading = "slightly asymmetric - ambiguous"
+    else:
+        reading = "symmetric - consistent with artwork bleeding off the edge by design"
+
+    return {
+        "measurable": True,
+        "safe_zone_px": band,
+        "edge_ink_coverage": coverage,
+        "interior_ink_coverage": interior_coverage,
+        "opposing_edge_asymmetry": asymmetry,
+        "reading": reading,
+        "calibration": (
+            "On the current evaluation set, clean files never exceed 0.059 and two thirds "
+            "of genuine margin intrusions sit above 0.06. Treat >= 0.06 as strong evidence "
+            "that something intruded, and below 0.02 as weak evidence that nothing did. "
+            "NOTE: this calibration comes from synthetic artwork in which intrusions are "
+            "always a single block on one edge, so it will not transfer unchanged to real "
+            "customer files. It is evidence to weigh, not a rule to apply."
+        ),
+        "interpretation_hint": (
+            "These numbers say WHERE ink sits relative to the cut margin. They do not say "
+            "whether it matters. A background running off the edge is correct and "
+            "expected; a logo or text about to lose part of itself is not. Look at the "
+            "image to decide which one this is."
+        ),
+    }
+
+
 def analyse_pixels(
     image: Image.Image, spec: ProductSpec, dpi: float
 ) -> tuple[list[Issue], list[TextBox]]:
@@ -393,4 +468,5 @@ __all__ = [
     "delta_e76",
     "measure_contrast",
     "measure_min_stroke_px",
+    "measure_safe_zone",
 ]

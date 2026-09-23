@@ -18,9 +18,14 @@ from typing import Any
 from PIL import Image
 
 from capstone.src.product_specs import UnknownProductError, get_spec
-from capstone.src.schemas import Issue, OrderMetadata
+from capstone.src.schemas import Evidence, Issue, IssueCode, OrderMetadata, Severity
 from capstone.tools.bucket1_metadata import effective_dpi, inspect_file, measure_bleed_in
-from capstone.tools.bucket2_pixels import analyse_pixels, measure_contrast, measure_min_stroke_px
+from capstone.tools.bucket2_pixels import (
+    analyse_pixels,
+    measure_contrast,
+    measure_min_stroke_px,
+    measure_safe_zone,
+)
 
 PT_PER_INCH = 72.0
 
@@ -125,6 +130,7 @@ def tool_analyse_pixels(*, image_path: Path, order: OrderMetadata, **_: Any) -> 
             pixel_issues, boxes = analyse_pixels(img, spec, dpi)
             stroke_px = measure_min_stroke_px(img, exclude=boxes)
             contrast = measure_contrast(img)
+            safe_zone = measure_safe_zone(img, spec, dpi)
     except OSError as exc:
         return {"readable": False, "error": f"{type(exc).__name__}: {exc}", "issues": []}
 
@@ -145,6 +151,7 @@ def tool_analyse_pixels(*, image_path: Path, order: OrderMetadata, **_: Any) -> 
         ),
         "safe_zone_in": spec.safe_zone_in,
         "safe_zone_px": round(spec.safe_zone_in * dpi, 1),
+        "safe_zone": safe_zone,
         "issues": _issues_payload(pixel_issues),
     }
 
@@ -193,9 +200,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "description": (
             "Exact measurements from the pixels: thinnest stroke width in points, lowest "
             "contrast between an element and the background in deltaE, transparency "
-            "coverage, and the smallest detected text size in points. Also returns any "
-            "issues these measurements prove. Use this instead of judging line weight, "
-            "contrast, or text size by eye."
+            "coverage, the smallest detected text size in points, and ink coverage inside "
+            "the keep-out margin on each of the four edges. Also returns any issues these "
+            "measurements prove. Use this instead of judging line weight, contrast, text "
+            "size, or margin intrusion by eye - the safe_zone block tells you WHERE ink "
+            "sits in the margin, and your job is to decide whether it is deliberate."
         ),
         "input_schema": {
             "type": "object",
@@ -321,27 +330,63 @@ def verdict_tool() -> dict[str, Any]:
 
 def dispatch(
     name: str, tool_input: dict[str, Any], *, image_path: Path, order: OrderMetadata
-) -> str:
-    """Execute a tool and return its JSON result.
+) -> tuple[str, dict[str, Any]]:
+    """Execute a tool. Returns (JSON for the model, parsed payload for the caller).
+
+    The payload is returned as well as the string because the deterministic findings in
+    it are **facts, not suggestions**. Principle III: code where code is exact. Relying
+    on the model to read a measurement and restate it in its verdict loses recall the
+    tools already achieved - measured at TEXT_TOO_SMALL 2/3 for the tools against 1/3 for
+    the model on the same cases.
 
     Never raises: a tool error becomes a JSON error payload the model can read and react
-    to. Constitution Principle IV — a tool failure must be able to reach ESCALATE, and a
+    to. Constitution Principle IV - a tool failure must be able to reach ESCALATE, and a
     raised exception mid-loop cannot.
     """
     fn = _DISPATCH.get(name)
     if fn is None:
-        return json.dumps({"error": "unknown_tool", "detail": name})
-    try:
-        result = fn(image_path=image_path, order=order, **tool_input)
-    except Exception as exc:  # noqa: BLE001 - deliberate: surface, never crash the loop
-        result = {"error": "tool_failed", "detail": f"{type(exc).__name__}: {exc}"}
-    return json.dumps(result, sort_keys=True)
+        payload: dict[str, Any] = {"error": "unknown_tool", "detail": name}
+    else:
+        try:
+            payload = fn(image_path=image_path, order=order, **tool_input)
+        except Exception as exc:  # noqa: BLE001 - deliberate: surface, never crash the loop
+            payload = {"error": "tool_failed", "detail": f"{type(exc).__name__}: {exc}"}
+    return json.dumps(payload, sort_keys=True), payload
+
+
+def issues_from_payload(payload: dict[str, Any]) -> list[Issue]:
+    """Rebuild Issue objects from a tool payload. Skips anything malformed."""
+    out: list[Issue] = []
+    for raw in payload.get("issues") or []:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            ev = raw.get("evidence") or {}
+            region = ev.get("region")
+            out.append(
+                Issue(
+                    code=IssueCode(raw["code"]),
+                    severity=Severity(raw["severity"]),
+                    message=raw["message"],
+                    evidence=Evidence(
+                        measured=ev.get("measured"),
+                        required=ev.get("required"),
+                        unit=ev.get("unit"),
+                        region=tuple(region) if region else None,
+                        note=ev.get("note"),
+                    ),
+                )
+            )
+        except (KeyError, ValueError, TypeError):
+            continue
+    return out
 
 
 __all__ = [
     "SUBMIT_VERDICT",
     "TOOL_SCHEMAS",
     "dispatch",
+    "issues_from_payload",
     "measurement_tools",
     "verdict_tool",
 ]
