@@ -8,6 +8,12 @@ What was measured, on what, and what it means. Every number here comes from a ru
 > **Unofficial project.** Not affiliated with Sticker Mule. All artwork is synthetic and
 > generated locally. Volume and cost figures are labelled assumptions.
 
+> **Superseded in part, 2026-09-23 — see [decider.md](decider.md).** On 600-case fresh
+> holdouts rules_only breaches SC-002 (2.1-2.5%); the 0% below was small-sample luck. A
+> CV decider with no vision model passes (84.4% / 0.0% and 84.6% / 0.5%) and matches
+> Claude's 13.6% escalation rate on the set below at $0 per file. This page is kept as
+> written, because the progression is the record.
+
 ---
 
 ## 1. Headline
@@ -170,6 +176,10 @@ Prompt caching contributes nothing: the cacheable prefix is 1,696 tokens against
    $164/day against the assumptions — and that estimate rests on 3 cases. **Run it as a
    measured experiment on live traffic before committing to it.**
 3. If it does not reproduce at scale, remove it. Nothing else depends on it.
+
+> **Update 2026-09-23:** point 1 did not survive a larger sample — rules_only breaches
+> SC-002 at n=600 (limits.md §12). The vision pass was removed and replaced by a
+> zero-cost CV decider rather than kept: [decider.md](decider.md).
 
 ## 8. What these numbers do not show
 

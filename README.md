@@ -55,9 +55,10 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | Document | What it is |
 |---|---|
 | [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
+| [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
 | [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
-| [limits.md](capstone/docs/limits.md) | Ten things this system cannot do, most found by measuring |
+| [limits.md](capstone/docs/limits.md) | Twelve things this system cannot do, most found by measuring |
 | [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
 | [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
 | [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
@@ -77,3 +78,4 @@ spend for the project: ~$4.30.
 | 2026-09-21 | Architecture doc + editable excalidraw diagram written. Local env set up; L0 in progress. |
 | 2026-09-22 | Spec-kit docs, schemas, generator, deterministic checks, eval harness, agent. First baselines. |
 | 2026-09-23 | **Holdout scored once: 82.0% auto-approve, 0 false approves, both arms.** Tool loop measured as worse AND costlier than a single call. Model contributes one extra detection per 312 files. See [results.md](capstone/docs/results.md). |
+| 2026-09-23 | **Vision model removed.** OpenCV margin features + a 5-feature logistic decider: 84.4% / 0.0% and 84.6% / 0.5% on two fresh sealed sets, $0/file. The model-free rules breach SC-002 at n=600 (2.4%) — the earlier pass was luck. See [decider.md](capstone/docs/decider.md). |

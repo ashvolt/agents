@@ -198,3 +198,31 @@ In order:
 2. A successful agent sweep, so the model's contribution is measured rather than argued.
 3. The red-team pass, because injection via rendered image text is the attack this design
    invites and it is currently untested.
+
+## 11. Label flaws found by the CV decider — added 2026-09-23
+
+Building features that describe the cut margin exposed two places where the generator's
+labels and its pixels disagree. Neither is fixed in the generator, because every dataset
+and result in this repo depends on it; both are worked around and recorded.
+
+- **Label text overruns the trim on small products and is labelled clean.** The generator
+  draws its text line from the left of the safe area without constraining its width, so
+  on small stickers the text runs into the keep-out margin and sometimes to the canvas
+  edge. In print that is a defect. The margin measurement excludes detected text so a
+  classifier does not learn "type at the blade is harmless" — which means **text at the
+  blade is currently caught by nothing.**
+- **Some safe-zone defects are pixel-identical to clean files.** A same-colour mark that
+  sits entirely inside a full-width border band of equal thickness leaves no trace
+  (case-00341 in shifted_v3: a 28 px mark inside a 28 px band). No decider can recover
+  it. Real logos are rarely the exact colour of the border they touch, so this is mostly
+  a generator artefact — but a logo that merges with a border *is* real, and is why the
+  band-protrusion guard exists (decider.md §3).
+
+## 12. The model-free pipeline does not meet SC-002 at scale — added 2026-09-23
+
+rules_only scored 0.0% false approves on the 88-case holdout. On three fresh sets of
+400-600 cases it scored 2.1-2.5%, breaching the 1% limit every time. §7 predicted this:
+44 approvals cannot distinguish 0% from 6.8%. The CV decider (decider.md) passes on the
+same sets at no cost; the deterministic-only recommendation in results.md §7 is
+withdrawn.
+

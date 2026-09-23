@@ -367,3 +367,47 @@ before the first sweep.)*
 | 2026-09-21 | — | self-hosted VLM rejected | on arithmetic: local costs more than Haiku below ~30K files/day. Recorded with numbers in brief §8. |
 | 2026-09-21 | L5 | eval circularity trap caught | deterministic defects must be injected straddling the threshold, not at one value. brief §9. Caught on paper, before any data existed. |
 | 2026-09-21 | L0 | in progress | local env running; 15 free tests red, `MODEL_PRICING` + `estimate_cost` next |
+| 2026-09-23 | — | **vision model removed** | OpenCV features + logistic decider pass two fresh sealed sets at $0/file; rules-only breaches SC-002 at n=600. `capstone/docs/decider.md` |
+| 2026-09-23 | — | deps added | `opencv-python-headless`, `scikit-learn`. Reasons in §11 |
+
+---
+
+## 11. Skipping the vision model — CV decider now, Jev later
+
+**Decided 2026-09-23.** Founder framing: at 4,000 files/day the vision call cost ~$26/day
+while human review of escalations cost ~$950/day. Tokens were never the expensive line;
+escalations were. So the question was not "cheaper model" but "can measurement plus a
+cheap decider match what the model bought" — which, per results.md §2, was exactly one
+thing: escalations from 17.0% down to 13.6%.
+
+**Answer: yes, at $0.** Numbers and method in
+[capstone/docs/decider.md](capstone/docs/decider.md).
+
+### Dependencies, and why each earns its place
+
+| Package | Why | Why not the alternative |
+|---|---|---|
+| `opencv-python-headless` | `connectedComponentsWithStats`: every element's bbox and area in one C pass, which is what the margin-object feature is built on | hand-rolled numpy labelling exists in `text_detect` but returns no per-component stats; headless build avoids GUI/Qt deps |
+| `scikit-learn` | fits the decider and runs the out-of-fold model selection | used at training time only — the model ships as JSON coefficients, so inference imports neither sklearn nor pickle |
+
+Rejected: **SimpleCV** (unmaintained, Python 2 only). **scikit-image** not needed yet;
+revisit if a skeleton-based stroke measurement replaces run lengths.
+
+### Where Jev fits
+
+Jev (TypeSafe AI, early access 2026-09-15) takes structured state and returns calibrated
+probabilities over declared options. It is text-only, so it can never replace the vision
+step — it can only replace the decider, which is exactly the slot `Decider` in
+`capstone/src/deciders.py` defines. Adding it is one class and one harness arm.
+
+**Decision rule, fixed before any Jev result exists:**
+
+> Jev replaces the logistic decider only if it holds false approves at or below the
+> logistic decider's on a fresh sealed holdout **and** either lowers the escalation rate,
+> or matches it on a product the logistic model has no training labels for.
+
+Why the second clause: the logistic model already separates train out-of-fold on five
+features, so Jev's plausible advantage is not accuracy but day-one coverage of a product
+with no labels. Vendor risk (single company, early access, possibly subsidised pricing)
+is accepted only because the pipeline runs without it.
+
