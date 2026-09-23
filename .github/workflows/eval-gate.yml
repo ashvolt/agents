@@ -1,0 +1,41 @@
+name: eval gate
+
+# Runs the deterministic arm against the committed baseline. No API key, no spend.
+# The agent arm costs money and is deliberately not run here - the deterministic
+# pipeline is the system of record (capstone/docs/results.md S7), so gating on it
+# protects the thing that actually ships.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit tests (offline, no API)
+        run: pytest -m "not integration" -q
+
+      - name: Generate the eval set
+        # Deterministic for a fixed seed, so CI reproduces the same 400 cases rather
+        # than committing ~400 images to the repo.
+        run: |
+          python -m capstone.data.generate \
+            -n 400 --clean-fraction 0.60 --seed 20260923 \
+            --out cases_large.jsonl --cases-dir cases_large
+
+      - name: Eval regression gate
+        run: python -m capstone.evals.gate
