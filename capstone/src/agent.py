@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import base64
 import io
+import json
 import os
 import time
 from datetime import UTC, datetime
@@ -338,26 +339,61 @@ class PreflightAgent:
         *,
         model: str | None = None,
         use_tools: bool = True,
+        precomputed: bool = False,
     ) -> None:
+        """`precomputed` runs every deterministic check up front and hands the model the
+        results in one message, instead of letting it request them through a tool loop.
+
+        The loop lets the model decide *which* measurements it needs. That is worth
+        paying for when tools are slow or expensive. Every tool here is deterministic
+        Python costing microseconds, so the choice buys nothing and the round trips cost
+        3x the tokens - measured at $0.0117/file for the loop against ~$0.003 for a
+        single call. See docs/hillclimb.md.
+        """
         self.client = client or anthropic.Anthropic()
         self.model = model or _model_id()
         self.use_tools = use_tools
+        self.precomputed = precomputed and use_tools
         self._system = SYSTEM_PROMPT if use_tools else SYSTEM_PROMPT + NO_TOOLS_SUFFIX
 
     # -- request assembly ---------------------------------------------------------------
 
     def _tools(self) -> list[dict[str, Any]]:
         tools = [verdict_tool()]
-        if self.use_tools:
+        if self.use_tools and not self.precomputed:
             tools = measurement_tools() + tools
         return tools
+
+    def _precompute(self, case: PreflightCase) -> tuple[str, list[Issue], list[str]]:
+        """Run every measurement tool now. Returns (report for the model, issues, names)."""
+        payloads: dict[str, Any] = {}
+        measured: list[Issue] = []
+        names: list[str] = []
+        for name in ("get_product_spec", "inspect_file", "analyse_pixels"):
+            args = {"product_id": case.order.product_id} if name == "get_product_spec" else {}
+            _json, payload = dispatch(
+                name, args, image_path=case.image_path, order=case.order
+            )
+            payloads[name] = payload
+            names.append(name)
+            for found in issues_from_payload(payload):
+                if found.code not in {m.code for m in measured}:
+                    measured.append(found)
+        report = (
+            "Measurements already taken for this file. These are exact and you should not "
+            "re-derive or second-guess them; anything listed under 'issues' is proven.\n\n"
+            + json.dumps(payloads, indent=2, sort_keys=True)
+        )
+        return report, measured, names
 
     def _system_blocks(self) -> list[dict[str, Any]]:
         # Frozen text plus a cache breakpoint: tools and system form the stable prefix,
         # and per-case content goes after it. research.md D-7.
         return [{"type": "text", "text": self._system, "cache_control": {"type": "ephemeral"}}]
 
-    def _initial_messages(self, case: PreflightCase, spec_name: str) -> list[dict[str, Any]] | None:
+    def _initial_messages(
+        self, case: PreflightCase, spec_name: str, measurements: str | None = None
+    ) -> list[dict[str, Any]] | None:
         encoded = encode_image(case.image_path)
         if encoded is None:
             return None
@@ -379,7 +415,8 @@ class PreflightAgent:
                             case.order.width_in,
                             case.order.height_in,
                             case.order.quantity,
-                        ),
+                        )
+                        + ("\n\n" + measurements if measurements else ""),
                     },
                 ],
             }
@@ -397,6 +434,8 @@ class PreflightAgent:
         )
         budget = Budget()
         checks: list[str] = []
+        measured: list[Issue] = []
+        measurements_text: str | None = None
 
         try:
             spec = get_spec(case.order.product_id)
@@ -404,7 +443,18 @@ class PreflightAgent:
             trace.termination = "unsupported_product"
             return escalate(EscalationReason.UNSUPPORTED_INPUT, checks=checks), trace
 
-        messages = self._initial_messages(case, spec.display_name)
+        if self.precomputed:
+            t_pre = time.perf_counter()
+            measurements_text, measured, checks = self._precompute(case)
+            trace.steps.append(
+                TraceStep(
+                    index=len(trace.steps), kind="tool_call", name="precompute_all",
+                    duration_ms=int((time.perf_counter() - t_pre) * 1000), ok=True,
+                    detail={"checks": checks, "issues_found": len(measured)},
+                )
+            )
+
+        messages = self._initial_messages(case, spec.display_name, measurements_text)
         if messages is None:
             trace.termination = "unreadable_file"
             issue = Issue(
@@ -419,7 +469,6 @@ class PreflightAgent:
 
         tools = self._tools()
         repair_used = 0
-        measured: list[Issue] = []
 
         while True:
             try:
@@ -500,10 +549,11 @@ class PreflightAgent:
                 if getattr(block, "type", None) != "tool_use":
                     continue
                 if block.name == SUBMIT_VERDICT:
-                    all_ran = (not self.use_tools) or {
-                        "inspect_file",
-                        "analyse_pixels",
-                    } <= set(checks)
+                    all_ran = (
+                        (not self.use_tools)
+                        or self.precomputed
+                        or {"inspect_file", "analyse_pixels"} <= set(checks)
+                    )
                     verdict = parse_verdict(dict(block.input), checks, all_ran, measured)
                     trace.termination = "completed"
                     trace.injection_suspected = bool(
@@ -597,14 +647,14 @@ class PreflightAgent:
 
 
 def make_triage_fn(
-    *, use_tools: bool = True, model: str | None = None
+    *, use_tools: bool = True, model: str | None = None, precomputed: bool = False
 ) -> Any:
     """A `Callable[[PreflightCase], Verdict]` for the eval harness.
 
     One agent instance for the whole sweep, so the HTTP client and the cached prefix are
     reused — a fresh client per case would forfeit both.
     """
-    agent = PreflightAgent(model=model, use_tools=use_tools)
+    agent = PreflightAgent(model=model, use_tools=use_tools, precomputed=precomputed)
 
     def triage(case: PreflightCase) -> Verdict:
         verdict, trace = agent.triage(case)

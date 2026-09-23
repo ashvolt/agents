@@ -240,11 +240,12 @@ def _resolve_arm(name: str, no_tools: bool) -> tuple[str, TriageFn]:
         return "always_approve", baselines.always_approve
     if name == "rules_only":
         return "rules_only", baselines.rules_only
-    if name == "agent":
+    if name in ("agent", "agent_fast"):
         from capstone.src.agent import make_triage_fn
 
-        label = "agent--no-tools" if no_tools else "agent"
-        return label, make_triage_fn(use_tools=not no_tools)
+        precomputed = name == "agent_fast"
+        label = "agent--no-tools" if no_tools else ("agent_fast" if precomputed else "agent")
+        return label, make_triage_fn(use_tools=not no_tools, precomputed=precomputed)
     raise SystemExit(f"unknown arm {name!r}")
 
 
@@ -254,7 +255,7 @@ def main() -> None:
         "arm",
         nargs="?",
         default="rules_only",
-        choices=["always_escalate", "always_approve", "rules_only", "agent"],
+        choices=["always_escalate", "always_approve", "rules_only", "agent", "agent_fast"],
     )
     ap.add_argument(
         "--no-tools",
@@ -279,6 +280,9 @@ def main() -> None:
         ),
     )
     ap.add_argument("--save", action="store_true", help="write the run to capstone/evals/runs/")
+    ap.add_argument(
+        "--manifest", type=str, default=None, help="dataset manifest (default cases.jsonl)"
+    )
     args = ap.parse_args()
 
     split = None if args.split == "all" else Split(args.split)
@@ -289,8 +293,11 @@ def main() -> None:
     cap = args.max_spend if args.max_spend and args.max_spend > 0 else None
     if cap is not None:
         print(f"spend cap: ${cap:.2f}\n")
+    pairs = load_cases(
+        manifest=Path(args.manifest) if args.manifest else None, split=split
+    )
     report, results = sweep(
-        fn, arm=arm_name, split=split, limit=args.limit, progress=True, max_spend_usd=cap
+        fn, pairs, arm=arm_name, limit=args.limit, progress=True, max_spend_usd=cap
     )
     print(report.render())
 

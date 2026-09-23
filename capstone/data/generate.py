@@ -359,21 +359,42 @@ def _make_order(rng: random.Random, idx: int, product_id: str) -> OrderMetadata:
     )
 
 
-def plan_cases(n: int, seed: int = 20260922, holdout_fraction: float = 0.25) -> list[CasePlan]:
+def plan_cases(
+    n: int,
+    seed: int = 20260922,
+    holdout_fraction: float = 0.25,
+    clean_fraction: float = 0.40,
+) -> list[CasePlan]:
     """Build the case list.
 
-    Mix follows brief.md S9: ~40% clean, ~40% single-perturbation, ~20% multi. Note that
-    "clean" here includes files perturbed to 0.5x and 0.9x of a limit — inside spec but
+    Default mix follows brief.md S9: ~40% clean, ~40% single-perturbation, ~20% multi.
+    "Clean" includes files perturbed to 0.5x and 0.9x of a limit — inside spec but
     deliberately close to it — because those are the files a nervous agent wrongly
     rejects, and false rejects are a tracked metric.
+
+    `clean_fraction` raises the share of clean cases, and it exists for a statistical
+    reason rather than a realism one. SC-002 is false approves divided by *approvals*,
+    and approvals come almost entirely from clean files, so the clean count sets the
+    resolution of the headline metric: 65 clean cases can only resolve ~2.2%, which
+    cannot test a 1% limit. Raising it to ~440 gets ~330 approvals and a resolution near
+    0.3%. See limits.md S7.
+
+    The defective cases carry per-issue recall, and that signal is already adequate at
+    the current count — so the cheapest way to make SC-002 measurable is to add clean
+    cases, not to scale everything.
     """
     rng = random.Random(seed)
     products = all_product_ids()
     plans: list[CasePlan] = []
 
-    n_pristine = round(n * 0.20)
-    n_near_miss = round(n * 0.20)
-    n_single = round(n * 0.40)
+    clean_fraction = min(max(clean_fraction, 0.05), 0.95)
+    defective_fraction = 1.0 - clean_fraction
+
+    # Clean splits evenly between pristine files and near-misses sitting just inside a
+    # limit; defective splits 2:1 between single-defect and multi-defect.
+    n_pristine = round(n * clean_fraction * 0.5)
+    n_near_miss = round(n * clean_fraction) - n_pristine
+    n_single = round(n * defective_fraction * (2 / 3))
     n_multi = n - n_pristine - n_near_miss - n_single
 
     def new_plan(idx: int, perts: tuple[Perturbation, ...]) -> CasePlan:
@@ -446,13 +467,14 @@ def generate(
     seed: int = 20260922,
     out_dir: Path | None = None,
     manifest: Path | None = None,
+    clean_fraction: float = 0.40,
 ) -> Path:
     """Render the dataset and write the manifest. Returns the manifest path."""
     root = Path(__file__).resolve().parent
     out_dir = out_dir or root / "cases"
     manifest = manifest or root / "cases.jsonl"
 
-    plans = plan_cases(n, seed=seed)
+    plans = plan_cases(n, seed=seed, clean_fraction=clean_fraction)
     rows: list[dict] = []
 
     for plan in plans:
@@ -483,9 +505,27 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Generate the synthetic preflight dataset.")
     ap.add_argument("-n", type=int, default=200, help="number of cases")
     ap.add_argument("--seed", type=int, default=20260922)
+    ap.add_argument(
+        "--clean-fraction",
+        type=float,
+        default=0.40,
+        help=(
+            "share of cases with no defect. Raise it to make SC-002 measurable: the "
+            "false-approve denominator is approvals, which come from clean files."
+        ),
+    )
+    ap.add_argument("--out", type=str, default=None, help="manifest filename")
+    ap.add_argument("--cases-dir", type=str, default=None, help="directory for the images")
     args = ap.parse_args()
 
-    manifest = generate(n=args.n, seed=args.seed)
+    root = Path(__file__).resolve().parent
+    manifest = generate(
+        n=args.n,
+        seed=args.seed,
+        clean_fraction=args.clean_fraction,
+        manifest=root / args.out if args.out else None,
+        out_dir=root / args.cases_dir if args.cases_dir else None,
+    )
 
     import collections
 
