@@ -67,6 +67,9 @@ class FixPlan(BaseModel):
     before: tuple[str, ...]  # issue codes present before
     after: tuple[str, ...]  # issue codes present on the rectified image (applied fixes only)
     rectified: Path | None = None
+    # distinct design elements before and after; a change means the fix altered the design
+    elements_before: int | None = None
+    elements_after: int | None = None
 
     @property
     def proof_ready(self) -> bool:
@@ -76,6 +79,10 @@ class FixPlan(BaseModel):
         sends the whole file to a reviewer: a proof that is right in three places and
         wrong in a fourth is still wrong, and a downstream decider approving it does not
         change that (found on holdout_v3, case-00593).
+
+        The element count must also survive. Thickening three closely spaced hairlines
+        merged them into one bar: every rule passed, and it was no longer the customer's
+        design (same case, seen only when the proof was rendered).
         """
         applied = [f for f in self.fixes if f.kind == "applied"]
         return (
@@ -83,6 +90,7 @@ class FixPlan(BaseModel):
             and bool(applied)
             and all(f.verified for f in applied)
             and not self.after
+            and self.elements_before == self.elements_after
         )
 
 
@@ -154,10 +162,16 @@ def _fit_to_safe(
     matrix = np.array([[scale, 0, tx], [0, scale, ty]], dtype=np.float32)
 
     bg = np.array([int(scene.background[i : i + 2], 16) for i in (1, 3, 5)], dtype=np.uint8)
+    # Everything inside the design's bounding region moves, not just pixels inside known
+    # element boxes: fragments too small to be elements (antialiasing below a text line)
+    # were left behind as specks on the proof. Edge-to-edge bands are cut back out.
+    pad = grow + 2
     layer = np.zeros((height, width), dtype=np.uint8)
-    for e in content:
-        x0, y0, x1, y1 = e.px
-        layer[max(0, y0 - grow) : y1 + grow, max(0, x0 - grow) : x1 + grow] = 1
+    layer[max(0, uy0 - pad) : uy1 + pad, max(0, ux0 - pad) : ux1 + pad] = 1
+    for e in scene.elements:
+        if e.spans_edge:
+            x0, y0, x1, y1 = e.px
+            layer[y0:y1, x0:x1] = 0
     # "Ink" exactly as the scene defines it - any colour cluster but the background's. A
     # looser threshold here left faint antialiased glyph edges behind in the margin, and
     # the re-check (which uses the scene's definition) caught them as still inside.
@@ -173,17 +187,31 @@ def _fit_to_safe(
     return base, scale
 
 
-def _thicken(arr: np.ndarray, e: Element, need_px: int) -> None:
-    """Grow a thin stroke outward until it is at least `need_px` wide."""
+def _thicken(arr: np.ndarray, e: Element, need_px: int, background_key: int) -> bool:
+    """Grow one thin stroke to at least `need_px` wide, unless that would touch anything.
+
+    Returns False, leaving the pixels alone, when the thickened stroke would meet a
+    neighbour. The first version dilated every same-coloured pixel near the stroke and
+    merged closely spaced parallel lines into one bar in 17 of 19 thickening cases: the
+    rules passed, and the design was no longer the customer's.
+    """
     x0, y0, x1, y1 = e.px
-    pad = need_px
+    pad = need_px + 1
     ya, yb = max(0, y0 - pad), min(arr.shape[0], y1 + pad)
     xa, xb = max(0, x0 - pad), min(arr.shape[1], x1 + pad)
     colour = np.array([int(e.colour[i : i + 2], 16) for i in (1, 3, 5)], dtype=np.int16)
     region = arr[ya:yb, xa:xb]
-    own = (np.abs(region.astype(np.int16) - colour).max(axis=2) <= 24).astype(np.uint8)
+    in_box = np.zeros(region.shape[:2], dtype=bool)
+    in_box[y0 - ya : y1 - ya, x0 - xa : x1 - xa] = True
+    same_colour = np.abs(region.astype(np.int16) - colour).max(axis=2) <= 24
+    own = (same_colour & in_box).astype(np.uint8)
+    others = (_cluster_keys(region) != background_key) & ~in_box
     grown = cv2.dilate(own, np.ones((need_px, need_px), np.uint8))
+    # keep at least one pixel of clear gap to anything else
+    if (cv2.dilate(grown, np.ones((3, 3), np.uint8)).astype(bool) & others).any():
+        return False
     region[grown.astype(bool)] = colour.astype(np.uint8)
+    return True
 
 
 def _pad_bleed(arr: np.ndarray, order: OrderMetadata, spec: ProductSpec, dpi: float) -> np.ndarray:
@@ -202,7 +230,12 @@ def _pad_bleed(arr: np.ndarray, order: OrderMetadata, spec: ProductSpec, dpi: fl
     )
 
 
-def _recheck(path: Path, order: OrderMetadata) -> set[str]:
+def _design_elements(scene: SceneDocument) -> int:
+    """Distinct non-background, non-text elements: what a fix must not merge or drop."""
+    return sum(1 for e in scene.elements if not e.spans_edge and e.shape != "text")
+
+
+def _recheck(path: Path, order: OrderMetadata) -> tuple[set[str], int]:
     """Blocking codes on the rectified file, plus CONTENT_IN_SAFE_ZONE if anything is still
     inside the keep-out margin.
 
@@ -212,7 +245,7 @@ def _recheck(path: Path, order: OrderMetadata) -> set[str]:
     spec = get_spec(order.product_id)
     issues, meta = inspect_file(path, spec, order)
     if not meta.ok:
-        return {IssueCode.UNREADABLE_FILE.value}
+        return {IssueCode.UNREADABLE_FILE.value}, 0
     dpi = effective_dpi(meta, spec, order) or float(spec.min_dpi)
     with Image.open(path) as img:
         img.load()
@@ -221,7 +254,7 @@ def _recheck(path: Path, order: OrderMetadata) -> set[str]:
     found = {i.code.value for i in issues + pixel_issues if i.severity is Severity.BLOCKING}
     if any(e.clearance_in < 0 and not e.spans_edge for e in scene.elements):
         found.add(IssueCode.CONTENT_IN_SAFE_ZONE.value)
-    return found
+    return found, _design_elements(scene)
 
 
 # --------------------------------------------------------------------------------------
@@ -258,9 +291,12 @@ def plan_fixes(
     upcoming = dry_run[1] if dry_run and dry_run[1] >= MIN_AUTO_SCALE else 1.0
     need_px = math.ceil(spec.min_stroke_pt / 72.0 * dpi / upcoming + 0.5)
     if IssueCode.THIN_LINES.value in blocking:
+        background_key = int(np.bincount(_cluster_keys(arr).ravel()).argmax())
         for e in scene.elements:
-            if e.shape in ("line", "outline") and (e.thickness_pt or 99) < spec.min_stroke_pt:
-                _thicken(arr, e, need_px)
+            if e.shape not in ("line", "outline") or (e.thickness_pt or 99) >= spec.min_stroke_pt:
+                continue
+            params = {"from_pt": e.thickness_pt or 0.0, "to_pt": spec.min_stroke_pt}
+            if _thicken(arr, e, need_px, background_key):
                 applied = True
                 add(
                     code=IssueCode.THIN_LINES,
@@ -270,7 +306,19 @@ def plan_fixes(
                         f"Thickened {e.id} from {e.thickness_pt:.2f} pt to at least "
                         f"{spec.min_stroke_pt:g} pt."
                     ),
-                    params={"from_pt": e.thickness_pt or 0.0, "to_pt": spec.min_stroke_pt},
+                    params=params,
+                )
+            else:
+                add(
+                    code=IssueCode.THIN_LINES,
+                    kind="suggested",
+                    target=e.id,
+                    action=(
+                        f"{e.id} is {e.thickness_pt:.2f} pt and needs {spec.min_stroke_pt:g} pt, "
+                        "but it sits too close to other artwork to thicken without merging "
+                        "into it. Thicken it in your design file and keep a gap around it."
+                    ),
+                    params=params,
                 )
 
     # 2. Anything inside the keep-out margin -> fit the design inside the safe line.
@@ -287,8 +335,12 @@ def plan_fixes(
                 kind="applied",
                 target=inside[0],
                 action=(
-                    f"Scaled the design to {scale:.0%} and centred it so every element "
-                    f"clears the {spec.safe_zone_in:g} in safe zone "
+                    (
+                        f"Scaled the design to {scale:.0%} and centred it"
+                        if scale < 0.995
+                        else "Re-centred the design without resizing it"
+                    )
+                    + f" so every element clears the {spec.safe_zone_in:g} in safe zone "
                     f"({len(inside)} element(s) were inside it). Edge-to-edge backgrounds "
                     "were left in place."
                 ),
@@ -353,13 +405,9 @@ def plan_fixes(
                 code=code,
                 kind="applied",
                 action=(
-                    f"Converted to {target_mode}"
-                    + (
-                        ", flattening transparent areas onto the background"
-                        if code is IssueCode.UNINTENDED_TRANSPARENCY
-                        else ""
-                    )
-                    + ". Colours may shift slightly; check the proof."
+                    "Filled transparent areas with the background colour."
+                    if code is IssueCode.UNINTENDED_TRANSPARENCY
+                    else f"Converted to {target_mode}. Colours may shift slightly; check the proof."
                 ),
                 params={"mode": target_mode},
             )
@@ -447,7 +495,7 @@ def plan_fixes(
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{case_id}.tif"
     Image.fromarray(arr).convert(target_mode).save(path, dpi=(dpi, dpi))
-    after = _recheck(path, order)
+    after, elements_after = _recheck(path, order)
     fixes = [
         f.model_copy(update={"verified": f.code.value not in after}) if f.kind == "applied" else f
         for f in fixes
@@ -457,6 +505,8 @@ def plan_fixes(
         before=tuple(sorted(blocking)),
         after=tuple(sorted(after)),
         rectified=path,
+        elements_before=_design_elements(scene),
+        elements_after=elements_after,
     )
 
 
