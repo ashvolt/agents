@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 
 from PIL import Image
 
-from capstone.evals.harness import attach_trace
+from capstone.ops.tracing import attach_trace
 from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.schemas import (
     EscalationReason,

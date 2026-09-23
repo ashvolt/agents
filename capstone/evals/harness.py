@@ -25,6 +25,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from capstone.evals.metrics import SweepReport, score
+from capstone.ops.tracing import take_trace
 from capstone.src.schemas import (
     EscalationReason,
     GoldLabel,
@@ -43,17 +44,6 @@ DEFAULT_MANIFEST = REPO_ROOT / "capstone" / "data" / "cases.jsonl"
 RUNS_DIR = REPO_ROOT / "capstone" / "evals" / "runs"
 
 TriageFn = Callable[[PreflightCase], Verdict]
-
-# A triage function reports its own token/cost accounting by dropping a Trace here keyed
-# by case_id; the harness picks it up and attaches real latency. Keeping it out of the
-# Verdict means the output contract stays exactly what the spec says it is, with no
-# observability fields smuggled into the thing the model is asked to produce.
-TRACE_SINK: dict[str, Trace] = {}
-
-
-def attach_trace(trace: Trace) -> None:
-    """Hand a trace to the harness for the case currently being run."""
-    TRACE_SINK[trace.case_id] = trace
 
 
 def load_cases(
@@ -118,7 +108,7 @@ def run_one(triage: TriageFn, case: PreflightCase, label: GoldLabel) -> RunResul
 
     # A triage function may attach its own trace via `attach_trace`; otherwise synthesise
     # a minimal one so cost and latency are still accounted for.
-    attached = TRACE_SINK.pop(case.case_id, None)
+    attached = take_trace(case.case_id)
     if attached is None:
         trace = Trace(
             case_id=case.case_id,

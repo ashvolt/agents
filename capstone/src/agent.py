@@ -29,6 +29,7 @@ from pydantic import ValidationError
 
 from capstone.ops.budgets import Budget, BudgetExhausted
 from capstone.ops.pricing import UnknownModelError, estimate_cost
+from capstone.ops.tracing import attach_trace
 from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.prompts import (
     NO_TOOLS_SUFFIX,
@@ -520,11 +521,23 @@ class PreflightAgent:
                 cache_read_tokens=cache_read, cache_write_tokens=cache_write,
             )
         except UnknownModelError:
-            cost = 0.0
+            # Fall back to the model we *asked* for rather than to zero. A zero here is
+            # the lying-dashboard failure ops/pricing.py exists to prevent, and it also
+            # disables the sweep spend cap, which reads this number.
+            try:
+                cost = estimate_cost(
+                    self.model, inp, out,
+                    cache_read_tokens=cache_read, cache_write_tokens=cache_write,
+                )
+                note = "priced against requested model"
+            except UnknownModelError:
+                cost = 0.0
+                note = "UNPRICED - cost accounting and spend cap are both blind"
             trace.steps.append(
                 TraceStep(
                     index=len(trace.steps), kind="validation", name="unpriced_model",
-                    duration_ms=0, ok=False, detail={"model": served},
+                    duration_ms=0, ok=False,
+                    detail={"served": served, "requested": self.model, "note": note},
                 )
             )
         trace.cost_usd += cost
@@ -544,8 +557,6 @@ def make_triage_fn(
     One agent instance for the whole sweep, so the HTTP client and the cached prefix are
     reused — a fresh client per case would forfeit both.
     """
-    from capstone.evals.harness import attach_trace
-
     agent = PreflightAgent(model=model, use_tools=use_tools)
 
     def triage(case: PreflightCase) -> Verdict:

@@ -11,6 +11,8 @@ change; when they do, this table is the one place to edit.
 
 from __future__ import annotations
 
+import re
+
 # model id -> (input $/MTok, output $/MTok)
 MODEL_PRICING: dict[str, tuple[float, float]] = {
     "claude-opus-5": (5.00, 25.00),
@@ -32,6 +34,32 @@ class UnknownModelError(ValueError):
     """Raised for a model with no pricing entry. Never returns 0.0 instead."""
 
 
+# The API reports the dated snapshot it actually served - "claude-haiku-4-5-20251001" for
+# a request naming "claude-haiku-4-5". Principle VI says price against the model that
+# served the request, so the id that comes back is the one to look up, and it will not
+# match the table as written.
+_DATE_SUFFIX = re.compile(r"-\d{8}$")
+
+
+def resolve_model(model: str) -> str:
+    """Map a served model id onto its pricing key.
+
+    Tries the id as given, then with a trailing -YYYYMMDD snapshot suffix removed.
+    Raises for anything still unknown rather than guessing: a wrong price is a quieter
+    failure than no price, and therefore a worse one.
+    """
+    if model in MODEL_PRICING:
+        return model
+    stripped = _DATE_SUFFIX.sub("", model)
+    if stripped in MODEL_PRICING:
+        return stripped
+    known = ", ".join(sorted(MODEL_PRICING))
+    raise UnknownModelError(
+        f"no pricing for model {model!r} (tried {stripped!r}). Known: {known}. "
+        "Returning 0.0 here would make every cost report a lie."
+    )
+
+
 def estimate_cost(
     model: str,
     input_tokens: int,
@@ -47,14 +75,7 @@ def estimate_cost(
     and they are billed differently, so adding them together overstates the bill by
     roughly 10x on a well-cached run.
     """
-    try:
-        in_rate, out_rate = MODEL_PRICING[model]
-    except KeyError:
-        known = ", ".join(sorted(MODEL_PRICING))
-        raise UnknownModelError(
-            f"no pricing for model {model!r}. Known: {known}. "
-            "Returning 0.0 here would make every cost report a lie."
-        ) from None
+    in_rate, out_rate = MODEL_PRICING[resolve_model(model)]
 
     cost = (
         input_tokens / 1_000_000 * in_rate
@@ -83,4 +104,5 @@ __all__ = [
     "UnknownModelError",
     "estimate_cost",
     "image_tokens",
+    "resolve_model",
 ]
