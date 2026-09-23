@@ -369,6 +369,7 @@ before the first sweep.)*
 | 2026-09-21 | L0 | in progress | local env running; 15 free tests red, `MODEL_PRICING` + `estimate_cost` next |
 | 2026-09-23 | — | **vision model removed** | OpenCV features + logistic decider pass two fresh sealed sets at $0/file; rules-only breaches SC-002 at n=600. `capstone/docs/decider.md` |
 | 2026-09-23 | — | deps added | `opencv-python-headless`, `scikit-learn`. Reasons in §11 |
+| 2026-09-23 | — | scene + fix + narration spike | model narrates, never measures; blocked on an API key for the live run. `capstone/docs/scene-narration.md` |
 
 ---
 

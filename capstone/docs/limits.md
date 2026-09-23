@@ -226,3 +226,13 @@ rules_only scored 0.0% false approves on the 88-case holdout. On three fresh set
 same sets at no cost; the deterministic-only recommendation in results.md §7 is
 withdrawn.
 
+## 13. Verified fixes are verified by the checks that found the problem — added 2026-09-23
+
+The fix engine (scene-narration.md) re-runs the full preflight on every corrected proof.
+That proves the checks pass, not that the proof is right. Two cases where it misled
+before being tightened: a stretched file padded to the correct canvas passed every rule
+with the design still distorted, and a proof with one unverified fix was approved by
+the decider anyway. Both are now blocked, but the class of failure is structural: **any
+defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
+check, and scaling a design — even to 97% — is only acceptable because it is a proof.
+
