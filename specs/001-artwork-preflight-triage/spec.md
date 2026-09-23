@@ -185,6 +185,13 @@ do not stall silently.
 
 SC-001 and SC-002 are the headline pair. SC-002 is not tradeable.
 
+> **Measurability caveat, added 2026-09-23.** SC-002 cannot be evaluated on the current
+> 200-case set. With ~46 approvals on the train split, a single wrong approval scores
+> 2.2%, so the observable values are 0% or >=2.2% — never 1%. "Passes" therefore means
+> "zero observed", which the rule of three puts consistent with a true rate up to ~6.7%.
+> Measuring 1% needs ~300 approvals, i.e. ~1,100 cases. The harness now reports the 95%
+> upper bound and warns when a run is too small. See limits.md §7.
+
 ## 6. Edge Cases
 
 - Corrupt, empty, or truncated upload → `ESCALATE` / `UNREADABLE_FILE`.

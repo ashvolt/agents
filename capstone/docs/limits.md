@@ -5,7 +5,7 @@ file says what the system cannot do and where it is known to fail. Everything he
 found by measurement or is a known property of the design — none of it is hypothetical
 hedging.
 
-**Last updated:** 2026-09-23, after the offline cost measurement.
+**Last updated:** 2026-09-23, after the first agent sweeps.
 
 > **Unofficial project.** No affiliation with Sticker Mule. All data synthetic.
 
@@ -127,7 +127,41 @@ reporting `cache hit rate: 0%` is expected here, and `SweepReport.cache_suspect`
 incorrectly. Caching becomes real when a longer system prompt and larger artwork push the
 prefix past the minimum naturally; padding it to get there would be cargo cult.
 
-## 7. Not yet measured at all
+## 7. SC-002 is not measurable on this dataset
+
+**The most important limitation in this document.** Added 2026-09-23.
+
+SC-002 requires a false-approve rate at or below 1%. The train split has 65 clean cases.
+At a ~70% approve rate that is about 45 approvals, so:
+
+| clean cases | ~approvals | one wrong approval scores | can 1% be observed? |
+|---|---|---|---|
+| 22 (a 50-case run) | 15 | 6.7% | no |
+| 65 (full train) | 46 | 2.2% | no |
+| 200 | 140 | 0.7% | yes |
+| 450 | 315 | 0.3% | yes |
+
+**The rate cannot land on 1%.** It is 0%, or it is at least 2.2%. Every false-approve
+figure quoted in this repo is quantised in steps of roughly 2-7% depending on the run, and
+"passes SC-002" can only ever mean "zero wrong approvals were observed" — which, by the
+rule of three, is consistent with a true rate as high as 3/45 ≈ 6.7%.
+
+Distinguishing 1% from 0% with any confidence needs ~300 approvals, so ~430 clean cases,
+so roughly **1,100 total cases** at the current 40% clean mix.
+
+Two honest options, neither yet taken:
+
+1. **Grow the eval set to ~1,100 cases.** Free to generate, but an agent sweep over it
+   costs ~$13 at the measured $0.0117/file — more than the project's remaining budget.
+2. **Restate SC-002 as what a 200-case set can actually support**, e.g. "zero false
+   approves observed, 95% upper bound below X%", and report the bound rather than the
+   point estimate.
+
+The harness now reports the 95% upper bound, the resolution, and an explicit warning when
+a run is too small for the constraint to be meaningful. That does not fix the problem; it
+stops the number being read as more precise than it is.
+
+## 8. Not yet measured at all
 
 Honest status, not a roadmap:
 
@@ -143,7 +177,7 @@ Honest status, not a roadmap:
   but untested. SC-006 has no measurement behind it.
 - **MCP server, CI gate, HITL queue, runbook alerts** — not built.
 
-## 8. Design choices that are limits by intention
+## 9. Design choices that are limits by intention
 
 - **Not multi-agent.** One agent plus deterministic tools. If the evals ever show a single
   agent cannot meet SC-001/SC-002, that gets revisited with evidence.
@@ -155,7 +189,7 @@ Honest status, not a roadmap:
 - **The product spec table is invented.** Plausible for the class of product, but not
   sourced from a real print operation. Every threshold in it is an assumption.
 
-## 9. What would change my confidence most
+## 10. What would change my confidence most
 
 In order:
 

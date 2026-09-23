@@ -78,6 +78,42 @@ class SweepReport:
         return self.approved_defective / self.approved if self.approved else 0.0
 
     @property
+    def false_approve_ci_upper(self) -> float:
+        """95% upper bound on the true false-approve rate.
+
+        Uses the rule of three when nothing went wrong (0 events in n trials gives an
+        upper bound of about 3/n), and a normal approximation otherwise.
+
+        This exists because the point estimate is misleading at small n. With 45
+        approvals, one wrong approval scores 2.2% and zero score 0% — the rate cannot
+        land on 1% at all. Reporting "0%" as a pass would be claiming a precision the
+        sample does not have.
+        """
+        n = self.approved
+        if n == 0:
+            return 1.0
+        k = self.approved_defective
+        if k == 0:
+            return min(1.0, 3.0 / n)
+        p = k / n
+        return min(1.0, p + 1.96 * ((p * (1 - p) / n) ** 0.5))
+
+    @property
+    def false_approve_resolution(self) -> float:
+        """Smallest non-zero false-approve rate this many approvals can report."""
+        return 1.0 / self.approved if self.approved else 1.0
+
+    @property
+    def can_measure_constraint(self) -> bool:
+        """Whether the sample is large enough for SC-002 to be a meaningful test.
+
+        False means a single wrong approval already scores above the limit, so the only
+        outcomes are "zero observed" and "fail". That is a statement about the dataset,
+        not about the agent.
+        """
+        return self.false_approve_resolution <= FALSE_APPROVE_LIMIT
+
+    @property
     def meets_constraint(self) -> bool:
         return self.false_approve_rate <= FALSE_APPROVE_LIMIT
 
@@ -152,6 +188,9 @@ class SweepReport:
             "n_defective": self.n_defective,
             "auto_approve_rate": round(self.auto_approve_rate, 4),
             "false_approve_rate": round(self.false_approve_rate, 4),
+            "false_approve_ci_upper_95": round(self.false_approve_ci_upper, 4),
+            "false_approve_resolution": round(self.false_approve_resolution, 4),
+            "can_measure_constraint": self.can_measure_constraint,
             "false_reject_rate": round(self.false_reject_rate, 4),
             "escalation_rate": round(self.escalation_rate, 4),
             "approved": self.approved,
@@ -193,6 +232,9 @@ class SweepReport:
             f"   (SC-001 target >= {APPROVE_RATE_TARGET:.0%})",
             f"  FALSE-APPROVE rate {self.false_approve_rate:6.1%}"
             f"   (SC-002 limit  <= {FALSE_APPROVE_LIMIT:.0%})  {breach}",
+            f"      95% upper bound {self.false_approve_ci_upper:6.1%}"
+            f"   resolution {self.false_approve_resolution:.1%} "
+            f"({self.approved} approvals)",
             f"  false-reject rate  {self.false_reject_rate:6.1%}",
             f"  escalation rate    {self.escalation_rate:6.1%}",
             f"  verdicts           {verdicts}",
@@ -213,6 +255,17 @@ class SweepReport:
         if self.billed_input_tokens:
             flag = "  *** zero cache reads ***" if self.cache_suspect else ""
             lines.append(f"  cache hit rate     {self.cache_hit_rate:6.1%}{flag}")
+        if not self.can_measure_constraint:
+            lines.append(
+                f"  !! SC-002 NOT MEASURABLE at n={self.approved} approvals: one wrong "
+                f"approval scores {self.false_approve_resolution:.1%}, already over the "
+                f"{FALSE_APPROVE_LIMIT:.0%} limit."
+            )
+            lines.append(
+                "     This run can only report 'zero observed' or 'fail'. "
+                f"Measuring {FALSE_APPROVE_LIMIT:.0%} needs ~{round(3 / FALSE_APPROVE_LIMIT)} "
+                "approvals."
+            )
         if self.crash_count:
             lines.append(f"  CRASHES            {self.crash_count}  (SC-007 requires 0)")
         lines.append("  per-issue recall:")

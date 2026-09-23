@@ -31,6 +31,11 @@ TRANSPARENCY_REPORT_RATIO = 0.005
 # thickness counts. Below it we are measuring speckle.
 COMPONENT_MIN_INK_RATIO = 0.002
 
+# Opposing-edge ink asymmetry above which the keep-out margin is called suspicious.
+# Fitted on the evaluation set: clean files topped out at 0.059, two thirds of genuine
+# intrusions sat above 0.06. Fitted to synthetic data, so it escalates rather than rejects.
+SAFE_ZONE_ASYMMETRY_THRESHOLD = 0.06
+
 
 # --------------------------------------------------------------------------------------
 # Transparency
@@ -407,12 +412,24 @@ def measure_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> dict
     interior = mask[band:-band, band:-band]
     interior_coverage = round(float(interior.mean()), 4) if interior.size else 0.0
 
-    if asymmetry >= 0.06:
-        reading = "asymmetric - one edge carries markedly more ink than the one opposite"
-    elif asymmetry >= 0.02:
-        reading = "slightly asymmetric - ambiguous"
+    # Positive evidence only. The first version of this reported "symmetric - consistent
+    # with artwork bleeding off the edge by design" below the threshold, and safe-zone
+    # recall COLLAPSED from 43% to 14%: the model read a confident-sounding all-clear and
+    # stopped looking. The measurement can show that something is wrong. It cannot show
+    # that nothing is. Same rule already documented on the text detector, broken here.
+    if asymmetry >= SAFE_ZONE_ASYMMETRY_THRESHOLD:
+        reading = (
+            "ASYMMETRIC - one edge carries markedly more ink than the edge opposite it. "
+            "That pattern is typical of something intruding into the margin rather than "
+            "artwork bleeding off it."
+        )
     else:
-        reading = "symmetric - consistent with artwork bleeding off the edge by design"
+        reading = (
+            "Below the asymmetry threshold. This measurement has NOT found evidence of an "
+            "intrusion, which is not the same as finding evidence there is none. It misses "
+            "roughly a third of genuine intrusions - anything centred, symmetric, or "
+            "spread across opposing edges is invisible to it. Judge from the image."
+        )
 
     return {
         "measurable": True,
@@ -420,14 +437,14 @@ def measure_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> dict
         "edge_ink_coverage": coverage,
         "interior_ink_coverage": interior_coverage,
         "opposing_edge_asymmetry": asymmetry,
+        "threshold": SAFE_ZONE_ASYMMETRY_THRESHOLD,
         "reading": reading,
         "calibration": (
-            "On the current evaluation set, clean files never exceed 0.059 and two thirds "
-            "of genuine margin intrusions sit above 0.06. Treat >= 0.06 as strong evidence "
-            "that something intruded, and below 0.02 as weak evidence that nothing did. "
-            "NOTE: this calibration comes from synthetic artwork in which intrusions are "
-            "always a single block on one edge, so it will not transfer unchanged to real "
-            "customer files. It is evidence to weigh, not a rule to apply."
+            "Measured over 95 cases: clean files never exceeded 0.059, and two thirds of "
+            "genuine intrusions sat above 0.06, so 0.06 catches 67% of them with no false "
+            "positives. The remaining third sit below it and are invisible to this "
+            "measurement. NOTE: calibrated on synthetic artwork where every intrusion is a "
+            "single block on one edge; it will not transfer unchanged to real files."
         ),
         "interpretation_hint": (
             "These numbers say WHERE ink sits relative to the cut margin. They do not say "
@@ -436,6 +453,43 @@ def measure_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> dict
             "image to decide which one this is."
         ),
     }
+
+
+def check_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> list[Issue]:
+    """Raise an ADVISORY finding when the margin is measurably asymmetric.
+
+    Advisory rather than blocking, and therefore an escalation rather than a fix request:
+    the threshold is fitted to synthetic artwork (research.md D-4), so it is good enough
+    to demand a human look and not good enough to tell a customer their file is wrong.
+
+    At 0.06 this fired on zero clean files across the evaluation set, so the added human
+    load is small and the failure direction is the cheap one.
+    """
+    measurement = measure_safe_zone(image, spec, dpi)
+    if not measurement.get("measurable"):
+        return []
+    asymmetry = float(measurement["opposing_edge_asymmetry"])  # type: ignore[arg-type]
+    if asymmetry < SAFE_ZONE_ASYMMETRY_THRESHOLD:
+        return []
+
+    coverage = measurement["edge_ink_coverage"]
+    return [
+        Issue(
+            code=IssueCode.CONTENT_IN_SAFE_ZONE,
+            severity=Severity.ADVISORY,
+            message=(
+                "Ink coverage inside the keep-out margin is uneven between opposite edges, "
+                "which often means artwork intrudes where the blade cuts. A human should "
+                "confirm whether this is deliberate."
+            ),
+            evidence=Evidence(
+                measured=asymmetry,
+                required=SAFE_ZONE_ASYMMETRY_THRESHOLD,
+                unit="edge asymmetry",
+                note=f"edge ink coverage {coverage}",
+            ),
+        )
+    ]
 
 
 def analyse_pixels(
@@ -448,12 +502,15 @@ def analyse_pixels(
     issues += check_contrast(image, spec)
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
+    issues += check_safe_zone(image, spec, dpi)
     return issues, boxes
 
 
 BUCKET2_CHECKS = (
     "check_transparency",
+    "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
+    "check_safe_zone",
     "check_stroke_width",
     "check_text_size",
 )
@@ -461,7 +518,9 @@ BUCKET2_CHECKS = (
 __all__ = [
     "BUCKET2_CHECKS",
     "analyse_pixels",
+    "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
+    "check_safe_zone",
     "check_stroke_width",
     "check_text_size",
     "check_transparency",
