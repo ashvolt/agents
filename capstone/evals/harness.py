@@ -152,6 +152,10 @@ def run_one(triage: TriageFn, case: PreflightCase, label: GoldLabel) -> RunResul
     return RunResult(case_id=case.case_id, verdict=verdict, label=label, trace=trace)
 
 
+class SpendLimitReached(RuntimeError):
+    """Raised when a sweep's cumulative cost passes the cap it was given."""
+
+
 def sweep(
     triage: TriageFn,
     cases: Iterable[tuple[PreflightCase, GoldLabel]] | None = None,
@@ -160,19 +164,45 @@ def sweep(
     split: Split | None = Split.TRAIN,
     limit: int | None = None,
     progress: bool = False,
+    max_spend_usd: float | None = None,
 ) -> tuple[SweepReport, list[RunResult]]:
-    """Run the set and score it."""
+    """Run the set and score it.
+
+    `max_spend_usd` is a hard stop on cumulative cost. It is checked *between* cases, so
+    the worst overshoot is one case — and the partial report is still returned and scored
+    rather than thrown away, because a truncated measurement beats no measurement.
+
+    This exists because the per-file budget in ops/budgets.py caps one run and cannot see
+    the sweep. A loop that costs 3x expectation stays inside its per-file budget on every
+    single case and still empties an account across 159 of them.
+    """
     pairs = list(cases) if cases is not None else load_cases(split=split)
     if limit:
         pairs = pairs[:limit]
 
     results: list[RunResult] = []
-    for i, (case, label) in enumerate(pairs, 1):
-        results.append(run_one(triage, case, label))
-        if progress and i % 25 == 0:
-            print(f"  ... {i}/{len(pairs)}")
+    spent = 0.0
+    stopped_early = False
 
-    return score(results, arm=arm), results
+    for i, (case, label) in enumerate(pairs, 1):
+        result = run_one(triage, case, label)
+        results.append(result)
+        spent += result.trace.cost_usd
+
+        if progress and i % 25 == 0:
+            print(f"  ... {i}/{len(pairs)}   spent ${spent:.3f}")
+
+        if max_spend_usd is not None and spent >= max_spend_usd:
+            stopped_early = True
+            print(
+                f"\n*** SPEND CAP HIT: ${spent:.3f} of ${max_spend_usd:.2f} after "
+                f"{i}/{len(pairs)} cases. Stopping. ***"
+            )
+            print("    The partial report below covers only the cases that ran.")
+            break
+
+    report = score(results, arm=arm + ("--partial" if stopped_early else ""))
+    return report, results
 
 
 def write_run(report: SweepReport, results: list[RunResult], out_dir: Path | None = None) -> Path:
@@ -247,7 +277,17 @@ def main() -> None:
         choices=["train", "holdout", "all"],
         help="holdout is scored ONCE, at the end of the project (T110)",
     )
-    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--limit", type=int, default=None, help="run only the first N cases")
+    ap.add_argument(
+        "--max-spend",
+        type=float,
+        default=2.50,
+        help=(
+            "hard stop once cumulative cost passes this many dollars (default 2.50). "
+            "A full 159-case Haiku sweep is expected to cost ~1.20-2.30, so this stops a "
+            "runaway without truncating a legitimate worst case. Pass 0 to disable."
+        ),
+    )
     ap.add_argument("--save", action="store_true", help="write the run to capstone/evals/runs/")
     args = ap.parse_args()
 
@@ -256,7 +296,12 @@ def main() -> None:
         print("*** Scoring the HOLDOUT split. This number is only meaningful once. ***\n")
 
     arm_name, fn = _resolve_arm(args.arm, args.no_tools)
-    report, results = sweep(fn, arm=arm_name, split=split, limit=args.limit, progress=True)
+    cap = args.max_spend if args.max_spend and args.max_spend > 0 else None
+    if cap is not None:
+        print(f"spend cap: ${cap:.2f}\n")
+    report, results = sweep(
+        fn, arm=arm_name, split=split, limit=args.limit, progress=True, max_spend_usd=cap
+    )
     print(report.render())
 
     if args.save:

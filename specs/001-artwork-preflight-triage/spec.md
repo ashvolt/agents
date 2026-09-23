@@ -223,7 +223,7 @@ SC-001 and SC-002 are the headline pair. SC-002 is not tradeable.
 
 | ID | Question | Resolution path |
 |---|---|---|
-| **OQ-1** | SC-003 ($0.01/file) is unreachable at list price: 20K in / 2K out is $0.03 on the cheapest model. Does batch + caching close the gap, or must the token shape shrink? | Measure in Phase 2 before the first sweep. Amend SC-003 or the architecture, and record which. |
+| ~~**OQ-1**~~ | ~~SC-003 unreachable at list price?~~ **Resolved 2026-09-23.** Measured: $0.0073/file at 2 model calls, $0.0146 at 4. SC-003 holds at the 2-call shape, so **turn count is the lever**, not model choice. Caveat: it holds because the synthetic images are small (~452 tokens vs ~1,600 for realistic artwork) — see research.md D-9 and limits.md §6. | Closed. Turn-count tuning moves to Phase 5. |
 | **OQ-2** | Confidence threshold for escalation. | Fit on the training split. Never guessed. |
 | **OQ-3** | Text detector choice: PaddleOCR / Tesseract / CRAFT. | Measured recall at small point sizes. |
 | **OQ-4** | Does one vision call cover bucket 3, or does the gestalt check want its own? | Measure both. |

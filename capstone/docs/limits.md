@@ -5,7 +5,7 @@ file says what the system cannot do and where it is known to fail. Everything he
 found by measurement or is a known property of the design — none of it is hypothetical
 hedging.
 
-**Last updated:** 2026-09-22, after the `rules_only` baseline.
+**Last updated:** 2026-09-23, after the offline cost measurement.
 
 > **Unofficial project.** No affiliation with Sticker Mule. All data synthetic.
 
@@ -81,19 +81,31 @@ file with both defects reports only the bleed problem, and the aspect problem su
 resubmission. Real preflight tools behave the same way, but it does mean a two-defect
 file produces a one-defect fix request.
 
-## 6. Cost target is currently unmet at list price
+## 6. The cost target passes for the wrong reason
 
-SC-003 targets $0.01/file. At the assumed 20K in / 2K out shape:
+Measured 2026-09-23 on Haiku 4.5:
 
-| Model | cost/file, list price |
-|---|---|
-| Opus 5 | $0.1500 |
-| Sonnet 5 | $0.0600 |
-| Haiku 4.5 | $0.0300 |
+| Loop shape | cost/file | 159-case sweep |
+|---|---|---|
+| 2 model calls | $0.0073 | ~$1.16 |
+| 4 model calls | $0.0146 | ~$2.31 |
 
-The cheapest model is 3x over budget. Batch (-50%) and prompt caching (cached reads at
-~10%) are the levers, and until they are measured **SC-003 is an aspiration, not a
-result**. Tracked as OQ-1. The ROI model in brief.md §4 depends on this resolving.
+SC-003 ($0.01/file) **passes at 2 calls and fails at 4**. Turn count decides it.
+
+**Why that is not a clean win.** The mean image in this dataset costs ~452 tokens, because
+a 2x2 in sticker at 150 DPI is 338 px. Real customer uploads are typically 2,000-4,000 px,
+hit the 1,100 px downscale cap, and cost roughly 1,600 tokens — about 3.5x more. At the
+4-call shape on realistic artwork the cost lands near $0.018/file and breaches the target.
+
+So: **the cost target is met by the test data, not demonstrated by the design.** Treat
+SC-003 as unproven for production until it is measured on real-sized files. Batch (-50%)
+is the unused lever if it turns out to be needed.
+
+**Prompt caching does nothing on this build.** The cacheable prefix is 1,696 tokens and
+Haiku's minimum is 2,048, so the `cache_control` breakpoint is a silent no-op. A sweep
+reporting `cache hit rate: 0%` is expected here, and `SweepReport.cache_suspect` will fire
+incorrectly. Caching becomes real when a longer system prompt and larger artwork push the
+prefix past the minimum naturally; padding it to get there would be cargo cult.
 
 ## 7. Not yet measured at all
 
@@ -105,8 +117,7 @@ Honest status, not a roadmap:
   end (T110). Any number quoted before then is a train-split number.
 - **Confidence threshold is a placeholder** (0.70). OQ-2 says fit it on the train split;
   it has not been fitted.
-- **Prompt caching is designed for but unverified.** `cache_read_input_tokens` has never
-  been observed non-zero, because no successful call has been made.
+- **Prompt caching cannot engage at all** on this build — prefix below the minimum, §6.
 - **The red-team suite does not exist.** Injection resistance is designed
   (`injection_suspected` forces escalation, image content is framed as untrusted data)
   but untested. SC-006 has no measurement behind it.

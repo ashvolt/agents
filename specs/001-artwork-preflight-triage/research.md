@@ -122,6 +122,29 @@ optimisation, which is why it is in the plan rather than a later tuning pass.
 invalidator — a timestamp, a UUID, an unsorted dict, a varying tool list. The harness
 surfaces it as a defect, not a curiosity.
 
+### Amended 2026-09-23 — caching does not engage on this build
+
+Measured: the cacheable prefix is **1,696 tokens** (system prompt ~720 + tool schemas
+~976). Haiku 4.5 requires a minimum cacheable prefix of **2,048 tokens**, so the
+`cache_control` breakpoint is a **silent no-op**. Nothing is cached, and nothing will be
+until the prefix grows past the minimum.
+
+Three consequences, all worth stating plainly:
+
+1. **`cache hit rate: 0%` in a sweep report is expected on this build**, not the silent
+   invalidator the metric was written to catch. `SweepReport.cache_suspect` will fire and
+   be wrong. Read it alongside this note until the prefix crosses 2,048.
+2. **The "caching is load-bearing" claim above was premature.** It is load-bearing for the
+   *realistic* token shape (20K input/file) this design was sized against. At the actual
+   shape of this dataset it does nothing, because the whole request is small.
+3. **Padding the prefix to reach the minimum would be cargo cult.** The cost target is
+   already met without it (D-9). Caching earns its place when real-sized artwork and a
+   longer system prompt push the prefix over 2,048 naturally, not before.
+
+The design decision stands — keep the prefix byte-stable, keep volatile content after it —
+because it costs nothing and is correct the moment the prefix grows. What changes is the
+claim about what it currently buys: nothing.
+
 ## D-8 — Storage: JSONL on the filesystem
 
 **Decision.** Cases, gold labels, traces, and run results are JSONL. No database.
@@ -159,3 +182,38 @@ written down.
 
 This was caught by writing a cost function before building the feature, which is exactly
 what [levels/L0_raw_api](../../levels/L0_raw_api/) exists to teach.
+
+### Resolved 2026-09-23 — SC-003 holds, but for a reason that does not generalise
+
+Measured token counts for this build, on Haiku 4.5 ($1/$5 per MTok):
+
+| Component | tokens |
+|---|---|
+| system prompt | ~720 |
+| tool schemas | ~976 |
+| **image, mean over the 200 cases** | **~452** (median 318, max 1,448) |
+| order context | ~85 |
+| all three tool results | ~311 |
+
+| Loop shape | cost/case | 159-case sweep |
+|---|---|---|
+| 2 model calls (tools in parallel) | **$0.0073** | ~$1.16 |
+| 4 model calls (sequential) | **$0.0146** | ~$2.31 |
+
+**SC-003 ($0.01/file) is met at the 2-call shape and missed at the 4-call shape** — which
+makes the number of loop turns, not the model or the price list, the thing that decides
+whether the cost target holds. Turn count is the lever worth tuning in Phase 5.
+
+**The caveat that matters more than the result.** The original estimate assumed ~1,600
+tokens per image. The measured mean is ~452, because the synthetic art is small — a 2x2 in
+sticker at 150 DPI is 338 px on its long edge. Real customer uploads are routinely
+2,000-4,000 px, which lands at the 1,100 px downscale cap and costs roughly 1,600 tokens,
+**3.5x the measured figure**.
+
+So SC-003 passes here *because the test images are small*, which is a property of the
+dataset rather than of the design. On realistic artwork the 4-call shape would cost about
+$0.018/file and breach the target. Recorded in `limits.md` §6 rather than reported as a
+clean pass.
+
+Batch (-50%) remains unused and is the obvious lever if the realistic shape needs it.
+Caching is not available at this prefix size — see the D-7 amendment.
