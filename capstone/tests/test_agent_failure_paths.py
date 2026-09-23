@@ -35,9 +35,6 @@ from capstone.src.schemas import (
     VerdictType,
 )
 
-pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
-
-
 # --------------------------------------------------------------------------------------
 # Fakes
 # --------------------------------------------------------------------------------------
