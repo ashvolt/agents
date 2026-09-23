@@ -53,6 +53,15 @@ upload
                   the engine's output, or the deterministic template ships
 ```
 
+![Upload, redraw from the scene text alone, and the auto-corrected proof](img/scene_example.png)
+
+*holdout_v3 case-00399, a 5x3 in vinyl banner. Red is the cut line, blue the safe line.
+The upload's text runs into the keep-out margin (a defect the generator labels clean —
+limits.md §11). The middle panel is drawn only from the scene document a model would
+receive: fidelity 0.976, text shown as a box because its content is never sent. The
+proof re-centres the design without resizing it and converts the colour mode; the
+re-check passes and the element count is unchanged.*
+
 Each step that could be wrong is followed by a check that runs on the step's own output,
 not on trust. The model sits at the very end, does the one thing it is best at
 (language), and cannot introduce a fact.
@@ -96,15 +105,25 @@ image tokens; its scene costs the same ~750 as a 400 px file.
 
 | | holdout_v3 (282 not approved) | **shifted_v3 (184 not approved)** |
 |---|---|---|
-| applied fixes verified | 269/273 | **134/134** |
-| — thin lines / bleed / colour / transparency | 118/118 · 38/38 · 31/31 · 12/12 | 59/59 · 22/22 · 15/15 · 5/5 |
-| — design fit inside the safe line | 70/74 | 33/33 |
-| **print-ready proofs, zero humans** | **88 (31%)** | **44 (24%)** |
+| applied fixes verified | 230/245 | **125/128** |
+| — bleed / colour / transparency | 38/38 · 31/31 · 12/12 | 22/22 · 15/15 · 5/5 |
+| — design fit inside the safe line | 74/74 | 33/33 |
+| — thin lines † | 75/90 | 50/53 |
+| **print-ready proofs, zero humans** ‡ | **88 (31%)** | **43 (23%)** |
 | proofs hiding an unaddressed injected defect | 0 * | 0 * |
-| suggestions with exact targets | 199 | 138 |
+| suggestions with exact targets | 227 | 144 |
 
-\* 7 and 2 files carry a transparency label on a product that *permits* transparency — a
-known rule gap (limits.md §2). The CMYK conversion flattened the alpha in each.
+\* Excluding transparency labels on products that *permit* transparency — a known rule
+gap (limits.md §2); the CMYK conversion flattens the alpha in each.
+† Verified per issue code: when one line on a file is too close to its neighbours to
+thicken (it becomes a suggestion), THIN_LINES stays open and the lines that *were*
+thickened on that file are conservatively counted unverified too.
+‡ `proof_ready`: every applied fix verified, nothing blocking left, same number of design
+elements as the upload — and the decider approves the proof.
+
+**Disclosure.** shifted_v3 was scored with an earlier version of the fix engine (134/134,
+44 proofs). Items 7-8 below were then found on train and holdout_v3 and fixed; shifted_v3
+was re-scored, not tuned on. The earlier figure counted proofs where hairlines had merged.
 
 ### Narrate
 
@@ -137,9 +156,19 @@ known rule gap (limits.md §2). The CMYK conversion flattened the alpha in each.
    proof although the fit had not verified. Now `proof_ready` requires every applied fix
    to verify — one failure sends the file to a person.
 
-Items 5 and 6 are the important ones: **verification is only as good as the checks it
-re-runs.** Both were fixed by tightening what counts as verified, not by loosening a
-threshold.
+7. **Thickening merged parallel hairlines into one bar** in 17 of 19 thickening cases.
+   Every rule passed. Found only by *looking at a rendered proof*. Two changes: a stroke
+   is thickened only if the result keeps a clear gap to everything else (otherwise it
+   becomes a suggestion), and `proof_ready` now requires the proof to keep the same
+   number of distinct design elements as the upload.
+8. **Faint antialiasing fragments were left behind as specks** when the design moved —
+   too small to be elements, so no check saw them. The fit now moves everything inside
+   the design's region, not just the pixels inside known element boxes.
+
+Items 5-7 are the important ones: **verification is only as good as the checks it
+re-runs.** Each was fixed by tightening what counts as verified, never by loosening a
+threshold. Item 7 is the uncomfortable one: no automated check found it; a picture did.
+Any production version needs a human to look at a sample of auto-corrected proofs.
 
 ## 5. Blockers — where I need you
 
