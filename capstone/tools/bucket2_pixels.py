@@ -32,9 +32,18 @@ TRANSPARENCY_REPORT_RATIO = 0.005
 COMPONENT_MIN_INK_RATIO = 0.002
 
 # Opposing-edge ink asymmetry above which the keep-out margin is called suspicious.
-# Fitted on the evaluation set: clean files topped out at 0.059, two thirds of genuine
-# intrusions sat above 0.06. Fitted to synthetic data, so it escalates rather than rejects.
-SAFE_ZONE_ASYMMETRY_THRESHOLD = 0.06
+#
+# Tuned on the 312-case TRAIN split only, by sweeping it against the false-approve rate:
+#   0.06 -> 83.2% approve / 3.1% false-approve   (5 wrong)
+#   0.03 -> 77.9% approve / 2.0% false-approve   (3 wrong)
+#   0.02 -> 70.0% approve / 0.7% false-approve   (1 wrong)
+# Paired with the no-text gate below, 0.03 gives 76.3% / 0.7% - the highest approve rate
+# that still clears SC-002. Lower values keep buying precision at roughly 8 points of
+# approve rate each, which is the SC-001/SC-002 trade stated explicitly.
+#
+# Fitted to synthetic data where every intrusion is one block on one edge, so it raises an
+# ADVISORY finding and escalates rather than telling a customer their file is wrong.
+SAFE_ZONE_ASYMMETRY_THRESHOLD = 0.03
 
 
 # --------------------------------------------------------------------------------------
@@ -492,6 +501,42 @@ def check_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> list[I
     ]
 
 
+def check_text_detection_inconclusive(boxes: list[TextBox], spec: ProductSpec) -> list[Issue]:
+    """Escalate when the detector found no text at all.
+
+    The detector's documented failure modes - merged glyphs, lines under three glyphs,
+    busy backgrounds, rotation - all fail toward finding NOTHING. So an empty result is
+    ambiguous between "this file has no text" and "this file has text I could not see",
+    and only one of those is safe to approve.
+
+    Measured on the train split: two of the five remaining false approves were files with
+    text at twice the minimum size that the detector missed entirely. Turning its own
+    blind spot into an escalation removes both, and costs about 2 points of approve rate.
+
+    This is the same rule the tool payload already states and that a previous version of
+    the safe-zone reading broke: absence of evidence is not evidence of absence.
+    """
+    if boxes:
+        return []
+    return [
+        Issue(
+            code=IssueCode.TEXT_TOO_SMALL,
+            severity=Severity.ADVISORY,
+            message=(
+                "No text was detected in this artwork. The detector misses small, merged, "
+                "or rotated type, so this cannot be read as confirmation that the file "
+                "carries no text below the minimum size. A human should confirm."
+            ),
+            evidence=Evidence(
+                note=(
+                    "text detector returned zero lines; minimum size for "
+                    f"{spec.display_name} is {spec.min_text_pt:g} pt"
+                )
+            ),
+        )
+    ]
+
+
 def analyse_pixels(
     image: Image.Image, spec: ProductSpec, dpi: float
 ) -> tuple[list[Issue], list[TextBox]]:
@@ -503,6 +548,7 @@ def analyse_pixels(
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
     issues += check_safe_zone(image, spec, dpi)
+    issues += check_text_detection_inconclusive(boxes, spec)
     return issues, boxes
 
 
@@ -511,6 +557,7 @@ BUCKET2_CHECKS = (
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
     "check_safe_zone",
+    "check_text_detection_inconclusive",
     "check_stroke_width",
     "check_text_size",
 )
@@ -521,6 +568,7 @@ __all__ = [
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
     "check_safe_zone",
+    "check_text_detection_inconclusive",
     "check_stroke_width",
     "check_text_size",
     "check_transparency",
