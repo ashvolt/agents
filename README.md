@@ -50,6 +50,23 @@ Integration tests are marked and deselected by default. Run them deliberately.
 Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill in),
 `test_exercise.py` (the bar), and `NOTES.md` (what I got wrong, in my own words).
 
+## Capstone documents
+
+| Document | What it is |
+|---|---|
+| [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
+| [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
+| [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
+| [limits.md](capstone/docs/limits.md) | Ten things this system cannot do, most found by measuring |
+| [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
+| [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
+| [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
+
+**Headline:** on a held-out split scored once — 82.0% auto-approve, 0 false approves in 41
+approvals, both criteria met. The deterministic pipeline passes *without* the model; the
+model's entire measured contribution is a 3.4 pp reduction in escalation rate. Total API
+spend for the project: ~$4.30.
+
 ## Learning log
 
 | Date | Entry |

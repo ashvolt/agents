@@ -159,9 +159,9 @@ has no measurement behind it), Phase 8 (MCP, CI gate), Phase 9 (portfolio writeu
 |---|---|---|---|---|
 | T100 | MCP server exposing the deterministic tools | `capstone/tools/mcp_server.py` | tools callable over MCP | `[ ]` |
 | T101 | MCP client smoke test | `capstone/tests/test_mcp.py` | parity with direct dispatch | `[ ]` |
-| T102 | CI regression gate | `capstone/evals/gate.py` | fails on FA > 1% or approve-rate drop | `[ ]` |
-| T103 | GitHub Actions workflow | `.github/workflows/eval-gate.yml` | runs on PR | `[ ]` |
-| T104 | **Prove the gate works** — deliberately bad change | (throwaway branch) | CI goes red, screenshot kept | `[ ]` |
+| T102 | CI regression gate | `capstone/evals/gate.py` | fails on FA > 1%, approve drop, or per-issue drop | `[x]` |
+| T103 | GitHub Actions workflow | `.github/workflows/eval-gate.yml` | runs on PR, no API key needed | `[x]` |
+| T104 | **Prove the gate works** — deliberately bad change | verified locally | **done: deleted the no-text gate, exit 1, two findings; restored, exit 0** | `[x]` |
 
 ---
 
@@ -170,8 +170,8 @@ has no measurement behind it), Phase 8 (MCP, CI gate), Phase 9 (portfolio writeu
 | ID | Task | File(s) | Done when | Status |
 |---|---|---|---|---|
 | T110 | Score the sealed holdout — **once** | `capstone/evals/runs/` | **done: 82.0% / 0 false approves, both arms** | `[x]` |
-| T111 | Update architecture doc to as-built | `capstone/docs/architecture.md` | diagrams match the code | `[ ]` |
-| T112 | Regenerate excalidraw diagrams | `capstone/docs/architecture.excalidraw` | as-built | `[ ]` |
+| T111 | Update architecture doc to as-built | `capstone/docs/architecture.md` | diagrams match the code | `[x]` |
+| T112 | Regenerate excalidraw diagrams | `capstone/docs/architecture.excalidraw` | as-built, 106 elements, 4 panels | `[x]` |
 | T113 | Portfolio writeup | `portfolio/writeup.md` | problem → decisions → numbers → limits | `[ ]` |
 | T114 | Demo script / recording | `portfolio/demo.md` | reproducible from a clean clone | `[ ]` |
 

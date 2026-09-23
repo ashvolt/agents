@@ -39,3 +39,9 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Level exercises import what their unfilled stubs will need. They are teaching material
+# with deliberate gaps, so an unused import there is the exercise, not a defect. Shipped
+# code under capstone/ and shared/ gets no such exemption.
+"levels/*/exercise.py" = ["F401"]
