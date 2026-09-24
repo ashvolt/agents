@@ -28,10 +28,10 @@ from capstone.tools.bucket2_pixels import (
     measure_contrast,
     measure_min_stroke_px,
 )
-from capstone.tools.text_detect import TextBox, detect_text
+from capstone.tools.text_detect import ConnectedComponentDetector, TextBox, detect_text
 
-STICKER = get_spec("die-cut-sticker")   # min_stroke 0.5pt, min_contrast dE 15, min_text 6pt
-BANNER = get_spec("vinyl-banner")       # allows_transparency = False
+STICKER = get_spec("die-cut-sticker")  # min_stroke 0.5pt, min_contrast dE 15, min_text 6pt
+BANNER = get_spec("vinyl-banner")  # allows_transparency = False
 DPI = 300.0
 BG = (245, 243, 240)
 
@@ -75,12 +75,12 @@ def art_with_strokes(stroke_px: int, *, add_solid_panel: bool = True) -> Image.I
 @pytest.mark.parametrize(
     ("stroke_pt", "should_flag"),
     [
-        (2.0, False),    # 4x the limit
-        (0.75, False),   # 1.5x -> 3px
-        (0.65, False),   # 3px, the first width that clears the limit once rasterised
-        (0.55, True),    # inside the quantisation band - see the test below
-        (0.30, True),    # 0.6x
-        (0.15, True),    # 0.3x
+        (2.0, False),  # 4x the limit
+        (0.75, False),  # 1.5x -> 3px
+        (0.65, False),  # 3px, the first width that clears the limit once rasterised
+        (0.55, True),  # inside the quantisation band - see the test below
+        (0.30, True),  # 0.6x
+        (0.15, True),  # 0.3x
     ],
 )
 def test_stroke_width_boundary(stroke_pt: float, should_flag: bool) -> None:
@@ -199,7 +199,7 @@ def test_antialiasing_halos_do_not_count_as_faint_elements() -> None:
 def test_measure_contrast_returns_the_weakest_element() -> None:
     img = canvas()
     d = ImageDraw.Draw(img)
-    d.rectangle((0, 0, 900, 200), fill=(10, 10, 10))              # bold
+    d.rectangle((0, 0, 900, 200), fill=(10, 10, 10))  # bold
     d.rectangle((100, 300, 800, 550), fill=colour_at_delta_e(9))  # faint
     measured = measure_contrast(img)
     assert measured is not None
@@ -263,6 +263,12 @@ def test_cmyk_file_has_no_alpha_to_check() -> None:
 # --------------------------------------------------------------------------------------
 
 
+# The glyph-row fixtures are rectangles, not type: they exercise the component detector's
+# grouping logic, so they name it. DBNet (the default since real-art.md) is tested with
+# real type in test_text_dbnet.py.
+COMPONENTS = ConnectedComponentDetector()
+
+
 def art_with_glyph_row(glyph_h_px: int, n: int = 6) -> Image.Image:
     """A row of glyph-sized marks. Exercises detection and grouping, not a font."""
     img = canvas()
@@ -275,7 +281,7 @@ def art_with_glyph_row(glyph_h_px: int, n: int = 6) -> Image.Image:
 
 
 def test_detector_groups_a_row_into_one_line() -> None:
-    boxes = detect_text(art_with_glyph_row(40))
+    boxes = detect_text(art_with_glyph_row(40), COMPONENTS)
     assert len(boxes) == 1
     assert boxes[0].glyph_count >= 3
 
@@ -283,7 +289,7 @@ def test_detector_groups_a_row_into_one_line() -> None:
 def test_detector_ignores_a_pair_of_marks() -> None:
     # Fewer than three glyphs is more likely artwork than writing. Documented limitation:
     # this also discards genuinely short words.
-    assert detect_text(art_with_glyph_row(40, n=2)) == []
+    assert detect_text(art_with_glyph_row(40, n=2), COMPONENTS) == []
 
 
 @pytest.mark.parametrize(
@@ -291,7 +297,7 @@ def test_detector_ignores_a_pair_of_marks() -> None:
     [(18.0, False), (9.0, False), (6.5, False), (5.0, True), (3.0, True)],
 )
 def test_text_size_boundary(text_pt: float, should_flag: bool) -> None:
-    boxes = detect_text(art_with_glyph_row(pt_to_px(text_pt)))
+    boxes = detect_text(art_with_glyph_row(pt_to_px(text_pt)), COMPONENTS)
     assert boxes, "fixture produced no detectable text"
     issues = check_text_size(boxes, STICKER, DPI)
     assert bool(issues) is should_flag, f"{text_pt}pt against {STICKER.min_text_pt}pt"
@@ -304,7 +310,7 @@ def test_no_detected_text_yields_no_finding() -> None:
 
 
 def test_text_size_evidence_locates_the_smallest_line() -> None:
-    boxes = detect_text(art_with_glyph_row(pt_to_px(3.0)))
+    boxes = detect_text(art_with_glyph_row(pt_to_px(3.0)), COMPONENTS)
     issue = check_text_size(boxes, STICKER, DPI)[0]
     assert issue.evidence.region is not None
     assert issue.evidence.required == STICKER.min_text_pt

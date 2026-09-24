@@ -239,16 +239,109 @@ def _group_into_lines(glyphs: list[tuple[int, int, int, int]]) -> list[TextBox]:
     return out
 
 
-_DEFAULT = ConnectedComponentDetector()
+class DBNetDetector:
+    """PaddleOCR's PP-OCRv3 text detector (DBNet), run on CPU through ONNX Runtime.
+
+    OQ-3/OQ-4, decided by measurement on real artwork (real-art.md): the connected-
+    component detector found no text at all on most real captions — antialiased type on
+    coloured backgrounds — and the no-text guard then escalated 70 clean files out of 270.
+
+    **Detection only.** RapidOCR bundles the model in its wheel (2.4 MB, no download). Its
+    recogniser is never called and no text content leaves this class, so the rest of the
+    pipeline still cannot carry what the artwork *says* to a language model (narrate.py).
+
+    **Boxes are tightened to the ink.** DBNet pads its boxes (unclip ratio ~1.6) so they
+    contain the glyphs comfortably. Measuring text size from a padded box would report
+    type as larger than it is — the dangerous direction for TEXT_TOO_SMALL — so each box
+    is shrunk to the rows and columns that actually differ from the box's own background.
+    """
+
+    def __init__(self) -> None:
+        from rapidocr_onnxruntime import RapidOCR  # optional dependency, imported lazily
+
+        self._detect = RapidOCR().text_detector
+
+    def detect(self, image: Image.Image) -> list[TextBox]:
+        rgb = np.asarray(image.convert("RGB"))
+        if rgb.size == 0:
+            return []
+        quads, _elapsed = self._detect(np.ascontiguousarray(rgb[:, :, ::-1]))
+        height, width = rgb.shape[:2]
+        boxes: list[TextBox] = []
+        for quad in [] if quads is None else quads:
+            xs, ys = quad[:, 0], quad[:, 1]
+            x0, x1 = max(0, int(xs.min())), min(width, int(np.ceil(xs.max())))
+            y0, y1 = max(0, int(ys.min())), min(height, int(np.ceil(ys.max())))
+            tight = _tighten(rgb[y0:y1, x0:x1])
+            if tight is None:
+                continue
+            tx0, ty0, tx1, ty1, glyphs = tight
+            boxes.append(TextBox(x0 + tx0, y0 + ty0, x0 + tx1, y0 + ty1, glyphs))
+        return sorted(boxes, key=lambda b: (b.y0, b.x0))
+
+
+def _tighten(region: np.ndarray) -> tuple[int, int, int, int, int] | None:
+    """Ink extent inside a padded box, plus a glyph count. None if the box holds no ink."""
+    if region.size == 0:
+        return None
+    flat = region.reshape(-1, 3)
+    keys = ((flat >> 4).astype(np.int32) * np.array([256, 16, 1], dtype=np.int32)).sum(axis=1)
+    background = flat[keys == int(np.bincount(keys).argmax())].mean(axis=0)
+    ink = np.abs(region.astype(np.int16) - background.astype(np.int16)).max(axis=2) > 24
+    # The padded box can also catch a rule or an edge of artwork above or below the line.
+    # Split the ink into horizontal bands separated by empty rows and keep the band with
+    # the most ink: that is the text line; a thin rule under it is not.
+    row_ink = ink.sum(axis=1)
+    bands: list[tuple[int, int]] = []
+    start = None
+    for y, has_ink in enumerate(row_ink > 0):
+        if has_ink and start is None:
+            start = y
+        elif not has_ink and start is not None:
+            bands.append((start, y))
+            start = None
+    if start is not None:
+        bands.append((start, len(row_ink)))
+    if not bands:
+        return None
+    by0, by1 = max(bands, key=lambda b: int(row_ink[b[0] : b[1]].sum()))
+    line = ink[by0:by1]
+    cols = np.flatnonzero(line.any(axis=0))
+    return int(cols[0]), by0, int(cols[-1]) + 1, by1, len(_label_runs(line))
+
+
+def _default_detector() -> TextDetector:
+    """DBNet when it is installed, unless PREFLIGHT_TEXT_DETECTOR=components says otherwise.
+
+    The fallback exists so the package still runs without the optional dependency, not as
+    an equal alternative: on real artwork the component detector is not fit for purpose.
+    """
+    import os
+
+    if os.environ.get("PREFLIGHT_TEXT_DETECTOR", "dbnet") == "components":
+        return ConnectedComponentDetector()
+    try:
+        return DBNetDetector()
+    except ImportError:
+        return ConnectedComponentDetector()
+
+
+_DEFAULT: TextDetector | None = None
 
 
 def detect_text(image: Image.Image, detector: TextDetector | None = None) -> list[TextBox]:
     """Locate text lines. Deterministic."""
-    return (detector or _DEFAULT).detect(image)
+    global _DEFAULT
+    if detector is None:
+        if _DEFAULT is None:
+            _DEFAULT = _default_detector()
+        detector = _DEFAULT
+    return detector.detect(image)
 
 
 __all__ = [
     "ConnectedComponentDetector",
+    "DBNetDetector",
     "TextBox",
     "TextDetector",
     "detect_text",

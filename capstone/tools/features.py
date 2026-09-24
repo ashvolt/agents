@@ -299,7 +299,7 @@ def extract_features(
     aspect_dev = abs(aspect / expected_aspect - 1.0) if aspect else None
 
     # bucket 2
-    stroke_px = measure_min_stroke_px(image, exclude=boxes)
+    stroke_px = measure_min_stroke_px(image, exclude=boxes, dpi=dpi)
     stroke_pt = stroke_px / dpi * PT_PER_INCH if stroke_px and dpi > 0 else None
     contrast = measure_contrast(image)
     text_pt = min(b.height_pt(dpi) for b in boxes) if boxes and dpi > 0 else None

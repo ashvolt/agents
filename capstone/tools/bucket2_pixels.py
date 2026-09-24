@@ -31,6 +31,16 @@ TRANSPARENCY_REPORT_RATIO = 0.005
 # thickness counts. Below it we are measuring speckle.
 COMPONENT_MIN_INK_RATIO = 0.002
 
+# ...unless it is at least this long at print size. The ratio above was tuned on sparse
+# synthetic art; next to a dense real illustration a 1.5 in hairline rule holds under
+# 0.2% of the ink and was skipped as speckle (real-art.md). Length is what makes a line.
+STROKE_MIN_LENGTH_IN = 0.08
+
+# Text boxes are excluded from the stroke measurement with this much margin, as a share
+# of the line's height. Without it the antialiased fringe just outside a tight box was
+# measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
+TEXT_EXCLUSION_PAD = 0.15
+
 # Opposing-edge ink asymmetry above which the keep-out margin is called suspicious.
 #
 # Tuned on the 312-case TRAIN split only, by sweeping it against the false-approve rate:
@@ -192,11 +202,56 @@ def measure_contrast(
     return (weakest[0], bg, weakest[1])  # type: ignore[return-value]
 
 
-def check_contrast(image: Image.Image, spec: ProductSpec) -> list[Issue]:
-    measured = measure_contrast(image)
-    if measured is None:
+def measure_text_contrast(
+    image: Image.Image, boxes: list[TextBox]
+) -> tuple[float, tuple[int, int, int], tuple[int, int, int]] | None:
+    """deltaE between each text line and the background immediately around it; the worst.
+
+    `measure_contrast` finds elements as connected regions and skips regions below a share
+    of the canvas. A caption is many small regions — one per letter — and every one fell
+    under that floor, so a low-contrast caption beside a large illustration was never
+    measured (7 of 17 false approves on real art). Text lines are measured as lines.
+
+    The ink colour is the mean of the line's solid core — pixels within 80% of its
+    strongest deviation — so antialiased edges do not drag it toward the background (a
+    median cut read a grey-222 caption on white as deltaE 3.8; its true value is ~10.7).
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.int16)
+    height, width = arr.shape[:2]
+    worst: tuple[float, tuple[int, int, int], tuple[int, int, int]] | None = None
+    for box in boxes:
+        pad = max(2, box.height_px // 2)
+        around = arr[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad]
+        flat = around.reshape(-1, 3)
+        keys = ((flat >> 4) * np.array([256, 16, 1])).sum(axis=1)
+        background = flat[keys == int(np.bincount(keys).argmax())].mean(axis=0)
+        inside = arr[box.y0 : box.y1, box.x0 : box.x1].reshape(-1, 3)
+        if inside.size == 0:
+            continue
+        deviation = np.abs(inside - background).max(axis=1)
+        if deviation.max() < 8:
+            continue
+        core = inside[deviation >= 0.8 * deviation.max()]
+        ink = core.mean(axis=0)
+        bg_t = tuple(int(round(c)) for c in background)
+        ink_t = tuple(int(round(c)) for c in ink)
+        de = delta_e76(bg_t, ink_t)  # type: ignore[arg-type]
+        if worst is None or de < worst[0]:
+            worst = (de, bg_t, ink_t)  # type: ignore[assignment]
+    return worst
+
+
+def check_contrast(
+    image: Image.Image, spec: ProductSpec, boxes: list[TextBox] | None = None
+) -> list[Issue]:
+    candidates = [
+        m
+        for m in (measure_contrast(image), measure_text_contrast(image, boxes or []))
+        if m is not None
+    ]
+    if not candidates:
         return []
-    delta_e, background, ink = measured
+    delta_e, background, ink = min(candidates, key=lambda m: m[0])
     if delta_e >= spec.min_contrast_delta_e:
         return []
     return [
@@ -242,7 +297,7 @@ def _run_lengths_along_axis(mask: np.ndarray, axis: int) -> np.ndarray:
 
 
 def measure_min_stroke_px(
-    image: Image.Image, exclude: list[TextBox] | None = None
+    image: Image.Image, exclude: list[TextBox] | None = None, dpi: float | None = None
 ) -> float | None:
     """Thinnest stroke present, in pixels.
 
@@ -265,7 +320,8 @@ def measure_min_stroke_px(
 
     if exclude:
         for box in exclude:
-            mask[box.y0 : box.y1, box.x0 : box.x1] = False
+            pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
+            mask[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = False
         if not mask.any():
             return None
 
@@ -275,12 +331,13 @@ def measure_min_stroke_px(
 
     total_ink = int(mask.sum())
     min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
+    min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
 
     thinnest: float | None = None
     for x0, y0, x1, y1 in _label_runs(mask):
         sub_mask = mask[y0:y1, x0:x1]
         area = int(sub_mask.sum())
-        if area < min_component_px:
+        if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
             continue
         values = thickness[y0:y1, x0:x1][sub_mask]
         if values.size == 0:
@@ -311,7 +368,7 @@ def check_stroke_width(
     """
     if dpi <= 0:
         return []
-    min_px = measure_min_stroke_px(image, exclude=exclude)
+    min_px = measure_min_stroke_px(image, exclude=exclude, dpi=dpi)
     if min_px is None or min_px <= 0:
         return []
 
@@ -327,9 +384,7 @@ def check_stroke_width(
                 f"needs {spec.min_stroke_pt:g} pt or heavier. Thinner strokes break up or "
                 "disappear on press."
             ),
-            evidence=Evidence(
-                measured=round(min_pt, 3), required=spec.min_stroke_pt, unit="pt"
-            ),
+            evidence=Evidence(measured=round(min_pt, 3), required=spec.min_stroke_pt, unit="pt"),
         )
     ]
 
@@ -544,7 +599,7 @@ def analyse_pixels(
     boxes = detect_text(image)
     issues: list[Issue] = []
     issues += check_transparency(image, spec)
-    issues += check_contrast(image, spec)
+    issues += check_contrast(image, spec, boxes)
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
     issues += check_safe_zone(image, spec, dpi)
@@ -575,5 +630,6 @@ __all__ = [
     "delta_e76",
     "measure_contrast",
     "measure_min_stroke_px",
+    "measure_text_contrast",
     "measure_safe_zone",
 ]
