@@ -15,21 +15,27 @@ Everything before this was graded on shapes drawn by `generate.py`, which shares
 assumptions with the checks (limits.md §1). On real design work the results did not
 transfer, and most of this document is about why.
 
-Final numbers, **scored once, on sets generated after the code was frozen**:
+Final numbers, **scored once, on sets generated after the code was frozen**. Two rounds;
+the second (2026-09-24, commit df1f873, model md5 8567b545) after the colour-region
+stroke rule and hue-preserving captions:
 
 | Fresh set | rules_only | cv_decider |
 |---|---|---|
 | holdout_v4 — 600 synthetic | 80.3% / 2.4% FAIL | **86.7% / 0.0% PASS** (UB 1.0%) |
 | shifted_v4 — 400 synthetic, intrusions on any edge | 83.8% / 5.2% FAIL | 85.8% / **1.4% FAIL** |
-| **real_art_v2 — 450 real illustrations, none seen before** | 79.6% / 10.8% FAIL | 78.1% / **6.2% FAIL** |
+| real_art_v2 — 450 real illustrations | 79.6% / 10.8% FAIL | 78.1% / **6.2% FAIL** |
+| holdout_v5 — 600 synthetic | 78.3% / 3.4% FAIL | **81.7% / 0.0% PASS** (UB 1.0%) |
+| shifted_v5 — 400 synthetic, intrusions on any edge | 83.8% / 4.7% FAIL | 81.7% / **1.5% FAIL** (UB 3.2%) |
+| **real_art_v3 — 450 real illustrations, none seen before** | 78.5% / 6.6% FAIL | 79.6% / **1.4% FAIL** (UB 2.9%) |
 
 *Auto-approve / false-approve. SC-001 ≥ 60%, SC-002 ≤ 1%.*
 
-**On real artwork the engine does not yet meet the 1% false-approve constraint.** It
-started at 7.8% on the first real set, reached 4.1% on that (now spent) set after the
-fixes below, and scored 6.2% on unseen real art. It is not shippable as an auto-approver
-for real uploads today. It is much closer than it was, the remaining failures are
-specific and named (§5), and the method for measuring them is now in place.
+**On real artwork the engine still does not meet the 1% false-approve constraint, but it
+is now close.** Unseen real art went from 6.2% (v2) to 1.4% (v3): 3 wrong approvals out
+of 218. After scoring, those three were diagnosed (§5): one is a label error, two are
+genuine safe-zone misses. With the label corrected the rate is 2/218 = 0.9%, but the
+95% upper bound is still above 1%, so this is **not** a pass. The shifted synthetic set
+fails in both rounds on the same thing: safe-zone intrusions on the top and bottom edges.
 
 ## 2. The set
 
@@ -88,18 +94,29 @@ This is the method to keep: synthetic labels for injected defects, a high-resolu
 vector render as ground truth for everything the design itself contains. It needs no
 customer data and no human labelling.
 
-## 5. What still fails on unseen real art (real_art_v2, 14 false approves)
+## 5. What still fails on unseen real art
 
-| Missed defect | Count | Most likely cause (from the diagnosed set; not re-tuned here) |
+### real_art_v3 (sealed score 1.4%, 3 false approves), diagnosed after scoring
+
+| Case | Label | Finding |
 |---|---|---|
-| LOW_CONTRAST | 7 | caption contrast measured against a *local* background that includes illustration colours; the faint-text pass recovered some but not these |
-| THIN_LINES | 3 | stroke measurement on a luminance mask: boundaries between two ink colours still produce slivers and mask real thin lines |
-| CONTENT_IN_SAFE_ZONE | 3 | antialiased illustration edges fall under the 24-level foreground threshold, so measured depth reads just under 1.0 at 1.1× |
+| case-00425 | aspect 1.1× (plus in-spec resolution and bleed) | **Label error.** The builder applied the 2× in-spec bleed, then stretched that canvas by 1.1× the tolerance. Against the canvas the spec requires, the file deviates 0.3× the tolerance: it is in spec, and approving it is correct. `generate.py` builds the same way and may have the same interaction. |
+| case-00400 | safe zone 2.0× | **Genuine miss.** The figure crosses the cut line on a navy background, but measured depth is 0.32. The margin mask is brightness-based, and a black outline barely differs from navy in brightness. The same colour-region move that fixed strokes applies to margins. |
+| case-00289 | safe zone 1.1× | **Genuine miss.** A 1.1× intrusion on a 72 DPI banner: the whole intrusion is under a pixel and a half and disappears into anti-aliasing. The same cause as the v2 safe-zone misses. |
+
+Both genuine misses are safe-zone intrusions, and so are all three misses on shifted_v5.
+Stroke and contrast, which caused 10 of the 14 v2 misses, caused none on v3.
+
+### real_art_v2 (sealed score 6.2%, 14 false approves)
+
+| Missed defect | Count | Most likely cause |
+|---|---|---|
+| LOW_CONTRAST | 7 | grey captions on coloured backgrounds were labelled by *intended* ΔE, not achieved; several were in spec (label error, fixed in the v3 builder: `caption_colour`) |
+| THIN_LINES | 3 | stroke measurement on a luminance mask; fixed for free-standing strokes by the colour-region rule |
+| CONTENT_IN_SAFE_ZONE | 3 | antialiased illustration edges fall under the foreground threshold at 1.1× |
 | TEXT_TOO_SMALL | 1 | — |
 
-The next engineering step is the one the evidence points at: **measure strokes and
-contrast on colour clusters rather than on a luminance threshold**, the same element
-definition the scene document already uses. Then a third real set, fresh again.
+With the caption labels corrected, the spent sets read 4.1% (v1) and 3.1% (v2).
 
 ## 6. What this is not
 

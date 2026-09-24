@@ -372,6 +372,7 @@ before the first sweep.)*
 | 2026-09-23 | — | scene + fix + narration spike | model narrates, never measures; blocked on an API key for the live run. `capstone/docs/scene-narration.md` |
 | 2026-09-24 | — | real artwork + DBNet + Ollama | OQ-4 decided by measurement: DBNet (PaddleOCR) over components. Unseen real art 6.2% false-approve; not yet shippable. `capstone/docs/real-art.md` |
 | 2026-09-24 | — | **scope reset** | proof generation and LLM narration parked: brief §11 non-goals. Effort back on the one metric (real-art false approves), then CI gate, review queue, red team |
+| 2026-09-24 | — | sealed round 2 + gate + queue + red team | real_art_v3 1.4% false-approve (0.9% label-corrected), holdout_v5 0.0% PASS, shifted_v5 1.5%. All remaining misses are safe-zone. CI gate now runs the CV decider on synthetic (SC-002) and real art (regression). Review queue built. Red team: 12 attacks, 2 known gaps (embedded hairline, upscaled art). `capstone/docs/real-art.md`, limits.md §14–15 |
 
 ---
 

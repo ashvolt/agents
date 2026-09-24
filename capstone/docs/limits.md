@@ -236,15 +236,21 @@ the decider anyway. Both are now blocked, but the class of failure is structural
 defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
 check, and scaling a design — even to 97% — is only acceptable because it is a proof.
 
-## 14. Real artwork does not yet meet SC-002 — added 2026-09-24
+## 14. Real artwork does not yet meet SC-002 — added 2026-09-24, updated same day
 
-On 450 unseen real illustrations laid out as sticker uploads (real-art.md), the CV
-decider scores 78.1% auto-approve with **6.2% false approves** (95% upper bound 9.4%),
-against a 1% limit. Synthetic holdouts pass (0.0% on 600) and a shifted synthetic set
-narrowly fails (1.4%). The remaining real-art misses are low-contrast captions (7), thin
-lines (3), safe-zone intrusions at 1.1x (3) and one small-text case. **The synthetic
-headline should not be quoted without this one next to it.**
+Two sealed rounds on unseen real illustrations laid out as sticker uploads (real-art.md):
 
+- real_art_v2: 78.1% auto-approve, **6.2%** false approves (95% upper bound 9.4%).
+- real_art_v3, after the colour-region stroke rule: 79.6%, **1.4%** (upper bound 2.9%).
+  Diagnosed afterwards: 1 of the 3 is a label error, so 0.9% corrected. The upper bound
+  is still above 1%.
+
+Synthetic holdouts pass in both rounds (0.0% on 600). The shifted synthetic set fails in
+both (1.4%, 1.5%), always on safe-zone intrusions at the top or bottom edge. **Every
+remaining real-art and shifted miss is a safe-zone intrusion:** dark ink on a dark
+background under-read by the brightness-based margin mask, or a 1.1× intrusion lost in
+anti-aliasing at low DPI. **The synthetic headline should not be quoted without the
+real-art number next to it.**
 
 ## 15. Red-team gaps — added 2026-09-24
 
