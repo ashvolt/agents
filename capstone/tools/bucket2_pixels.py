@@ -53,6 +53,16 @@ REGION_MIN_SHARE = 0.0005
 REGION_MIN_PX = 30
 REGION_MERGE_DELTA_E = 10.0
 
+# The brightness mask never demands more than this much luminance difference from the
+# background, however dark the darkest ink in the file is. See `ink_mask`.
+STROKE_MASK_CAP = 24
+
+# A colour-region component counts as a free-standing stroke when at least this share of
+# the pixels just around it are background. Details inside an illustration (a highlight
+# in a face) are surrounded by other ink and are not what a line-weight rule is for:
+# measuring every region took real-art auto-approval from 78% to 32% (real-art.md).
+FREE_STANDING_BG_SHARE = 0.8
+
 # Faint-text search: the image's difference from its background is multiplied by this
 # before a second detection pass. A line that only appears after amplification is, by
 # definition, low-contrast text.
@@ -355,50 +365,109 @@ def measure_min_stroke_px(
     legitimately thinner than the artwork minimum at small sizes, and counting them here
     would flag every file carrying small type as a thin-line defect.
     """
+    candidates = [
+        v
+        for v in (
+            _luminance_min_stroke(image, exclude, dpi),
+            _free_standing_min_stroke(image, exclude, dpi),
+        )
+        if v is not None
+    ]
+    return min(candidates) if candidates else None
+
+
+def _excluded(shape: tuple[int, ...], exclude: list[TextBox] | None) -> np.ndarray:
+    mask = np.zeros(shape[:2], dtype=bool)
+    for box in exclude or []:
+        pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
+        mask[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = True
+    return mask
+
+
+def _luminance_min_stroke(
+    image: Image.Image, exclude: list[TextBox] | None, dpi: float | None
+) -> float | None:
+    """Thinnest stroke on a brightness mask: every ink element, embedded details included."""
+    mask = ink_mask(image, cap=STROKE_MASK_CAP)
+    if mask.size == 0 or not mask.any():
+        return None
+    mask &= ~_excluded(mask.shape, exclude)
+    if not mask.any():
+        return None
+
+    thickness = np.minimum(
+        _run_lengths_along_axis(mask, axis=1), _run_lengths_along_axis(mask, axis=0)
+    )
+    total_ink = int(mask.sum())
+    min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
+    min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
+
+    thinnest: float | None = None
+    for x0, y0, x1, y1 in _label_runs(mask):
+        sub_mask = mask[y0:y1, x0:x1]
+        area = int(sub_mask.sum())
+        if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
+            continue
+        values = thickness[y0:y1, x0:x1][sub_mask]
+        if values.size == 0:
+            continue
+        median = float(np.median(values))
+        if median > 0 and (thinnest is None or median < thinnest):
+            thinnest = median
+
+    if thinnest is None:
+        # Everything was below the component floor; fall back to the global minimum so a
+        # file made entirely of hairlines is not silently reported as clean.
+        values = thickness[mask]
+        thinnest = float(values.min()) if values.size else None
+    return thinnest
+
+
+def _free_standing_min_stroke(
+    image: Image.Image, exclude: list[TextBox] | None, dpi: float | None
+) -> float | None:
+    """Thinnest free-standing stroke, measured on colour regions.
+
+    Catches what brightness cannot see - a grey rule on navy differs in colour, barely
+    in luminance - while ignoring details embedded in other ink.
+    """
     regions, background = colour_regions(image)
     if regions.size == 0:
         return None
-    excluded = np.zeros(regions.shape, dtype=bool)
-    for box in exclude or []:
-        pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
-        excluded[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = True
-
+    excluded = _excluded(regions.shape, exclude)
     ink = (regions != background) & ~excluded
     total_ink = int(ink.sum())
     if total_ink == 0:
         return None
     min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
     min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
+    height, width = regions.shape
+    ring_kernel = np.ones((3, 3), np.uint8)
 
-    # Strokes are measured per colour region, not on a brightness threshold. A grey rule
-    # on navy differs in colour far more than in luminance; a luminance mask never saw it
-    # (real-art.md). And a boundary between two inks is no longer a band of its own.
     thinnest: float | None = None
-    global_min: float | None = None
     for region in np.unique(regions[ink]).tolist():
         mask = (regions == region) & ~excluded
         thickness = np.minimum(
             _run_lengths_along_axis(mask, axis=1), _run_lengths_along_axis(mask, axis=0)
         )
-        region_min = float(thickness[mask].min())
-        global_min = region_min if global_min is None else min(global_min, region_min)
-        count, _labels, stats, _ = cv2.connectedComponentsWithStats(
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(
             mask.astype(np.uint8), connectivity=8
         )
         for idx in range(1, count):
             x0, y0, w, h, area = (int(v) for v in stats[idx])
             if area < min_component_px and max(w, h) < min_length_px:
                 continue
-            component = _labels[y0 : y0 + h, x0 : x0 + w] == idx
-            values = thickness[y0 : y0 + h, x0 : x0 + w][component]
+            ya, yb = max(0, y0 - 1), min(height, y0 + h + 1)
+            xa, xb = max(0, x0 - 1), min(width, x0 + w + 1)
+            component = labels[ya:yb, xa:xb] == idx
+            ring = cv2.dilate(component.astype(np.uint8), ring_kernel).astype(bool) & ~component
+            around = regions[ya:yb, xa:xb][ring]
+            if around.size == 0 or (around == background).mean() < FREE_STANDING_BG_SHARE:
+                continue
+            values = thickness[ya:yb, xa:xb][component]
             median = float(np.median(values)) if values.size else 0.0
             if median > 0 and (thinnest is None or median < thinnest):
                 thinnest = median
-
-    if thinnest is None:
-        # Everything was below the component floor; fall back to the global minimum so a
-        # file made entirely of hairlines is not silently reported as clean.
-        thinnest = global_min
     return thinnest
 
 
