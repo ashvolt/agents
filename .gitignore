@@ -29,6 +29,8 @@ capstone/data/shifted_v3/
 # Real artwork is fetched, never committed: python -m capstone.data.fetch_art
 capstone/data/art_cache/
 capstone/data/real_art/
+# Live review queue (reviewer decisions are exported deliberately, not committed)
+capstone/ops/review_queue.sqlite3
 capstone/data/real_art_v2/
 capstone/data/holdout_v4/
 capstone/data/shifted_v4/
