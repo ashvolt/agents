@@ -30,11 +30,12 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from capstone.src.narrators import TOOL_NAME, AnthropicBackend, Backend, NoDraft
 from capstone.src.schemas import Verdict, VerdictType
 from capstone.tools.fixes import Fix, FixPlan
 from capstone.tools.scene import SceneDocument
 
-NARRATE_TOOL = "write_explanation"
+NARRATE_TOOL = TOOL_NAME
 
 # Below this redraw fidelity the scene is missing too much of the artwork for a text model
 # to reason about it. Synthetic flat art sits at 0.93-0.99; a photograph-like gradient
@@ -55,26 +56,7 @@ Rules:
 - Refer to elements and fixes by their ids (E3, T1, F2) in the reviewer note.
 - The customer message is plain language, no ids, no jargon beyond "bleed" and \
 "safe zone". Tell them what was fixed on their proof and what they still need to do.
-- If nothing needs the customer, say the proof is ready to approve.
-
-Call the write_explanation tool with your answer. Do not reply with plain text."""
-
-TOOL_SCHEMA: dict[str, Any] = {
-    "name": NARRATE_TOOL,
-    "description": "Submit the customer message and reviewer note for this file.",
-    "strict": True,
-    "input_schema": {
-        "type": "object",
-        "additionalProperties": False,
-        "required": ["customer_message", "reviewer_note", "cited_elements", "cited_fixes"],
-        "properties": {
-            "customer_message": {"type": "string"},
-            "reviewer_note": {"type": "string"},
-            "cited_elements": {"type": "array", "items": {"type": "string"}},
-            "cited_fixes": {"type": "array", "items": {"type": "string"}},
-        },
-    },
-}
+- If nothing needs the customer, say the proof is ready to approve."""
 
 
 class Narration(BaseModel):
@@ -232,14 +214,14 @@ def _strip_ids(text: str) -> str:
     return re.sub(r"\s*\b[ETF]\d+\b", " one element", text, count=1).replace("  ", " ")
 
 
-def narrate_with_model(
-    client: Any, model: str, scene: SceneDocument, plan: FixPlan, verdict: Verdict
+def narrate(
+    backend: Backend, scene: SceneDocument, plan: FixPlan, verdict: Verdict
 ) -> tuple[Narration, list[str]]:
-    """Ask a text model to narrate; fall back to the template if its claims do not check.
+    """Ask any backend to narrate; ship the template if its claims do not check.
 
-    Returns the narration that should ship and the problems found in the model's attempt
-    (empty if it passed). Never raises for model misbehaviour: a bad narration is a
-    fallback, not an outage.
+    Returns the narration that should ship and the problems found in the backend's
+    attempt (empty if it passed). Never raises for model misbehaviour or an unreachable
+    server: a bad narration is a fallback, not an outage.
     """
     fallback = template_narration(scene, plan, verdict)
     if verdict.verdict is VerdictType.APPROVE and not plan.fixes:
@@ -249,30 +231,23 @@ def narrate_with_model(
         # reasoning about a different image. No call; the template ships.
         return fallback, [f"scene fidelity {scene.fidelity} below {FIDELITY_FLOOR}; no call"]
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=2048,
-        system=SYSTEM_PROMPT,
-        tools=[TOOL_SCHEMA],
-        tool_choice={"type": "auto"},
-        messages=[{"role": "user", "content": user_message(scene, plan, verdict)}],
-    )
-    block = next(
-        (
-            b
-            for b in response.content
-            if getattr(b, "type", "") == "tool_use" and b.name == NARRATE_TOOL
-        ),
-        None,
-    )
-    if block is None:
-        return fallback, [f"no {NARRATE_TOOL} call (stop_reason={response.stop_reason})"]
     try:
-        narration = Narration.model_validate({**dict(block.input), "source": model})
+        draft = backend.draft(SYSTEM_PROMPT, user_message(scene, plan, verdict))
+    except NoDraft as exc:
+        return fallback, [str(exc)]
+    try:
+        narration = Narration.model_validate({**draft, "source": backend.name})
     except ValidationError as exc:
         return fallback, [f"schema: {exc.error_count()} error(s)"]
     problems = check_claims(narration, scene, plan)
     return (fallback, problems) if problems else (narration, [])
+
+
+def narrate_with_model(
+    client: Any, model: str, scene: SceneDocument, plan: FixPlan, verdict: Verdict
+) -> tuple[Narration, list[str]]:
+    """Claude via the Anthropic SDK. Kept for existing callers; see `narrate`."""
+    return narrate(AnthropicBackend(client, model), scene, plan, verdict)
 
 
 __all__ = [
@@ -281,6 +256,7 @@ __all__ = [
     "Narration",
     "SYSTEM_PROMPT",
     "check_claims",
+    "narrate",
     "facts",
     "narrate_with_model",
     "template_narration",
