@@ -399,8 +399,11 @@ def main() -> None:
     from capstone.src.deciders import make_cv_decider_triage
 
     out = Path(args.out) if args.out else Path(tempfile.mkdtemp(prefix="redteam-"))
+    from capstone.tools import text_detect
+
     results = run(build(out), make_cv_decider_triage())
     text, ok = report(results)
+    print(f"text detector: {type(text_detect._DEFAULT).__name__}")
     print(text)
     if args.json:
         Path(args.json).write_text(

@@ -18,6 +18,7 @@ approve.
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -342,6 +343,14 @@ def _default_detector() -> TextDetector:
     try:
         return DBNetDetector()
     except ImportError:
+        # Loud on purpose: the red-team run that first hit this reported two false
+        # approvals that were the fallback's, not the shipped pipeline's.
+        warnings.warn(
+            "rapidocr_onnxruntime is not installed: text detection fell back to the "
+            "connected-component detector, which is not fit for real artwork",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         return ConnectedComponentDetector()
 
 
