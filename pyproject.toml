@@ -36,6 +36,13 @@ dev = [
 data = [
     "cairosvg>=2.7",
 ]
+# The local web demo (capstone/demo): upload a file, see the verdict. Not needed to run
+# the pipeline or the evals.
+demo = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+]
 
 [tool.setuptools.packages.find]
 include = ["shared*", "levels*", "capstone*"]
