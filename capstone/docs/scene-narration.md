@@ -170,19 +170,36 @@ re-runs.** Each was fixed by tightening what counts as verified, never by loosen
 threshold. Item 7 is the uncomfortable one: no automated check found it; a picture did.
 Any production version needs a human to look at a sample of auto-corrected proofs.
 
-## 5. Blockers — where I need you
+## 5. Local model (Ollama) and blockers — updated 2026-09-24
 
-| Blocker | Why it matters | What unblocks it |
-|---|---|---|
-| **No API key in this environment** | The narration model has never run. Everything above is measured without it. | A key in `.env` (never committed). Then `pytest -m integration` runs the real-model claim-check test, and a ~$0.50 sweep measures how often Haiku's narration passes the check vs. falls back. |
-| **Hugging Face is blocked by the network policy** | Rules out trying a small *local* model (e.g. a 0.5-3B instruct model on CPU) as the narrator. | Allow `huggingface.co` in the environment's network settings, or accept Haiku/Jev only. |
-| **No Jev access** | Jev returns decisions, not prose, so it cannot narrate — but it could replace the decider (decider.md §7). | Early-access key. |
-| **Real artwork** | Every fidelity number assumes flat-colour art. Photos and gradients will score low — correctly routed to a human, but the share of real uploads that decompose cleanly is unknown. | A sample of real files. Unavailable under the integrity rules (PLAN.md §2). |
+The narrator is now a backend behind one checked path (`capstone/src/narrators.py`):
+Claude through the Anthropic SDK, or **any local model served by Ollama**, both judged by
+the same claim check. The Ollama backend uses the standard library (no new dependency),
+asks for schema-constrained JSON, runs at temperature 0 with an 8K context so the facts
+are never silently truncated, and treats an unreachable server as a fallback, not an
+outage. It is tested against a real HTTP server speaking Ollama's wire format.
 
-**Estimated narration cost if unblocked** (assumption, not measured): ~1,100 input +
-~300 output tokens on Haiku 4.5 ≈ **$0.0026 per narrated file**. Only files that are
-not auto-approved need one (~47% of the synthetic mix), so ~$5/day at 4,000 files/day,
-against ~$26-70/day for the vision call it replaces.
+To benchmark local models (on any machine with Ollama):
+
+```bash
+ollama pull qwen2.5:3b && ollama pull llama3.2:3b && ollama pull phi4-mini
+python -m capstone.evals.narration_eval --backend ollama \
+    --model qwen2.5:3b --model llama3.2:3b --model phi4-mini --out drafts.jsonl
+```
+
+It reports each model's **pass rate** (share of narrations that survive the claim check),
+fallback reasons and latency, and writes every draft for a human to read.
+
+| Blocker | Status |
+|---|---|
+| **Ollama blocked here** | `ollama.com` and `registry.ollama.ai` are denied by this environment's network policy, so neither the binary nor weights can be fetched. Allow both hosts in the environment's network settings, or run the benchmark on your machine. |
+| Jev | Deferred by decision (early access); the decider slot is ready for it. |
+| Real artwork | Now measured: [real-art.md](real-art.md). Real *customer* uploads are still unavailable. |
+
+**Estimated cost if a hosted model narrates** (assumption, not measured): ~1,100 input +
+~300 output tokens on Haiku 4.5 ≈ $0.0026 per narrated file. A local model moves that to
+hardware already owned; the benchmark's latency column decides whether it can sit in the
+upload path.
 
 ## 6. Two properties that come free
 

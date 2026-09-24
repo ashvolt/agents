@@ -57,9 +57,10 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
 | [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
 | [scene-narration.md](capstone/docs/scene-narration.md) | **Spike.** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
+| [real-art.md](capstone/docs/real-art.md) | **Reality check.** 450 real illustrations as sticker uploads: what broke, what was fixed, and the unseen-art score (6.2% false-approve — not yet shippable) |
 | [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
-| [limits.md](capstone/docs/limits.md) | Thirteen things this system cannot do, most found by measuring |
+| [limits.md](capstone/docs/limits.md) | Fourteen things this system cannot do, most found by measuring |
 | [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
 | [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
 | [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
@@ -81,3 +82,4 @@ spend for the project: ~$4.30.
 | 2026-09-23 | **Holdout scored once: 82.0% auto-approve, 0 false approves, both arms.** Tool loop measured as worse AND costlier than a single call. Model contributes one extra detection per 312 files. See [results.md](capstone/docs/results.md). |
 | 2026-09-23 | **Vision model removed.** OpenCV margin features + a 5-feature logistic decider: 84.4% / 0.0% and 84.6% / 0.5% on two fresh sealed sets, $0/file. The model-free rules breach SC-002 at n=600 (2.4%) — the earlier pass was luck. See [decider.md](capstone/docs/decider.md). |
 | 2026-09-23 | **Scene documents + verified fixes (spike).** Redraw-from-text fidelity 0.975 median; 23-31% of rejected files become print-ready proofs with no human; every proof re-verified and structure-checked; narration claim-checked. Live model run blocked: no API key here. See [scene-narration.md](capstone/docs/scene-narration.md). |
+| 2026-09-24 | **Real artwork.** OpenMoji/Twemoji/Noto as sticker uploads; the synthetic results did not transfer (7.8% false-approve). DBNet text detection, line-level contrast, stroke-mask fixes and a cut-line guard: synthetic holdout 86.7% / 0.0%, unseen real art 78.1% / 6.2%. Local-model narration via Ollama built and tested; blocked here by network policy. See [real-art.md](capstone/docs/real-art.md). |

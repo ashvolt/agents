@@ -236,3 +236,12 @@ the decider anyway. Both are now blocked, but the class of failure is structural
 defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
 check, and scaling a design — even to 97% — is only acceptable because it is a proof.
 
+## 14. Real artwork does not yet meet SC-002 — added 2026-09-24
+
+On 450 unseen real illustrations laid out as sticker uploads (real-art.md), the CV
+decider scores 78.1% auto-approve with **6.2% false approves** (95% upper bound 9.4%),
+against a 1% limit. Synthetic holdouts pass (0.0% on 600) and a shifted synthetic set
+narrowly fails (1.4%). The remaining real-art misses are low-contrast captions (7), thin
+lines (3), safe-zone intrusions at 1.1x (3) and one small-text case. **The synthetic
+headline should not be quoted without this one next to it.**
+

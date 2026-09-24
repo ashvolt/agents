@@ -345,9 +345,9 @@ one squashed commit. Do not tidy the history.
    runbook? A live URL is more impressive and adds a day.
 3. **Job posting** — not available yet. If it surfaces, re-tune the plan to the stack and
    signals it screens for.
-4. **Text detector choice** — PaddleOCR, Tesseract or CRAFT for `TEXT_TOO_SMALL`. Decided
-   by measured recall at small point sizes, which is both the regime that matters and the
-   one detectors are weakest in.
+4. ~~**Text detector choice**~~ — **decided 2026-09-24: PaddleOCR's DBNet** (via
+   `rapidocr_onnxruntime`, CPU, model bundled). Found text in 438/442 real-art files vs
+   311 for the component detector. See capstone/docs/real-art.md.
 
 *(Resolved: API budget — see section 8. Project ceiling is $50-100.)*
 *(Resolved 2026-09-21: vision — every current Claude model accepts image input. Per-image
@@ -370,6 +370,7 @@ before the first sweep.)*
 | 2026-09-23 | — | **vision model removed** | OpenCV features + logistic decider pass two fresh sealed sets at $0/file; rules-only breaches SC-002 at n=600. `capstone/docs/decider.md` |
 | 2026-09-23 | — | deps added | `opencv-python-headless`, `scikit-learn`. Reasons in §11 |
 | 2026-09-23 | — | scene + fix + narration spike | model narrates, never measures; blocked on an API key for the live run. `capstone/docs/scene-narration.md` |
+| 2026-09-24 | — | real artwork + DBNet + Ollama | OQ-4 decided by measurement: DBNet (PaddleOCR) over components. Unseen real art 6.2% false-approve; not yet shippable. `capstone/docs/real-art.md` |
 
 ---
 

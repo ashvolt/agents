@@ -6,6 +6,12 @@
 > **Unofficial project.** Not affiliated with Sticker Mule. All artwork is synthetic and
 > generated locally. Every number here is an upper bound on real uploads (limits.md §1).
 
+> **Update 2026-09-24 — read [real-art.md](real-art.md) next to this page.** The text
+> detector is now DBNet, the pixel checks changed, and crossing the cut line became a guard.
+> Re-scored on fresh sets: synthetic holdout_v4 **86.7% / 0.0%** (pass), shifted_v4
+> **85.8% / 1.4%** (narrow fail), unseen real art **78.1% / 6.2%** (fail). The numbers
+> below are the synthetic-only results as they stood on 2026-09-23.
+
 ---
 
 ## 1. Headline
