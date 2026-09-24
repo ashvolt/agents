@@ -159,14 +159,20 @@ def build(n: int, seed: int, out_name: str, exclude: list[Path]) -> Path:
         for p in plan_cases(n, seed=seed, clean_fraction=1.0)
     ]
     rows = []
+    skipped: list[str] = []
     for i, plan in enumerate(plans):
         rng = random.Random(plan.seed)
         style = STYLES[i % len(STYLES)]
-        svg = rng.choice(files[style])
-        while f"{style}/{svg.name}" in used:
+        while True:
             svg = rng.choice(files[style])
-        used.add(f"{style}/{svg.name}")
-        base, dpi, _ = render_real(plan, svg, plan.seed)
+            if f"{style}/{svg.name}" in used:
+                continue
+            used.add(f"{style}/{svg.name}")
+            try:
+                base, dpi, _ = render_real(plan, svg, plan.seed)
+                break
+            except Exception as exc:  # noqa: BLE001 - a few library SVGs crash cairosvg
+                skipped.append(f"{style}/{svg.name}: {type(exc).__name__}")
         process = names[i % len(names)]
         img, ext, save_kw, perts = PROCESSES[process](base, plan, dpi, rng)
         path = out_dir / f"{plan.case_id}.{ext}"
@@ -186,6 +192,8 @@ def build(n: int, seed: int, out_name: str, exclude: list[Path]) -> Path:
     with manifest.open("w", encoding="utf-8") as fh:
         for row in rows:
             fh.write(json.dumps(row) + "\n")
+    for line in skipped:
+        print(f"skipped unrenderable art {line}")
     return manifest
 
 
