@@ -253,6 +253,13 @@ def measure_margin_objects(
             continue
         if max(spans) >= FULL_EDGE_SPAN:
             protrusions += _band_bumps(labels, idx, sides, inset_x, inset_y, bump_px)
+            for depth, span, embedded_area in _band_embedded(
+                arr, labels, idx, background, inset_x, inset_y, safe_px
+            ):
+                objects += 1
+                area_in_margin += embedded_area
+                if depth > deepest:
+                    deepest, deepest_span = depth, span
             continue
         best_depth = max(near)
         best_span = spans[near.index(best_depth)]
@@ -270,6 +277,63 @@ def measure_margin_objects(
         "safe_zone_px": round(safe_px, 2),
         "band_protrusions": protrusions,
     }
+
+
+def _band_embedded(
+    arr: np.ndarray,
+    labels: np.ndarray,
+    idx: int,
+    background: np.ndarray,
+    inset_x: float,
+    inset_y: float,
+    safe_px: float,
+) -> list[tuple[float, float, int]]:
+    """Elements of another colour sitting inside border band `idx`: (depth, span, area).
+
+    The foreground mask is one bit, so a logo drawn over a border band merges with it
+    and is filed as background. `_band_bumps` catches one that sticks out past the band;
+    one wholly inside it was invisible (shifted_v4/v5, once the generator stopped drawing
+    those marks in the band's own colour). Band pixels that are not the band's colour,
+    and are thicker than an antialiased edge, are measured as margin objects in their
+    own right.
+
+    A band of the *same* colour as the element stays undecidable (red-team RT11).
+    """
+    ys, xs = np.nonzero(labels == idx)
+    if ys.size == 0:
+        return []
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    inside = labels[y0:y1, x0:x1] == idx
+    region = arr[y0:y1, x0:x1].astype(np.int16)
+    band = _background_rgb(arr[ys, xs][None, :, :]).astype(np.int16)
+    off_band = np.abs(region - band).max(axis=2) > FOREGROUND_CHANNEL_DELTA
+    embedded = (inside & off_band).astype(np.uint8)
+    # Antialiasing between band and page is a fringe a pixel or two wide; an element is
+    # solid. An opening removes the fringe and keeps the element.
+    embedded = cv2.morphologyEx(embedded, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    if not embedded.any():
+        return []
+
+    height, width = labels.shape
+    min_area = max(MARGIN_MIN_AREA_PX, int((0.2 * safe_px) ** 2))
+    count, _sub, stats, _ = cv2.connectedComponentsWithStats(embedded, connectivity=8)
+    found = []
+    for j in range(1, count):
+        ex, ey, ew, eh, area = (int(v) for v in stats[j])
+        if area < min_area:
+            continue
+        ex, ey = ex + x0, ey + y0
+        sides = (
+            (ex, inset_x, eh / height),
+            (width - (ex + ew), inset_x, eh / height),
+            (ey, inset_y, ew / width),
+            (height - (ey + eh), inset_y, ew / width),
+        )
+        near = [((i - d) / safe_px, span) for d, i, span in sides if d < i]
+        if near:
+            depth, span = max(near)
+            found.append((depth, span, area))
+    return found
 
 
 def _band_bumps(

@@ -371,3 +371,24 @@ def test_artwork_sharing_a_text_box_is_not_excluded() -> None:
     result = margin(img, exclude=[box])
     assert result["margin_objects"] >= 1
     assert result["margin_depth_max"] > 1.0
+
+
+def test_logo_inside_a_border_band_is_measured() -> None:
+    # shifted_v4/v5: a mark wholly inside a full-width band merged with it on the one-bit
+    # mask and was filed as background. A different colour is now measured.
+    img = canvas()
+    d = ImageDraw.Draw(img)
+    band = round(BLEED_PX * 1.5)
+    d.rectangle((0, H - band, W, H), fill=(96, 96, 96))
+    d.rectangle((450, H - band, 510, H), fill=(196, 48, 40))
+    result = margin(img)
+    assert result["margin_objects"] == 1
+    assert result["margin_depth_max"] > 1.0
+
+
+def test_plain_band_with_antialiased_edge_has_no_embedded_objects() -> None:
+    img = canvas()
+    band = round(BLEED_PX * 1.5)
+    ImageDraw.Draw(img).rectangle((0, H - band, W, H), fill=(96, 96, 96))
+    img = img.resize((W * 2, H * 2)).resize((W, H), Image.LANCZOS)  # soften the edge
+    assert margin(img)["margin_objects"] == 0

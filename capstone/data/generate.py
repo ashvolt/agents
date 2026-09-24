@@ -58,6 +58,9 @@ GRADED_CODES = (
     IssueCode.TEXT_TOO_SMALL,
     IssueCode.CONTENT_IN_SAFE_ZONE,
 )
+# A logo colour for a safe-zone mark that lands inside a grey border band.
+IN_BAND_MARK = (196, 48, 40)
+
 BINARY_CODES = (
     IssueCode.WRONG_COLOR_MODE,
     IssueCode.UNINTENDED_TRANSPARENCY,
@@ -323,7 +326,15 @@ def render(plan: CasePlan) -> tuple[Image.Image, float]:
         else:  # "left" - the original placement, unchanged
             x0 = trim[0] + safe_px - intrusion
             box = (x0, mid_y[0], x0 + mark_w, mid_y[1])
-        draw.rectangle(box, fill=accent)
+        # A top or bottom mark can land inside the accent border band. Drawn in the band's
+        # colour it vanished: the file was pixel-identical to a clean one, and every
+        # shifted_v4/v5 "false approve" was one of these. It is drawn as a distinct logo
+        # colour instead (the body ink is a grey too close to the band's to be a fair
+        # test). Left and right marks never meet a band and keep the accent colour, so
+        # those files are unchanged.
+        band_h = int(bleed_px * 1.5) or 1
+        in_band = box[1] < band_h or box[3] > px_h - band_h
+        draw.rectangle(box, fill=IN_BAND_MARK if in_band else accent)
 
     return img, dpi
 
