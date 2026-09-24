@@ -41,6 +41,15 @@ STROKE_MIN_LENGTH_IN = 0.08
 # measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
 TEXT_EXCLUSION_PAD = 0.15
 
+# The stroke mask never demands more than this much luminance difference from the
+# background, however dark the darkest ink in the file is. See `ink_mask`.
+STROKE_MASK_CAP = 24
+
+# Faint-text search: the image's difference from its background is multiplied by this
+# before a second detection pass. A line that only appears after amplification is, by
+# definition, low-contrast text.
+FAINT_TEXT_GAIN = 4.0
+
 # Opposing-edge ink asymmetry above which the keep-out margin is called suspicious.
 #
 # Tuned on the 312-case TRAIN split only, by sweeping it against the false-approve rate:
@@ -241,6 +250,30 @@ def measure_text_contrast(
     return worst
 
 
+def find_faint_text(image: Image.Image, known: list[TextBox]) -> list[TextBox]:
+    """Text lines visible only after amplifying the image's difference from its background.
+
+    A caption pale enough to be a contrast defect can also be too pale for the detector,
+    and if the detector found *anything else* — part of an illustration — the no-text guard
+    stays quiet and the caption is never measured (5 of 14 remaining false approves on
+    real art). Amplify, detect again, and keep the lines the first pass missed; the
+    contrast check then measures them on the original pixels.
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.float32)
+    if arr.size == 0:
+        return []
+    flat = arr.reshape(-1, 3).astype(np.int32)
+    keys = ((flat >> 4) * np.array([256, 16, 1])).sum(axis=1)
+    background = flat[keys == int(np.bincount(keys).argmax())].mean(axis=0)
+    boosted = np.clip(background + FAINT_TEXT_GAIN * (arr - background), 0, 255).astype(np.uint8)
+    found = detect_text(Image.fromarray(boosted))
+
+    def overlaps(a: TextBox, b: TextBox) -> bool:
+        return a.x0 < b.x1 and b.x0 < a.x1 and a.y0 < b.y1 and b.y0 < a.y1
+
+    return [box for box in found if not any(overlaps(box, k) for k in known)]
+
+
 def check_contrast(
     image: Image.Image, spec: ProductSpec, boxes: list[TextBox] | None = None
 ) -> list[Issue]:
@@ -314,7 +347,7 @@ def measure_min_stroke_px(
     legitimately thinner than the artwork minimum at small sizes, and counting them here
     would flag every file carrying small type as a thin-line defect.
     """
-    mask = ink_mask(image)
+    mask = ink_mask(image, cap=STROKE_MASK_CAP)
     if mask.size == 0 or not mask.any():
         return None
 
@@ -599,7 +632,7 @@ def analyse_pixels(
     boxes = detect_text(image)
     issues: list[Issue] = []
     issues += check_transparency(image, spec)
-    issues += check_contrast(image, spec, boxes)
+    issues += check_contrast(image, spec, boxes + find_faint_text(image, boxes))
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
     issues += check_safe_zone(image, spec, dpi)
@@ -631,5 +664,6 @@ __all__ = [
     "measure_contrast",
     "measure_min_stroke_px",
     "measure_text_contrast",
+    "find_faint_text",
     "measure_safe_zone",
 ]

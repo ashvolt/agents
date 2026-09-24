@@ -58,7 +58,8 @@ def _extract_svgs(name: str, blob: bytes, out: Path) -> int:
                 for icon, spec in data["icons"].items():
                     w, h = spec.get("width", width), spec.get("height", height)
                     svg = (
-                        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}">'
+                        f'<svg xmlns="http://www.w3.org/2000/svg" '
+                        f'xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 {w} {h}">'
                         f"{spec['body']}</svg>"
                     )
                     (out / f"{icon}.svg").write_text(svg, encoding="utf-8")

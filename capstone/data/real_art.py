@@ -193,8 +193,19 @@ def render_real(
     return img, dpi
 
 
-def build(n: int, seed: int, clean_fraction: float, out_name: str) -> Path:
+def build(
+    n: int, seed: int, clean_fraction: float, out_name: str, exclude: list[Path] | None = None
+) -> Path:
+    """Render the set. `exclude` lists earlier manifests whose illustrations must not be
+    reused: a validation set that repeats artwork the checks were diagnosed on is not a
+    validation set (per-case seeds overlap between nearby base seeds, so without this a
+    second set shared 175 of 442 illustrations with the first)."""
     files = _art_files()
+    used = {
+        json.loads(line)["art"]
+        for manifest in exclude or []
+        for line in manifest.open(encoding="utf-8")
+    }
     out_dir = ROOT / out_name
     manifest = ROOT / f"{out_name}.jsonl"
     plans = plan_cases(n, seed=seed, clean_fraction=clean_fraction)
@@ -203,6 +214,9 @@ def build(n: int, seed: int, clean_fraction: float, out_name: str) -> Path:
         rng = random.Random(plan.seed)
         style = STYLES[i % len(STYLES)]
         svg = rng.choice(files[style])
+        while f"{style}/{svg.name}" in used:
+            svg = rng.choice(files[style])
+        used.add(f"{style}/{svg.name}") if exclude else None
         img, dpi = render_real(plan, svg, plan.seed)
         path = save_case(img, dpi, plan, out_dir)
         label = GoldLabel(case_id=plan.case_id, perturbations=plan.perturbations, split=plan.split)
@@ -229,8 +243,15 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=20260924)
     ap.add_argument("--clean-fraction", type=float, default=0.60)
     ap.add_argument("--out", type=str, default="real_art")
+    ap.add_argument(
+        "--exclude",
+        action="append",
+        default=None,
+        help="manifest whose illustrations must not be reused; repeatable",
+    )
     args = ap.parse_args()
-    manifest = build(args.n, args.seed, args.clean_fraction, args.out)
+    exclude = [ROOT / m for m in args.exclude] if args.exclude else None
+    manifest = build(args.n, args.seed, args.clean_fraction, args.out, exclude)
     rows = [json.loads(line) for line in manifest.open(encoding="utf-8")]
     clean = sum(1 for r in rows if not any(p["magnitude"] > 1 for p in r["label"]["perturbations"]))
     print(f"wrote {len(rows)} cases -> {manifest}  ({clean} clean)")

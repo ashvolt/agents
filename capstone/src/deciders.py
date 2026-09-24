@@ -104,6 +104,7 @@ def _guard(features: ArtworkFeatures) -> tuple[IssueCode, str] | None:
       nearest pixel, so the true width could sit on either side (limits.md S4). On the
       train split this is exactly one THIN_LINES defect at 1.1x and two clean files at
       0.9x, all measuring 1.00x. No feature separates them, because the pixels do not.
+    - **An element past the cut line** (margin depth above 1.0). Geometry, not judgement.
     - **An element merged into a background band.** Its outer edge is inside the band, so
       how far it reaches toward the blade is not in the pixels (features.py
       `_band_bumps`). Found on the shifted holdout, where it hid 7 of 10 top/bottom
@@ -113,6 +114,15 @@ def _guard(features: ArtworkFeatures) -> tuple[IssueCode, str] | None:
         return (
             IssueCode.TEXT_TOO_SMALL,
             "text detector found no text; its misses cannot be told from absence",
+        )
+    if features.margin_depth_max > 1.0:
+        # Past the trim line is a measurement, not a judgement. Left to the model, it was
+        # learned from synthetic "clean" files whose caption runs off the canvas (a label
+        # flaw, limits.md S11), and the refit approved two real intrusions at 1.1x.
+        return (
+            IssueCode.CONTENT_IN_SAFE_ZONE,
+            f"an element reaches {features.margin_depth_max:.2f} safe-zone widths into the "
+            "margin, past the cut line",
         )
     if features.band_protrusions:
         return (

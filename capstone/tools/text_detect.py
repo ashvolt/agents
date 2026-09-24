@@ -78,7 +78,9 @@ class TextDetector(Protocol):
 # --------------------------------------------------------------------------------------
 
 
-def ink_mask(image: Image.Image, threshold_ratio: float = 0.55) -> np.ndarray:
+def ink_mask(
+    image: Image.Image, threshold_ratio: float = 0.55, cap: int | None = None
+) -> np.ndarray:
     """Boolean mask of pixels that differ from the dominant (background) luminance.
 
     Threshold is relative to the observed spread rather than absolute, so it survives a
@@ -95,7 +97,14 @@ def ink_mask(image: Image.Image, threshold_ratio: float = 0.55) -> np.ndarray:
     spread = int(deviation.max())
     if spread < 8:  # effectively a flat image; nothing to detect
         return np.zeros_like(grey, dtype=bool)
-    return deviation >= max(6, spread * threshold_ratio)
+    threshold = max(6, spread * threshold_ratio)
+    if cap is not None:
+        # Never demand more than `cap` levels of difference. A relative threshold alone
+        # hides mid-tone elements whenever the file also holds near-black ink: on real
+        # artwork with dark outlines, a mid-grey hairline rule fell under 55% of the
+        # spread and was never measured (real-art.md).
+        threshold = min(threshold, max(6, cap))
+    return deviation >= threshold
 
 
 def _label_runs(mask: np.ndarray) -> list[tuple[int, int, int, int]]:
