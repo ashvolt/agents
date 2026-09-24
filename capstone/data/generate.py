@@ -109,6 +109,24 @@ def required_canvas_inches(spec: ProductSpec, order: OrderMetadata) -> tuple[flo
     )
 
 
+def aspect_base_px_w(
+    spec: ProductSpec, order: OrderMetadata, bleed_in: float, px_w: int, px_h: int
+) -> int:
+    """The width an ASPECT_MISMATCH stretch is applied to.
+
+    A label's aspect magnitude is deviation / tolerance *against the canvas the spec
+    requires* (check_aspect). When bleed is non-standard, including in-spec extra bleed,
+    the canvas already has a different ratio, and stretching it made the label wrong: a
+    1.1x stretch on a 2x-bleed canvas measured 0.3x (real_art_v3 case-00425). So with
+    non-standard bleed, start from the width that gives the spec's ratio at this height.
+    With standard bleed this returns `px_w` unchanged, so those files stay byte-identical.
+    """
+    if bleed_in == spec.bleed_in:
+        return px_w
+    cw, ch = required_canvas_inches(spec, order)
+    return round(px_h * cw / ch)
+
+
 def _pt_to_px(pt: float, dpi: float) -> float:
     return pt / PT_PER_INCH * dpi
 
@@ -218,7 +236,8 @@ def render(plan: CasePlan) -> tuple[Image.Image, float]:
     # --- ASPECT_MISMATCH ------------------------------------------------------------
     if plan.has(IssueCode.ASPECT_MISMATCH):
         deviation = spec.aspect_tolerance * plan.magnitude_for(IssueCode.ASPECT_MISMATCH)
-        px_w = max(8, round(px_w * (1.0 + deviation)))
+        base_w = aspect_base_px_w(spec, order, bleed_in, px_w, px_h)
+        px_w = max(8, round(base_w * (1.0 + deviation)))
 
     img = Image.new("RGB", (px_w, px_h), BACKGROUND)
     draw = ImageDraw.Draw(img)

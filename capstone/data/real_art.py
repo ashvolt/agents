@@ -40,6 +40,7 @@ from PIL import Image, ImageDraw, ImageFont
 from capstone.data.generate import (
     CasePlan,
     _pt_to_px,
+    aspect_base_px_w,
     delta_e76,
     foreground_at_delta_e,
     plan_cases,
@@ -149,12 +150,9 @@ def render_real(
     px_w = max(8, round(canvas_w_in * dpi))
     px_h = max(8, round(canvas_h_in * dpi))
     if plan.has(IssueCode.ASPECT_MISMATCH):
-        px_w = max(
-            8,
-            round(
-                px_w * (1.0 + spec.aspect_tolerance * plan.magnitude_for(IssueCode.ASPECT_MISMATCH))
-            ),
-        )
+        base_w = aspect_base_px_w(spec, order, bleed_in, px_w, px_h)
+        deviation = spec.aspect_tolerance * plan.magnitude_for(IssueCode.ASPECT_MISMATCH)
+        px_w = max(8, round(base_w * (1.0 + deviation)))
 
     background = WHITE if rng.random() < 0.6 else rng.choice(BRAND)
     img = Image.new("RGB", (px_w, px_h), background)
