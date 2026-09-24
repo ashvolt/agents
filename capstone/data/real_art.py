@@ -250,13 +250,21 @@ def build(
     for i, plan in enumerate(plans):
         rng = random.Random(plan.seed)
         style = STYLES[i % len(STYLES)]
-        svg = rng.choice(files[style])
-        while f"{style}/{svg.name}" in used:
+        while True:
             svg = rng.choice(files[style])
-        used.add(f"{style}/{svg.name}") if exclude else None
-        img, dpi, achieved_de = render_real(
-            plan, svg, plan.seed, legacy_grey_captions=legacy_grey_captions
-        )
+            while f"{style}/{svg.name}" in used:
+                svg = rng.choice(files[style])
+            used.add(f"{style}/{svg.name}") if exclude else None
+            try:
+                img, dpi, achieved_de = render_real(
+                    plan, svg, plan.seed, legacy_grey_captions=legacy_grey_captions
+                )
+                break
+            except Exception as exc:  # noqa: BLE001 - a few library SVGs crash cairosvg
+                # Only ever reached by art that failed; earlier sets never hit it, so they
+                # rebuild byte-for-byte.
+                print(f"skipped unrenderable art {style}/{svg.name}: {type(exc).__name__}")
+                used.add(f"{style}/{svg.name}")
         perturbations = plan.perturbations
         if plan.has(IssueCode.LOW_CONTRAST) and not legacy_grey_captions:
             # the label records the contrast actually drawn, not the one requested
