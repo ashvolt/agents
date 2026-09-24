@@ -246,11 +246,13 @@ Two sealed rounds on unseen real illustrations laid out as sticker uploads (real
   is still above 1%.
 
 Synthetic holdouts pass in both rounds (0.0% on 600). The shifted synthetic set fails in
-both (1.4%, 1.5%), always on safe-zone intrusions at the top or bottom edge. **Every
-remaining real-art and shifted miss is a safe-zone intrusion:** dark ink on a dark
-background under-read by the brightness-based margin mask, or a 1.1× intrusion lost in
-anti-aliasing at low DPI. **The synthetic headline should not be quoted without the
-real-art number next to it.**
+both (1.4%, 1.5%). Diagnosed afterwards, every remaining miss was either a label
+artefact (an aspect stretch on a non-standard-bleed canvas; a mark drawn invisibly
+inside a same-colour border band) or artwork hidden from the margin check by text-box
+exclusion or by merging into a border band. All four are fixed, and the spent sets read
+0.0% (real-art.md §5). That is development evidence, not a result: it needs a new
+sealed set. **The synthetic headline should not be quoted without the real-art number
+next to it.**
 
 ## 15. Red-team gaps — added 2026-09-24
 

@@ -100,12 +100,32 @@ customer data and no human labelling.
 
 | Case | Label | Finding |
 |---|---|---|
-| case-00425 | aspect 1.1× (plus in-spec resolution and bleed) | **Label error.** The builder applied the 2× in-spec bleed, then stretched that canvas by 1.1× the tolerance. Against the canvas the spec requires, the file deviates 0.3× the tolerance: it is in spec, and approving it is correct. `generate.py` builds the same way and may have the same interaction. |
-| case-00400 | safe zone 2.0× | **Genuine miss.** The figure crosses the cut line on a navy background, but measured depth is 0.32. The margin mask is brightness-based, and a black outline barely differs from navy in brightness. The same colour-region move that fixed strokes applies to margins. |
-| case-00289 | safe zone 1.1× | **Genuine miss.** A 1.1× intrusion on a 72 DPI banner: the whole intrusion is under a pixel and a half and disappears into anti-aliasing. The same cause as the v2 safe-zone misses. |
+| case-00425 | aspect 1.1× (plus in-spec resolution and bleed) | **Label error.** The builder applied the 2× in-spec bleed, then stretched that canvas by 1.1× the tolerance. Against the canvas the spec requires, the file deviates 0.3× the tolerance: it is in spec, and approving it is correct. Fixed in both builders (`aspect_base_px_w`). |
+| case-00400 | safe zone 2.0× | **Genuine miss: the text detector boxed the figure as a one-glyph line**, and text boxes were blanked before margin analysis. |
+| case-00289 | safe zone 1.1× | **Genuine miss: a hand touching the caption's last letter shared its text box**, and was blanked with it. |
 
-Both genuine misses are safe-zone intrusions, and so are all three misses on shifted_v5.
-Stroke and contrast, which caused 10 of the 14 v2 misses, caused none on v3.
+*Correction:* the first write-up of this table blamed dark-on-dark contrast and
+anti-aliasing for the two genuine misses. Measuring with and without the text exclusion
+showed both are the exclusion (depths 2.04 and 1.11 once it is removed).
+
+Fixed afterwards and checked on spent sets only:
+- The margin check now removes only a text box's own colours (ink, background, and the
+  blend between them), not the whole box.
+- The shifted synthetic misses (all depth 2.0, top/bottom) were a generator artefact: the
+  mark was drawn in the border band's own colour and was invisible. With the mark
+  visible, the detector still missed it, merging it into the band; `_band_embedded` now
+  measures other-coloured elements inside a band.
+
+| Spent set | before | after both fixes |
+|---|---|---|
+| real_art_v3 (label-fixed) | 79.6% / 0.9% | 78.9% / **0.0%** |
+| shifted_v4 (rebuilt) | 85.4% / 1.4% | 85.0% / **0.0%** |
+| shifted_v5 (rebuilt) | 81.7% / 1.5% | 81.7% / **0.0%** |
+| holdout_v5 | 81.7% / 0.0% | 81.4% / 0.0% |
+| real_art_v2 | 77.4% / 3.7% | 76.7% / 3.7% (caption-label errors, §5 below) |
+| real_art (v1) | 80.4% / 3.1% | 80.0% / 3.1% (same) |
+
+These are development numbers on sets already used. The claim waits for a sealed set.
 
 ### real_art_v2 (sealed score 6.2%, 14 false approves)
 
