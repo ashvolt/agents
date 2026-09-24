@@ -236,21 +236,22 @@ the decider anyway. Both are now blocked, but the class of failure is structural
 defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
 check, and scaling a design — even to 97% — is only acceptable because it is a proof.
 
-## 14. Real artwork meets SC-002 on the point estimate, not yet on the bound — updated 2026-09-24
+## 14. Real artwork: SC-002 met on the bound, on artwork we laid out — updated 2026-09-24
 
-Three sealed rounds on unseen real illustrations laid out as sticker uploads
-(real-art.md): 6.2% (v2), 1.4% (v3), and **0.4% on 1,000 files (v4, 2 of 479 approvals)**
-at 79.5% auto-approve. The point estimate meets SC-002. The exact 95% upper bound is
-1.3%, so it is not yet shown with confidence. The two misses are named (real-art.md §5):
-a grey illustration boxed as text, and near-white art on white stock.
+Four sealed rounds on unseen real illustrations laid out as sticker uploads
+(real-art.md): 6.2% (v2), 1.4% (v3), 0.4% on 1,000 (v4), and **0 of 500 approvals on
+1,000 (v5), exact 95% upper bound 0.6%** at 78.7% auto-approve. On this data SC-002 is
+met with confidence, not just on the point estimate.
 
-Round 3's synthetic sets pass too (holdout_v6 0.0%, shifted_v6 0.0%). Every earlier
-shifted-set failure turned out to be a generator artefact plus a real blind spot in
-border bands, both fixed before round 3.
+Rounds 1-3 used a strict CMYK rule; round 4 converts RGB (a product decision, not a
+tuning choice) and measures element contrast on its solid core, which fixed JPEG false
+rejections (mistakes_v1: 74.6% -> 82.4% auto-approve on the spent set).
 
-What this still is not: real customer uploads. The artwork is real design work, but
-it is laid out and labelled by our builder, which shares assumptions with the checks.
-**Quote the real-art number and its bound, never the synthetic headline alone.**
+What this still is not: real customer uploads. The artwork is real design work, but it
+is laid out and labelled by our builder, which shares assumptions with the checks. The
+customer-mistake set makes the *processes* real (screenshots, chat apps, JPEG, GIF,
+background removers, trim-size exports); the labels are still ours. **Quote the real-art
+number and its bound, never the synthetic headline alone.**
 
 ## 15. Red-team gaps — added 2026-09-24
 

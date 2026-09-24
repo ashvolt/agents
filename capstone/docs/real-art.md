@@ -29,13 +29,20 @@ text-box and border-band fixes (§5):
 | real_art_v3 — 450 real illustrations | 78.5% / 6.6% FAIL | 79.6% / 1.4% FAIL |
 | holdout_v6 — 600 synthetic | 84.2% / 2.6% FAIL | **83.6% / 0.0% PASS** (UB 1.0%) |
 | shifted_v6 — 400 synthetic | 82.5% / 6.2% FAIL | **82.9% / 0.0% PASS** (UB 1.5%) |
-| **real_art_v4 — 1,000 real illustrations, none seen before** | 77.7% / 5.5% FAIL | **79.5% / 0.4% PASS** (UB 1.3%) |
+| real_art_v4 — 1,000 real illustrations | 77.7% / 5.5% FAIL | **79.5% / 0.4% PASS** (UB 1.3%) |
+| **real_art_v5 — 1,000 real illustrations, none seen before (round 4)** | 73.9% / 3.9% FAIL | **78.7% / 0.0% PASS** (UB 0.6%) |
+| **mistakes_v2 — 480 real-art stickers put through customer processes (round 4)** | 18.8% / 0.0% FAIL | **87.0% / 0.0% PASS** (UB 1.2%) |
 
 *Auto-approve / false-approve. SC-001 ≥ 60%, SC-002 ≤ 1% (point estimate). UB is the
 exact one-sided 95% upper bound (Clopper-Pearson); bounds quoted before round 3 used a
 normal approximation and read low.*
 
-**On a sealed set of 1,000 unseen real illustrations the pipeline meets both success
+**Round 4 (2026-09-24, frozen at 98ecc30, scored once at 090477c; RGB now converted,
+element contrast on its solid core): 0 wrong approvals in 500 on 1,000 unseen real
+illustrations, exact 95% upper bound 0.6%.** For the first time the bound itself is
+under 1%. The customer-mistake set (demo.md) had 0 wrong approvals in 240.
+
+Round 3, for the record: **on a sealed set of 1,000 unseen real illustrations the pipeline met both success
 criteria for the first time: 79.5% of clean files auto-approved, 0.4% false approves
 (2 of 479).** The honest qualifier: the 95% upper bound is 1.3%, so the data cannot yet
 rule out a true rate a little over 1%. Two misses in 479 is consistent with anything

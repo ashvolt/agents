@@ -63,17 +63,18 @@ async function main() {
   await caption(page, "Artwork preflight: is a customer's sticker file ready to print?", 4000);
   await caption(page, "No vision model. Computer vision measures the file; a small decider approves, asks for a fix, or asks a person.", 5000);
 
-  await sample(page, "Print-ready file", "A careful designer's file: approved in about a second, at $0 model cost.");
+  await sample(page, "Print-ready file", "A careful designer's print-ready file: approved in seconds, at $0 model cost.");
   await sample(page, "Screenshot", "A screenshot: too few pixels for the ordered size. The customer gets a plain message saying exactly what to fix.");
   await sample(page, "Exported without bleed", "Exported at the ordered size with no bleed, the default in most design tools. Caught, with the cut line drawn on the preview.");
   await sample(page, "Background remover", "Background removed on a product printed on opaque stock: transparency flagged before it becomes a white patch in print.");
+  await sample(page, "Re-saved as JPEG", "A clean design saved as JPEG a few times: still approved. RGB is converted, with a note to the customer.");
   await sample(page, "Uploaded as .gif", "Not a print format at all: sent to a person rather than guessed at.");
 
   await page.goto(BASE + "/reports");
   await page.waitForSelector("#rounds tr");
-  await caption(page, "Scored once on files it had never seen, including 1,000 real illustrations.", 5000);
+  await caption(page, "Every number here was scored once, on files the checker had never seen.", 5000);
   await page.locator("#rounds").scrollIntoViewIfNeeded();
-  await caption(page, "Wrong approvals on real art: 6.2%, then 1.4%, then 0.4% across three sealed rounds.", 5500);
+  await caption(page, "Wrong approvals on unseen real art fell from 6.2% to 1.4% to 0.4%, and to 0 of 500 in the latest sealed round.", 5500);
   await page.locator("#mistakes").scrollIntoViewIfNeeded();
   await caption(page, "The mistakes customers actually make, and how each one was handled.", 5500);
   await page.locator("#cost").scrollIntoViewIfNeeded();

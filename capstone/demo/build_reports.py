@@ -30,24 +30,38 @@ OUT = HERE / "static" / "reports.json"
 ROUNDS = [
     (
         "Real art, round 1",
-        "450 unseen illustrations",
+        "450 unseen illustrations; strict-CMYK rule",
         450,
         "20260924T044528Z-rules_only",
         "20260924T045122Z-cv_decider",
     ),
     (
         "Real art, round 2",
-        "450 unseen illustrations",
+        "450 unseen illustrations; strict-CMYK rule",
         450,
         "20260924T063152Z-rules_only",
         "20260924T063851Z-cv_decider",
     ),
     (
         "Real art, round 3",
-        "1,000 unseen illustrations",
+        "1,000 unseen illustrations; strict-CMYK rule",
         1000,
         "20260924T100436Z-rules_only",
         "20260924T094418Z-cv_decider",
+    ),
+    (
+        "Real art, round 4",
+        "1,000 unseen illustrations; RGB converted",
+        1000,
+        "20260924T162434Z-rules_only",
+        "20260924T160855Z-cv_decider",
+    ),
+    (
+        "Customer mistakes, round 4",
+        "480 real-art stickers put through customer processes",
+        480,
+        "20260924T162838Z-rules_only",
+        "20260924T161512Z-cv_decider",
     ),
     (
         "Synthetic holdout, round 3",
@@ -95,6 +109,11 @@ def _report(run: str) -> dict:
     report["meets_constraint"] = report["meets_constraint_sc002"]
     report["meets_target"] = report["meets_target_sc001"]
     return report
+
+
+def _pixels(path: Path) -> int:
+    with Image.open(path) as img:
+        return img.width * img.height
 
 
 def _thumb(src: Path, name: str, long_side: int = 480) -> str:
@@ -145,11 +164,18 @@ def mistakes_section(run: str, manifest: Path) -> tuple[list[dict], list[dict]]:
             if row["label"]["perturbations"]
             and any(p["magnitude"] > 1 for p in row["label"]["perturbations"])
         ]
-        row, r = (defective or correct or stats["rows"])[0]
+        pool = defective or correct or stats["rows"]
+        # Among those, the largest file: a 180 px banner is a true example but a poor
+        # picture. Size is chosen for legibility; the verdict is not a criterion.
+        row, r = max(pool, key=lambda pr: _pixels(REPO / pr[0]["image_path"]))
         src = REPO / row["image_path"]
         example = _thumb(src, f"{process}-thumb.jpg")
         sample_name = f"{process}{src.suffix}"
-        (SAMPLES / sample_name).write_bytes(src.read_bytes())
+        if src.suffix == ".tif":  # lossless LZW: same pixels, a fraction of the bytes
+            with Image.open(src) as img:
+                img.save(SAMPLES / sample_name, compression="tiff_lzw", dpi=img.info.get("dpi"))
+        else:
+            (SAMPLES / sample_name).write_bytes(src.read_bytes())
         samples.append(
             {
                 "file": sample_name,
@@ -181,7 +207,7 @@ def main() -> None:
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--mistakes-run", required=True, help="cv_decider run file stem")
-    ap.add_argument("--mistakes-manifest", default="mistakes_v1.jsonl")
+    ap.add_argument("--mistakes-manifest", default="mistakes_v2.jsonl")
     args = ap.parse_args()
 
     rounds = [
@@ -189,7 +215,7 @@ def main() -> None:
         for name, note, n, r, c in ROUNDS
     ]
     gallery, samples = mistakes_section(args.mistakes_run, DATA / args.mistakes_manifest)
-    real = rounds[2]["cv_decider"]
+    real = rounds[3]["cv_decider"]
     data = {
         "headline": [
             {
@@ -235,13 +261,14 @@ def main() -> None:
                 "with the checks."
             ),
             (
-                f"On real art the wrong-approval rate is {real['false_approve_rate']:.1%}, but "
-                f"the exact 95% upper bound is {real['false_approve_ci_upper_95']:.1%}: the "
-                "data cannot yet rule out a true rate a little over the 1% target."
+                f"Real art, round 4: {real['approved_defective']} wrong approvals in "
+                f"{real['approved']}. The exact 95% upper bound is "
+                f"{real['false_approve_ci_upper_95']:.1%}, under the 1% target, on "
+                "artwork this project laid out; real uploads may behave differently."
             ),
             (
-                "Sealed rounds were scored under a strict CMYK rule. RGB is now converted "
-                "instead of rejected; the numbers above predate that change."
+                "Rounds 1-3 were scored under a strict CMYK rule; round 4 under the "
+                "current rule, where RGB is converted rather than rejected."
             ),
             (
                 "Known misses: grey artwork that the text detector boxes as text, near-white "

@@ -57,7 +57,8 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
 | [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
 | [scene-narration.md](capstone/docs/scene-narration.md) | **Parked (out of scope, brief §11).** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
-| [real-art.md](capstone/docs/real-art.md) | **Reality check.** 450 real illustrations as sticker uploads: what broke, what was fixed, and the unseen-art score (6.2% false-approve — not yet shippable) |
+| [real-art.md](capstone/docs/real-art.md) | **Reality check.** Real illustrations as sticker uploads: four sealed rounds, 6.2% → 1.4% → 0.4% → **0 of 500 wrong approvals (exact bound 0.6%)** on 1,000 unseen files |
+| [demo.md](capstone/docs/demo.md) | **The demo.** Local web app over the shipped pipeline, results page, customer-mistake gallery, scripted video walkthrough |
 | [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
 | [limits.md](capstone/docs/limits.md) | Fourteen things this system cannot do, most found by measuring |
@@ -83,3 +84,4 @@ spend for the project: ~$4.30.
 | 2026-09-23 | **Vision model removed.** OpenCV margin features + a 5-feature logistic decider: 84.4% / 0.0% and 84.6% / 0.5% on two fresh sealed sets, $0/file. The model-free rules breach SC-002 at n=600 (2.4%) — the earlier pass was luck. See [decider.md](capstone/docs/decider.md). |
 | 2026-09-23 | **Scene documents + verified fixes (spike).** Redraw-from-text fidelity 0.975 median; 23-31% of rejected files become print-ready proofs with no human; every proof re-verified and structure-checked; narration claim-checked. Live model run blocked: no API key here. See [scene-narration.md](capstone/docs/scene-narration.md). |
 | 2026-09-24 | **Real artwork.** OpenMoji/Twemoji/Noto as sticker uploads; the synthetic results did not transfer (7.8% false-approve). DBNet text detection, line-level contrast, stroke-mask fixes and a cut-line guard: synthetic holdout 86.7% / 0.0%, unseen real art 78.1% / 6.2%. Local-model narration via Ollama built and tested; blocked here by network policy. See [real-art.md](capstone/docs/real-art.md). |
+| 2026-09-24 | **Round 4 and the demo.** RGB converted (product decision); JPEG false rejects fixed; customer-mistake simulator (real processes on real art). Sealed: real art 78.7% / 0 of 500 (bound 0.6%), customer mistakes 87.0% / 0 of 240. Web demo, results page and recorded walkthrough. See [demo.md](capstone/docs/demo.md). |

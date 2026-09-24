@@ -113,6 +113,7 @@ function render(r) {
       <div class="preview">${preview}</div>
       <div><h3 style="margin-top:0">What the checker found</h3>${issues}${message}</div>
     </div>`;
+  if (window.innerWidth < 900) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function choose(file) {
@@ -132,5 +133,13 @@ $("drop").addEventListener("drop", (e) => {
 });
 $("go").addEventListener("click", runUpload);
 
+async function loadStats() {
+  const data = await (await fetch("/static/reports.json")).json();
+  $("stats").innerHTML = data.headline
+    .map((h) => `<div class="stat"><b>${escapeHtml(h.value)}</b><span>${escapeHtml(h.label)}</span></div>`)
+    .join("");
+}
+
 loadProducts();
 loadSamples();
+loadStats();
