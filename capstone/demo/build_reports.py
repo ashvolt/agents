@@ -133,16 +133,19 @@ def mistakes_section(run: str, manifest: Path) -> tuple[list[dict], list[dict]]:
         stats = by_process.get(process)
         if stats is None:
             continue
-        # The example is the first file whose verdict matches the label: it shows the
-        # typical outcome, not a cherry-picked one, and the counts sit next to it.
-        row, r = next(
-            (
-                (row, r)
-                for row, r in stats["rows"]
-                if not r["false_approve"] and not r["false_reject"]
-            ),
-            stats["rows"][0],
-        )
+        # The example is the first correctly decided file, preferring a defective one
+        # where the process produces defects: it shows what the process does, and the
+        # counts sit next to it so one example cannot stand in for the rate.
+        correct = [
+            (row, r) for row, r in stats["rows"] if not r["false_approve"] and not r["false_reject"]
+        ]
+        defective = [
+            (row, r)
+            for row, r in correct
+            if row["label"]["perturbations"]
+            and any(p["magnitude"] > 1 for p in row["label"]["perturbations"])
+        ]
+        row, r = (defective or correct or stats["rows"])[0]
         src = REPO / row["image_path"]
         example = _thumb(src, f"{process}-thumb.jpg")
         sample_name = f"{process}{src.suffix}"
