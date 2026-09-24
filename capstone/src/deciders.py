@@ -263,9 +263,21 @@ def measure(case: PreflightCase) -> tuple[Verdict | None, list[Issue], ArtworkFe
 
 def decide(case: PreflightCase, decider: Decider, threshold: float) -> tuple[Verdict, float | None]:
     """Triage one file. Returns the verdict and the decider's p(defect), if it was asked."""
+    verdict, p, _issues, _features = decide_explained(case, decider, threshold)
+    return verdict, p
+
+
+def decide_explained(
+    case: PreflightCase, decider: Decider, threshold: float
+) -> tuple[Verdict, float | None, list[Issue], ArtworkFeatures | None]:
+    """`decide`, plus every issue measured (advisories included) and the features.
+
+    An APPROVE verdict carries no issues by design (schemas.Verdict), so a caller that
+    wants to show a customer "approved - we'll convert your RGB" needs them from here.
+    """
     settled, issues, features = measure(case)
     if settled is not None:
-        return settled, None
+        return settled, None, issues, features
     checks = ["bucket1_metadata", "bucket2_pixels", "cv_features"]
     assert features is not None  # measure() only returns unsettled with features
 
@@ -283,6 +295,8 @@ def decide(case: PreflightCase, decider: Decider, threshold: float) -> tuple[Ver
                 checks_completed=checks + ["guard"],
             ),
             None,
+            issues,
+            features,
         )
 
     p = decider.p_defect(features)
@@ -294,6 +308,8 @@ def decide(case: PreflightCase, decider: Decider, threshold: float) -> tuple[Ver
                 checks_completed=checks + [decider.name],
             ),
             p,
+            issues,
+            features,
         )
 
     # Escalations carry the reasoning a reviewer needs, not just a number (PLAN.md S6.5).
@@ -325,6 +341,8 @@ def decide(case: PreflightCase, decider: Decider, threshold: float) -> tuple[Ver
             checks_completed=checks + [decider.name],
         ),
         p,
+        issues,
+        features,
     )
 
 
@@ -340,6 +358,7 @@ def make_cv_decider_triage(model: LogisticModel | None = None):
 
 __all__ = [
     "DEFAULT_MODEL",
+    "decide_explained",
     "Decider",
     "LogisticModel",
     "decide",
