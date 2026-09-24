@@ -218,7 +218,15 @@ def measure_contrast(
         if int(sub.sum()) < min_pixels:
             continue
         pixels = arr[y0:y1, x0:x1][sub]
-        colour = tuple(float(c) for c in pixels.mean(axis=0))
+        # The element's colour is its solid core, as for text lines: pixels within 80% of
+        # its strongest deviation (a 95th percentile, so one noisy pixel cannot define
+        # it). A plain mean let JPEG chroma subsampling, which smears a thin coloured rule
+        # into the background, read a clearly visible line as a faint one: 36 of 47 wrong
+        # rejections on the customer-mistake set (mistakes_v1, re-saved and chat-app
+        # JPEGs). A genuinely faint element is uniform, so its core is its mean.
+        de_pixels = de_map[y0:y1, x0:x1][sub]
+        core = pixels[de_pixels >= 0.8 * float(np.percentile(de_pixels, 95))]
+        colour = tuple(float(c) for c in (core if core.size else pixels).mean(axis=0))
         de = delta_e76(background, colour)
         if weakest is None or de < weakest[0]:
             weakest = (de, tuple(int(round(c)) for c in colour))  # type: ignore[arg-type]
