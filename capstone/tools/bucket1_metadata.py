@@ -177,6 +177,20 @@ def check_color_mode(meta: FileMetadata, spec: ProductSpec) -> list[Issue]:
     if family in spec.accepted_color_modes:
         return []
     accepted = "/".join(spec.accepted_color_modes)
+    if family in spec.converted_color_modes:
+        return [
+            Issue(
+                code=IssueCode.WRONG_COLOR_MODE,
+                severity=Severity.ADVISORY,
+                message=(
+                    f"Artwork is {family}; we convert it to {accepted} for printing. Very "
+                    "bright colours, especially neon greens and blues, may print slightly duller."
+                ),
+                evidence=Evidence(
+                    note=f"file mode {meta.mode} -> {family}, converted to {accepted}"
+                ),
+            )
+        ]
     return [
         Issue(
             code=IssueCode.WRONG_COLOR_MODE,

@@ -20,7 +20,7 @@ import pytest
 from PIL import Image
 
 from capstone.src.product_specs import get_spec
-from capstone.src.schemas import IssueCode, OrderMetadata
+from capstone.src.schemas import IssueCode, OrderMetadata, Severity
 from capstone.tools.bucket1_metadata import (
     check_aspect,
     check_bleed,
@@ -160,9 +160,46 @@ def test_cmyk_is_accepted(tmp_path: Path) -> None:
     assert check_color_mode(read_metadata(p), SPEC) == []
 
 
-def test_rgb_is_rejected_for_a_cmyk_product(tmp_path: Path) -> None:
+def test_rgb_is_converted_not_rejected_for_a_cmyk_product(tmp_path: Path) -> None:
+    # RGB is converted by the shop (converted_color_modes): reported, never blocking.
     p = write_art(tmp_path / "a", mode="RGB")
-    assert codes(check_color_mode(read_metadata(p), SPEC)) == {IssueCode.WRONG_COLOR_MODE}
+    issues = check_color_mode(read_metadata(p), SPEC)
+    assert codes(issues) == {IssueCode.WRONG_COLOR_MODE}
+    assert all(i.severity is Severity.ADVISORY for i in issues)
+
+
+def test_unconvertible_mode_still_blocks(tmp_path: Path) -> None:
+    p = write_art(tmp_path / "a", mode="L")
+    issues = check_color_mode(read_metadata(p), SPEC)
+    assert codes(issues) == {IssueCode.WRONG_COLOR_MODE}
+    assert all(i.severity is Severity.BLOCKING for i in issues)
+
+
+def test_rgb_is_not_a_defect_in_labels_for_a_converting_product() -> None:
+    from capstone.evals.harness import apply_spec_rules
+    from capstone.src.schemas import GoldLabel, Perturbation
+
+    label = GoldLabel(
+        case_id="c",
+        perturbations=(
+            Perturbation(code=IssueCode.WRONG_COLOR_MODE, magnitude=2.0),
+            Perturbation(code=IssueCode.LOW_RESOLUTION, magnitude=1.1),
+        ),
+    )
+    judged = apply_spec_rules(label, SPEC.product_id)
+    assert judged.injected_codes == {IssueCode.LOW_RESOLUTION}
+
+
+def test_transparency_is_a_defect_only_where_the_product_forbids_it() -> None:
+    from capstone.evals.harness import apply_spec_rules
+    from capstone.src.schemas import GoldLabel, Perturbation
+
+    label = GoldLabel(
+        case_id="c",
+        perturbations=(Perturbation(code=IssueCode.UNINTENDED_TRANSPARENCY, magnitude=2.0),),
+    )
+    assert apply_spec_rules(label, "die-cut-sticker").is_clean  # allows transparency
+    assert not apply_spec_rules(label, "custom-magnet").is_clean  # opaque stock
 
 
 def test_rgba_is_reported_as_rgb_family(tmp_path: Path) -> None:

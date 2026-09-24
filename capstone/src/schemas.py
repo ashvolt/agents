@@ -117,6 +117,10 @@ class ProductSpec(BaseModel):
     min_stroke_pt: float = Field(gt=0)
     min_contrast_delta_e: float = Field(gt=0)
     accepted_color_modes: tuple[str, ...]
+    # Modes the shop converts itself: reported as advisory, never blocking. Online
+    # printers take RGB and convert; demanding CMYK rejected almost every real upload
+    # (Canva, phone, AI, screenshots). Decided 2026-09-24.
+    converted_color_modes: tuple[str, ...] = ("RGB",)
     allows_transparency: bool
     aspect_tolerance: float = Field(gt=0, le=1.0)
 
