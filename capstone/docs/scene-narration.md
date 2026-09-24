@@ -8,6 +8,14 @@
 > **Unofficial project.** Not affiliated with Sticker Mule. All artwork is synthetic.
 > Every number is an upper bound on real uploads (limits.md §1).
 
+> **PARKED 2026-09-24 — out of scope.** The brief's non-goals (brief.md §11) are "not
+> fixing the artwork" and "not generating proofs", and the only customer-facing output is
+> one message a human approves. This spike built both anyway, and found the failure mode
+> the brief predicted four times (§4 items 5-8). The code stays, tested, because the
+> progression is the record; no further effort goes into it. The shipped pipeline is the
+> CV decider (decider.md), and the open problem is real-artwork false approves
+> (real-art.md).
+
 ---
 
 ## 1. The question

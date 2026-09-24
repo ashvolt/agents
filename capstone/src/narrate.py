@@ -1,5 +1,8 @@
 """Narration — a small text model explains the file; code checks every claim it makes.
 
+PARKED 2026-09-24: out of scope per brief.md §11 (see scene-narration.md). Kept, tested,
+not part of the shipped pipeline.
+
 The model never sees pixels. It receives the scene document (`tools/scene.py`) and the
 verified fix plan (`tools/fixes.py`), and writes two things: a message the customer can
 act on, and a note for the reviewer. Everything it could get wrong is then checked:

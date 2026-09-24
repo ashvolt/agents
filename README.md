@@ -56,7 +56,7 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 |---|---|
 | [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
 | [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
-| [scene-narration.md](capstone/docs/scene-narration.md) | **Spike.** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
+| [scene-narration.md](capstone/docs/scene-narration.md) | **Parked (out of scope, brief §11).** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
 | [real-art.md](capstone/docs/real-art.md) | **Reality check.** 450 real illustrations as sticker uploads: what broke, what was fixed, and the unseen-art score (6.2% false-approve — not yet shippable) |
 | [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |

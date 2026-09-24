@@ -1,5 +1,8 @@
 """Verified fixes — correct what can be corrected, prove it, and price what cannot.
 
+PARKED 2026-09-24: out of scope per brief.md §11 (see scene-narration.md). Kept, tested,
+not part of the shipped pipeline.
+
 The business flow already has a step for this: upload -> review -> **proof sent** ->
 customer approves. Today an artist makes the proof. This module makes a candidate proof
 from the measurements, then re-runs the entire preflight on it. A fix counts only if the

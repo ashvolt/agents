@@ -1,5 +1,8 @@
 """The whole no-vision pipeline for one file, in one call.
 
+PARKED 2026-09-24: out of scope per brief.md §11 (see scene-narration.md). Kept, tested,
+not part of the shipped pipeline.
+
     rules -> decider -> scene -> fixes -> re-checked proof -> decider on the proof
 
 Every experiment in decider.md and scene-narration.md ran some version of this by hand.

@@ -371,6 +371,7 @@ before the first sweep.)*
 | 2026-09-23 | — | deps added | `opencv-python-headless`, `scikit-learn`. Reasons in §11 |
 | 2026-09-23 | — | scene + fix + narration spike | model narrates, never measures; blocked on an API key for the live run. `capstone/docs/scene-narration.md` |
 | 2026-09-24 | — | real artwork + DBNet + Ollama | OQ-4 decided by measurement: DBNet (PaddleOCR) over components. Unseen real art 6.2% false-approve; not yet shippable. `capstone/docs/real-art.md` |
+| 2026-09-24 | — | **scope reset** | proof generation and LLM narration parked: brief §11 non-goals. Effort back on the one metric (real-art false approves), then CI gate, review queue, red team |
 
 ---
 

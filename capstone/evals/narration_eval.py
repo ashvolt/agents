@@ -1,5 +1,8 @@
 """Benchmark narrators: which model writes explanations that survive the claim check?
 
+PARKED 2026-09-24: out of scope per brief.md §11 (see scene-narration.md). Kept, tested,
+not part of the shipped pipeline.
+
     # local models through Ollama (pull them first: `ollama pull qwen2.5:3b`)
     python -m capstone.evals.narration_eval --backend ollama \\
         --model qwen2.5:3b --model llama3.2:3b --model phi4-mini --model gemma3:4b
