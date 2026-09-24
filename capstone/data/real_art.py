@@ -40,12 +40,13 @@ from PIL import Image, ImageDraw, ImageFont
 from capstone.data.generate import (
     CasePlan,
     _pt_to_px,
+    delta_e76,
     foreground_at_delta_e,
     plan_cases,
     required_canvas_inches,
     save_case,
 )
-from capstone.src.schemas import GoldLabel, IssueCode
+from capstone.src.schemas import GoldLabel, IssueCode, Perturbation
 
 ROOT = Path(__file__).resolve().parent
 ART = ROOT / "art_cache"
@@ -91,9 +92,38 @@ def _ink_box(art: Image.Image) -> tuple[int, int, int, int]:
     return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
 
 
+def caption_colour(
+    background: tuple[int, int, int], target_de: float
+) -> tuple[tuple[int, int, int], float]:
+    """The shade of the background's own hue whose deltaE from it is closest to target.
+
+    The first two real-art sets used the synthetic generator's helper, which searches
+    greys. On a coloured background no grey gets anywhere near a small target - the
+    closest grey to navy is ~24 dE away - so seven captions labelled LOW_CONTRAST were
+    in fact comfortably legible, and the engine was scored as missing defects that were
+    not there (real-art.md). Searching toward black and toward white from the background
+    keeps its hue and reaches any target. Returns the colour and the deltaE achieved.
+    """
+    best: tuple[float, tuple[int, int, int], float] | None = None
+    bg = np.array(background, dtype=float)
+    for end in (np.zeros(3), np.full(3, 255.0)):
+        for step in range(1, 401):
+            colour = tuple(int(round(v)) for v in bg + (end - bg) * step / 400)
+            de = delta_e76(background, colour)  # type: ignore[arg-type]
+            gap = abs(de - target_de)
+            if best is None or gap < best[0]:
+                best = (gap, colour, de)  # type: ignore[assignment]
+    assert best is not None
+    return best[1], best[2]
+
+
 def render_real(
-    plan: CasePlan, svg: Path, style_seed: int, oversample: float = 1.0
-) -> tuple[Image.Image, float]:
+    plan: CasePlan,
+    svg: Path,
+    style_seed: int,
+    oversample: float = 1.0,
+    legacy_grey_captions: bool = False,
+) -> tuple[Image.Image, float, float]:
     """Lay one illustration out as a sticker upload, applying the plan's perturbations.
 
     `oversample` renders the identical layout at a multiple of the resolution. It exists
@@ -142,7 +172,11 @@ def render_real(
     target_de = spec.min_contrast_delta_e * 3.0
     if plan.has(IssueCode.LOW_CONTRAST):
         target_de = spec.min_contrast_delta_e / plan.magnitude_for(IssueCode.LOW_CONTRAST)
-    ink = foreground_at_delta_e(background, target_de)
+    if legacy_grey_captions:  # how real_art and real_art_v2 were built
+        ink = foreground_at_delta_e(background, target_de)
+        achieved_de = delta_e76(background, ink)
+    else:
+        ink, achieved_de = caption_colour(background, target_de)
     stroke_pt = spec.min_stroke_pt * 2.0
     if plan.has(IssueCode.THIN_LINES):
         stroke_pt = spec.min_stroke_pt / plan.magnitude_for(IssueCode.THIN_LINES)
@@ -190,11 +224,16 @@ def render_real(
     draw.text((tx, ty), caption, font=font, fill=ink)
     rule_y = ty + text_px * 1.25 + stroke_px
     draw.line((sx0 + safe_w * 0.2, rule_y, sx1 - safe_w * 0.2, rule_y), fill=ink, width=stroke_px)
-    return img, dpi
+    return img, dpi, achieved_de
 
 
 def build(
-    n: int, seed: int, clean_fraction: float, out_name: str, exclude: list[Path] | None = None
+    n: int,
+    seed: int,
+    clean_fraction: float,
+    out_name: str,
+    exclude: list[Path] | None = None,
+    legacy_grey_captions: bool = False,
 ) -> Path:
     """Render the set. `exclude` lists earlier manifests whose illustrations must not be
     reused: a validation set that repeats artwork the checks were diagnosed on is not a
@@ -217,9 +256,23 @@ def build(
         while f"{style}/{svg.name}" in used:
             svg = rng.choice(files[style])
         used.add(f"{style}/{svg.name}") if exclude else None
-        img, dpi = render_real(plan, svg, plan.seed)
+        img, dpi, achieved_de = render_real(
+            plan, svg, plan.seed, legacy_grey_captions=legacy_grey_captions
+        )
+        perturbations = plan.perturbations
+        if plan.has(IssueCode.LOW_CONTRAST) and not legacy_grey_captions:
+            # the label records the contrast actually drawn, not the one requested
+            perturbations = tuple(
+                Perturbation(
+                    code=p.code,
+                    magnitude=round(plan.spec.min_contrast_delta_e / achieved_de, 3),
+                )
+                if p.code is IssueCode.LOW_CONTRAST
+                else p
+                for p in perturbations
+            )
         path = save_case(img, dpi, plan, out_dir)
-        label = GoldLabel(case_id=plan.case_id, perturbations=plan.perturbations, split=plan.split)
+        label = GoldLabel(case_id=plan.case_id, perturbations=perturbations, split=plan.split)
         rows.append(
             {
                 "case_id": plan.case_id,
@@ -244,6 +297,11 @@ def main() -> None:
     ap.add_argument("--clean-fraction", type=float, default=0.60)
     ap.add_argument("--out", type=str, default="real_art")
     ap.add_argument(
+        "--legacy-grey-captions",
+        action="store_true",
+        help="reproduce real_art / real_art_v2, whose LOW_CONTRAST labels are unreliable",
+    )
+    ap.add_argument(
         "--exclude",
         action="append",
         default=None,
@@ -251,7 +309,9 @@ def main() -> None:
     )
     args = ap.parse_args()
     exclude = [ROOT / m for m in args.exclude] if args.exclude else None
-    manifest = build(args.n, args.seed, args.clean_fraction, args.out, exclude)
+    manifest = build(
+        args.n, args.seed, args.clean_fraction, args.out, exclude, args.legacy_grey_captions
+    )
     rows = [json.loads(line) for line in manifest.open(encoding="utf-8")]
     clean = sum(1 for r in rows if not any(p["magnitude"] > 1 for p in r["label"]["perturbations"]))
     print(f"wrote {len(rows)} cases -> {manifest}  ({clean} clean)")

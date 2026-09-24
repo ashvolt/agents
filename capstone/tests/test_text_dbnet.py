@@ -85,3 +85,16 @@ def test_long_hairline_is_measured_even_next_to_dense_artwork() -> None:
     assert measure_min_stroke_px(img, dpi=DPI) == pytest.approx(1.0)
     # without a resolution the old share-of-ink floor applies and the line is skipped
     assert measure_min_stroke_px(img) != pytest.approx(1.0)
+
+
+def test_square_detection_is_not_a_text_line() -> None:
+    # DBNet fires on round illustration parts; called "text", they were excluded from the
+    # cut-line measurement and hid two real intrusions. A line of text is wide.
+    img = Image.new("RGB", (1200, 900), (255, 255, 255))
+    d = ImageDraw.Draw(img)
+    d.ellipse((100, 100, 400, 400), fill=(250, 200, 40), outline=(20, 20, 20), width=8)
+    d.ellipse((190, 190, 230, 230), fill=(20, 20, 20))
+    d.ellipse((270, 190, 310, 230), fill=(20, 20, 20))
+    d.text((100, 600), "SMALL BATCH", font=ImageFont.load_default(size=60), fill=(30, 30, 30))
+    boxes = DETECTOR.detect(img)
+    assert boxes and all(b.width_px >= 1.2 * b.height_px for b in boxes)

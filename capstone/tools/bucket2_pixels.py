@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -41,9 +42,16 @@ STROKE_MIN_LENGTH_IN = 0.08
 # measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
 TEXT_EXCLUSION_PAD = 0.15
 
-# The stroke mask never demands more than this much luminance difference from the
-# background, however dark the darkest ink in the file is. See `ink_mask`.
-STROKE_MASK_CAP = 24
+# Colour regions for the stroke measurement. A quantised colour is a real colour of the
+# artwork if it covers at least this share of the canvas (or REGION_MIN_PX pixels);
+# everything else is antialiasing and is reassigned to the nearest real colour. Real
+# colours closer than REGION_MERGE_DELTA_E are one region, so the 16-level steps of a
+# gradient do not become a stack of thin bands. The merge threshold sits below every
+# product's minimum contrast (15), so two colours a customer can tell apart on press
+# are never merged.
+REGION_MIN_SHARE = 0.0005
+REGION_MIN_PX = 30
+REGION_MERGE_DELTA_E = 10.0
 
 # Faint-text search: the image's difference from its background is multiplied by this
 # before a second detection pass. A line that only appears after amplification is, by
@@ -347,46 +355,104 @@ def measure_min_stroke_px(
     legitimately thinner than the artwork minimum at small sizes, and counting them here
     would flag every file carrying small type as a thin-line defect.
     """
-    mask = ink_mask(image, cap=STROKE_MASK_CAP)
-    if mask.size == 0 or not mask.any():
+    regions, background = colour_regions(image)
+    if regions.size == 0:
         return None
+    excluded = np.zeros(regions.shape, dtype=bool)
+    for box in exclude or []:
+        pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
+        excluded[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = True
 
-    if exclude:
-        for box in exclude:
-            pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
-            mask[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = False
-        if not mask.any():
-            return None
-
-    horizontal = _run_lengths_along_axis(mask, axis=1)
-    vertical = _run_lengths_along_axis(mask, axis=0)
-    thickness = np.minimum(horizontal, vertical)
-
-    total_ink = int(mask.sum())
+    ink = (regions != background) & ~excluded
+    total_ink = int(ink.sum())
+    if total_ink == 0:
+        return None
     min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
     min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
 
+    # Strokes are measured per colour region, not on a brightness threshold. A grey rule
+    # on navy differs in colour far more than in luminance; a luminance mask never saw it
+    # (real-art.md). And a boundary between two inks is no longer a band of its own.
     thinnest: float | None = None
-    for x0, y0, x1, y1 in _label_runs(mask):
-        sub_mask = mask[y0:y1, x0:x1]
-        area = int(sub_mask.sum())
-        if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
-            continue
-        values = thickness[y0:y1, x0:x1][sub_mask]
-        if values.size == 0:
-            continue
-        median = float(np.median(values))
-        if median <= 0:
-            continue
-        if thinnest is None or median < thinnest:
-            thinnest = median
+    global_min: float | None = None
+    for region in np.unique(regions[ink]).tolist():
+        mask = (regions == region) & ~excluded
+        thickness = np.minimum(
+            _run_lengths_along_axis(mask, axis=1), _run_lengths_along_axis(mask, axis=0)
+        )
+        region_min = float(thickness[mask].min())
+        global_min = region_min if global_min is None else min(global_min, region_min)
+        count, _labels, stats, _ = cv2.connectedComponentsWithStats(
+            mask.astype(np.uint8), connectivity=8
+        )
+        for idx in range(1, count):
+            x0, y0, w, h, area = (int(v) for v in stats[idx])
+            if area < min_component_px and max(w, h) < min_length_px:
+                continue
+            component = _labels[y0 : y0 + h, x0 : x0 + w] == idx
+            values = thickness[y0 : y0 + h, x0 : x0 + w][component]
+            median = float(np.median(values)) if values.size else 0.0
+            if median > 0 and (thinnest is None or median < thinnest):
+                thinnest = median
 
     if thinnest is None:
         # Everything was below the component floor; fall back to the global minimum so a
         # file made entirely of hairlines is not silently reported as clean.
-        values = thickness[mask]
-        thinnest = float(values.min()) if values.size else None
+        thinnest = global_min
     return thinnest
+
+
+def colour_regions(image: Image.Image) -> tuple[np.ndarray, int]:
+    """Each pixel's colour region, and the background region's id.
+
+    The artwork's real colours are the quantised colours that cover a meaningful area.
+    Every other pixel — the antialiased edge between two real colours — takes the nearest
+    real colour, and real colours within REGION_MERGE_DELTA_E of each other are joined,
+    so a gradient is one region rather than a stack of bands.
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.uint8)
+    if arr.size == 0:
+        return np.zeros((0, 0), dtype=np.int32), 0
+    flat = arr.reshape(-1, 3)
+    keys = ((flat >> 4).astype(np.int32) * np.array([256, 16, 1], dtype=np.int32)).sum(axis=1)
+    counts = np.bincount(keys, minlength=4096)
+    present = np.flatnonzero(counts)
+    sums = np.stack(
+        [np.bincount(keys, weights=flat[:, c], minlength=4096) for c in range(3)], axis=1
+    )
+    means = sums[present] / counts[present][:, None]
+
+    floor = max(REGION_MIN_PX, int(flat.shape[0] * REGION_MIN_SHARE))
+    major = present[counts[present] >= floor]
+    if major.size == 0:
+        major = present[[int(np.argmax(counts[present]))]]
+    major_means = sums[major] / counts[major][:, None]
+
+    # join real colours closer than the merge threshold (union-find over the palette)
+    parent = list(range(len(major)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    labs = [
+        _srgb_to_lab(tuple(float(c) for c in m))  # type: ignore[arg-type]
+        for m in major_means
+    ]
+    for i in range(len(major)):
+        for j in range(i + 1, len(major)):
+            if math.dist(labs[i], labs[j]) < REGION_MERGE_DELTA_E:
+                parent[find(i)] = find(j)
+
+    # every present quantised colour -> nearest real colour -> its region
+    nearest = np.argmin(((means[:, None, :] - major_means[None, :, :]) ** 2).sum(axis=2), axis=1)
+    lut = np.zeros(4096, dtype=np.int32)
+    lut[present] = np.array([find(int(n)) for n in nearest], dtype=np.int32)
+    regions = lut[keys].reshape(arr.shape[:2])
+    background = int(np.bincount(regions.ravel()).argmax())
+    return regions, background
 
 
 def check_stroke_width(
@@ -664,6 +730,7 @@ __all__ = [
     "measure_contrast",
     "measure_min_stroke_px",
     "measure_text_contrast",
+    "colour_regions",
     "find_faint_text",
     "measure_safe_zone",
 ]

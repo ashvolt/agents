@@ -248,6 +248,10 @@ def _group_into_lines(glyphs: list[tuple[int, int, int, int]]) -> list[TextBox]:
     return out
 
 
+# Minimum width / height for a detected box to count as a line of text.
+TEXT_LINE_MIN_ASPECT = 1.2
+
+
 class DBNetDetector:
     """PaddleOCR's PP-OCRv3 text detector (DBNet), run on CPU through ONNX Runtime.
 
@@ -285,6 +289,12 @@ class DBNetDetector:
             if tight is None:
                 continue
             tx0, ty0, tx1, ty1, glyphs = tight
+            if tx1 - tx0 < TEXT_LINE_MIN_ASPECT * (ty1 - ty0):
+                # A line of text is wider than it is tall. DBNet also fires on parts of
+                # illustrations (a round emoji face reads as a word), and anything called
+                # text is excluded from the stroke and cut-line measurements - which hid
+                # two real safe-zone intrusions on real art (real-art.md).
+                continue
             boxes.append(TextBox(x0 + tx0, y0 + ty0, x0 + tx1, y0 + ty1, glyphs))
         return sorted(boxes, key=lambda b: (b.y0, b.x0))
 
