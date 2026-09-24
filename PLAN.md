@@ -373,6 +373,7 @@ before the first sweep.)*
 | 2026-09-24 | — | real artwork + DBNet + Ollama | OQ-4 decided by measurement: DBNet (PaddleOCR) over components. Unseen real art 6.2% false-approve; not yet shippable. `capstone/docs/real-art.md` |
 | 2026-09-24 | — | **scope reset** | proof generation and LLM narration parked: brief §11 non-goals. Effort back on the one metric (real-art false approves), then CI gate, review queue, red team |
 | 2026-09-24 | — | sealed round 2 + gate + queue + red team | real_art_v3 1.4% false-approve (0.9% label-corrected), holdout_v5 0.0% PASS, shifted_v5 1.5%. All remaining misses are safe-zone. CI gate now runs the CV decider on synthetic (SC-002) and real art (regression). Review queue built. Red team: 12 attacks, 2 known gaps (embedded hairline, upscaled art). `capstone/docs/real-art.md`, limits.md §14–15 |
+| 2026-09-24 | — | **sealed round 3** | real_art_v4 (1,000 unseen real illustrations): **79.5% / 0.4% — meets SC-001 and SC-002 on the point estimate**; exact 95% bound 1.3%. holdout_v6 0.0%, shifted_v6 0.0%. Fixes before the freeze: aspect-label bug, text boxes hiding art, invisible/undetected marks in border bands. Harness bound now exact. `capstone/docs/real-art.md` |
 
 ---
 

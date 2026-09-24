@@ -15,27 +15,32 @@ Everything before this was graded on shapes drawn by `generate.py`, which shares
 assumptions with the checks (limits.md §1). On real design work the results did not
 transfer, and most of this document is about why.
 
-Final numbers, **scored once, on sets generated after the code was frozen**. Two rounds;
-the second (2026-09-24, commit df1f873, model md5 8567b545) after the colour-region
-stroke rule and hue-preserving captions:
+Final numbers, **scored once, on sets generated after the code was frozen**. Three
+rounds. Round 3 (2026-09-24, frozen at b7bd493, model md5 8567b545) came after the
+text-box and border-band fixes (§5):
 
 | Fresh set | rules_only | cv_decider |
 |---|---|---|
-| holdout_v4 — 600 synthetic | 80.3% / 2.4% FAIL | **86.7% / 0.0% PASS** (UB 1.0%) |
-| shifted_v4 — 400 synthetic, intrusions on any edge | 83.8% / 5.2% FAIL | 85.8% / **1.4% FAIL** |
-| real_art_v2 — 450 real illustrations | 79.6% / 10.8% FAIL | 78.1% / **6.2% FAIL** |
-| holdout_v5 — 600 synthetic | 78.3% / 3.4% FAIL | **81.7% / 0.0% PASS** (UB 1.0%) |
-| shifted_v5 — 400 synthetic, intrusions on any edge | 83.8% / 4.7% FAIL | 81.7% / **1.5% FAIL** (UB 3.2%) |
-| **real_art_v3 — 450 real illustrations, none seen before** | 78.5% / 6.6% FAIL | 79.6% / **1.4% FAIL** (UB 2.9%) |
+| holdout_v4 — 600 synthetic | 80.3% / 2.4% FAIL | **86.7% / 0.0% PASS** |
+| shifted_v4 — 400 synthetic, intrusions on any edge | 83.8% / 5.2% FAIL | 85.8% / 1.4% FAIL |
+| real_art_v2 — 450 real illustrations | 79.6% / 10.8% FAIL | 78.1% / 6.2% FAIL |
+| holdout_v5 — 600 synthetic | 78.3% / 3.4% FAIL | **81.7% / 0.0% PASS** |
+| shifted_v5 — 400 synthetic | 83.8% / 4.7% FAIL | 81.7% / 1.5% FAIL |
+| real_art_v3 — 450 real illustrations | 78.5% / 6.6% FAIL | 79.6% / 1.4% FAIL |
+| holdout_v6 — 600 synthetic | 84.2% / 2.6% FAIL | **83.6% / 0.0% PASS** (UB 1.0%) |
+| shifted_v6 — 400 synthetic | 82.5% / 6.2% FAIL | **82.9% / 0.0% PASS** (UB 1.5%) |
+| **real_art_v4 — 1,000 real illustrations, none seen before** | 77.7% / 5.5% FAIL | **79.5% / 0.4% PASS** (UB 1.3%) |
 
-*Auto-approve / false-approve. SC-001 ≥ 60%, SC-002 ≤ 1%.*
+*Auto-approve / false-approve. SC-001 ≥ 60%, SC-002 ≤ 1% (point estimate). UB is the
+exact one-sided 95% upper bound (Clopper-Pearson); bounds quoted before round 3 used a
+normal approximation and read low.*
 
-**On real artwork the engine still does not meet the 1% false-approve constraint, but it
-is now close.** Unseen real art went from 6.2% (v2) to 1.4% (v3): 3 wrong approvals out
-of 218. After scoring, those three were diagnosed (§5): one is a label error, two are
-genuine safe-zone misses. With the label corrected the rate is 2/218 = 0.9%, but the
-95% upper bound is still above 1%, so this is **not** a pass. The shifted synthetic set
-fails in both rounds on the same thing: safe-zone intrusions on the top and bottom edges.
+**On a sealed set of 1,000 unseen real illustrations the pipeline meets both success
+criteria for the first time: 79.5% of clean files auto-approved, 0.4% false approves
+(2 of 479).** The honest qualifier: the 95% upper bound is 1.3%, so the data cannot yet
+rule out a true rate a little over 1%. Two misses in 479 is consistent with anything
+from roughly 0.05% to 1.3%. Closing that needs either the two remaining failure modes
+fixed (§5) or real uploads (limits.md §10), not another synthetic round.
 
 ## 2. The set
 
@@ -95,6 +100,15 @@ vector render as ground truth for everything the design itself contains. It need
 customer data and no human labelling.
 
 ## 5. What still fails on unseen real art
+
+### real_art_v4 (sealed round 3: 0.4%, 2 false approves in 479)
+
+| Case | Label | Finding |
+|---|---|---|
+| case-00778 | safe zone 1.1× | The text detector boxed a whole grey bicycle illustration as a 13-glyph text line. The bike is grey on white, on the same colour line as the grey caption, so the colour-based exclusion still removes it. A text-box sanity check (glyph heights, box size against type size) would catch it. |
+| case-00670 | safe zone 2.0× | A flag whose top half is #EEEEEE on white paper: 17 levels from the paper, under the 24-level foreground threshold, so the part past the cut line is invisible. Near-white artwork on white stock. |
+
+Both are genuine. Neither is a label error.
 
 ### real_art_v3 (sealed score 1.4%, 3 false approves), diagnosed after scoring
 

@@ -236,23 +236,21 @@ the decider anyway. Both are now blocked, but the class of failure is structural
 defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
 check, and scaling a design — even to 97% — is only acceptable because it is a proof.
 
-## 14. Real artwork does not yet meet SC-002 — added 2026-09-24, updated same day
+## 14. Real artwork meets SC-002 on the point estimate, not yet on the bound — updated 2026-09-24
 
-Two sealed rounds on unseen real illustrations laid out as sticker uploads (real-art.md):
+Three sealed rounds on unseen real illustrations laid out as sticker uploads
+(real-art.md): 6.2% (v2), 1.4% (v3), and **0.4% on 1,000 files (v4, 2 of 479 approvals)**
+at 79.5% auto-approve. The point estimate meets SC-002. The exact 95% upper bound is
+1.3%, so it is not yet shown with confidence. The two misses are named (real-art.md §5):
+a grey illustration boxed as text, and near-white art on white stock.
 
-- real_art_v2: 78.1% auto-approve, **6.2%** false approves (95% upper bound 9.4%).
-- real_art_v3, after the colour-region stroke rule: 79.6%, **1.4%** (upper bound 2.9%).
-  Diagnosed afterwards: 1 of the 3 is a label error, so 0.9% corrected. The upper bound
-  is still above 1%.
+Round 3's synthetic sets pass too (holdout_v6 0.0%, shifted_v6 0.0%). Every earlier
+shifted-set failure turned out to be a generator artefact plus a real blind spot in
+border bands, both fixed before round 3.
 
-Synthetic holdouts pass in both rounds (0.0% on 600). The shifted synthetic set fails in
-both (1.4%, 1.5%). Diagnosed afterwards, every remaining miss was either a label
-artefact (an aspect stretch on a non-standard-bleed canvas; a mark drawn invisibly
-inside a same-colour border band) or artwork hidden from the margin check by text-box
-exclusion or by merging into a border band. All four are fixed, and the spent sets read
-0.0% (real-art.md §5). That is development evidence, not a result: it needs a new
-sealed set. **The synthetic headline should not be quoted without the real-art number
-next to it.**
+What this still is not: real customer uploads. The artwork is real design work, but
+it is laid out and labelled by our builder, which shares assumptions with the checks.
+**Quote the real-art number and its bound, never the synthetic headline alone.**
 
 ## 15. Red-team gaps — added 2026-09-24
 
