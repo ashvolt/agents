@@ -129,6 +129,41 @@ def _background_rgb(arr: np.ndarray) -> np.ndarray:
     return flat[keys == background_key].mean(axis=0)
 
 
+# How far (RGB, Euclidean) a pixel may sit from the line between a text box's ink colour
+# and its local background and still count as that text, antialiasing included.
+TEXT_COLOUR_TOLERANCE = 28.0
+
+
+def _text_ink(region: np.ndarray) -> np.ndarray:
+    """Pixels in a detected text box that are the text: its ink colour, its background,
+    or a blend of the two (antialiasing). Everything else in the box is not text.
+
+    Blanking the whole box hid artwork that shared a box with text: a hand touching the
+    last letter of a caption (real_art_v3 case-00289) and a figure DBNet boxed as a
+    one-glyph line (case-00400). Both crossed the cut line and were approved.
+    """
+    h, w = region.shape[:2]
+    if h < 3 or w < 3:
+        return np.ones((h, w), dtype=bool)
+    ring = np.concatenate([region[0], region[-1], region[1:-1, 0], region[1:-1, -1]])
+    background = _background_rgb(ring[None, :, :])
+    px = region.reshape(-1, 3).astype(np.float32)
+    diff = np.abs(px - background).max(axis=1)
+    ink = diff > FOREGROUND_CHANNEL_DELTA
+    if not ink.any():
+        return np.ones((h, w), dtype=bool)
+    solid = px[diff >= 0.6 * diff.max()]
+    colour = _background_rgb(solid.astype(np.uint8)[None, :, :])
+    axis = colour - background
+    length_sq = float(axis @ axis)
+    if length_sq == 0:
+        return np.ones((h, w), dtype=bool)
+    t = np.clip(((px - background) @ axis) / length_sq, 0.0, 1.0)
+    nearest = background + t[:, None] * axis
+    distance = np.sqrt(((px - nearest) ** 2).sum(axis=1))
+    return (distance <= TEXT_COLOUR_TOLERANCE).reshape(h, w)
+
+
 def measure_margin_objects(
     image: Image.Image,
     spec: ProductSpec,
@@ -146,7 +181,9 @@ def measure_margin_objects(
     Trim is located from the ordered size rather than from the spec's bleed, so a file
     short on bleed still gets its cut line in the right place.
 
-    Detected text is excluded, as it is from the stroke measurement. That is a concession
+    Detected text is excluded, as it is from the stroke measurement: the pixels in a text
+    box that are the text's colour, its background, or a blend of the two - not the whole
+    box, which hid artwork sharing a box with text (`_text_ink`). That is a concession
     to the dataset, not a claim about print: the generator's label text overruns the trim
     on small products and those files are labelled clean (limits.md S11). Leaving text in
     would teach a classifier that type at the blade is harmless. Leaving it out means text
@@ -180,7 +217,9 @@ def measure_margin_objects(
     diff = np.abs(arr.astype(np.int16) - background.astype(np.int16)).max(axis=2)
     foreground = (diff > FOREGROUND_CHANNEL_DELTA).astype(np.uint8)
     for box in exclude or []:
-        foreground[max(0, box.y0 - 1) : box.y1 + 1, max(0, box.x0 - 1) : box.x1 + 1] = 0
+        y0, x0 = max(0, box.y0 - 1), max(0, box.x0 - 1)
+        region = arr[y0 : box.y1 + 1, x0 : box.x1 + 1]
+        foreground[y0 : box.y1 + 1, x0 : box.x1 + 1][_text_ink(region)] = 0
 
     count, labels, stats, _centroids = cv2.connectedComponentsWithStats(foreground, connectivity=8)
 

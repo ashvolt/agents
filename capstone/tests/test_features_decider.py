@@ -345,3 +345,29 @@ def test_blocking_rule_finding_is_final_and_skips_the_decider(tmp_path: Path) ->
     assert verdict.verdict is VerdictType.REQUEST_FIX
     assert IssueCode.LOW_RESOLUTION in {i.code for i in verdict.issues}
     assert p is None and stub.calls == 0
+
+
+def _caption_at_the_blade(img: Image.Image) -> TextBox:
+    """Antialiased text reaching past the cut line on the left, and its detected box."""
+    from PIL import ImageFont
+
+    ImageDraw.Draw(img).text((4, 300), "HOMEMADE", font=ImageFont.load_default(size=48), fill=INK)
+    return TextBox(x0=2, y0=296, x1=260, y1=352, glyph_count=8)
+
+
+def test_text_in_a_text_box_is_excluded_with_its_antialiasing() -> None:
+    img = canvas()
+    box = _caption_at_the_blade(img)
+    assert margin(img, exclude=[box])["margin_objects"] == 0
+
+
+def test_artwork_sharing_a_text_box_is_not_excluded() -> None:
+    # real_art_v3 case-00289: a hand touching the caption's last letter shared its box,
+    # and blanking the box hid the hand's intrusion. Only the text's colours are removed.
+    img = canvas()
+    box = _caption_at_the_blade(img)
+    # Entirely inside the detected box, so blanking the box would hide all of it.
+    ImageDraw.Draw(img).ellipse((3, 305, 40, 345), fill=(240, 200, 30), outline=(0, 0, 0))
+    result = margin(img, exclude=[box])
+    assert result["margin_objects"] >= 1
+    assert result["margin_depth_max"] > 1.0
