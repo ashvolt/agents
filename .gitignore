@@ -51,3 +51,6 @@ capstone/data/redteam_cases/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local copies of demo recordings and screenshots sent for review
+demo-output/
