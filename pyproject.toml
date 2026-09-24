@@ -19,6 +19,10 @@ dependencies = [
     # Fits the decider (capstone/evals/train_decider.py). Inference does not import it;
     # the model ships as JSON coefficients.
     "scikit-learn>=1.5",
+    # Text detection: PaddleOCR's DBNet, run through ONNX Runtime. The model ships inside
+    # the wheel, so nothing is downloaded at runtime. Chosen over the component detector
+    # on real artwork, where the latter missed most captions (capstone/docs/real-art.md).
+    "rapidocr_onnxruntime>=1.2.3",
 ]
 
 [project.optional-dependencies]
@@ -26,6 +30,11 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "ruff>=0.7",
+]
+# Building the real-artwork evaluation set (capstone/data/real_art.py): renders the
+# openly licensed SVG illustrations at print resolution. Not needed to run the pipeline.
+data = [
+    "cairosvg>=2.7",
 ]
 
 [tool.setuptools.packages.find]

@@ -26,6 +26,9 @@ capstone/data/holdout_v2/
 capstone/data/shifted_v2/
 capstone/data/holdout_v3/
 capstone/data/shifted_v3/
+# Real artwork is fetched, never committed: python -m capstone.data.fetch_art
+capstone/data/art_cache/
+capstone/data/real_art/
 capstone/evals/runs/
 capstone/data/redteam_cases/
 
