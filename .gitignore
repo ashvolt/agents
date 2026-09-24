@@ -41,6 +41,8 @@ capstone/data/real_art_v4/
 capstone/data/holdout_v6/
 capstone/data/shifted_v6/
 capstone/data/mistakes_v1/
+capstone/data/real_art_v5/
+capstone/data/mistakes_v2/
 capstone/evals/runs/
 capstone/data/redteam_cases/
 
