@@ -245,3 +245,28 @@ narrowly fails (1.4%). The remaining real-art misses are low-contrast captions (
 lines (3), safe-zone intrusions at 1.1x (3) and one small-text case. **The synthetic
 headline should not be quoted without this one next to it.**
 
+
+## 15. Red-team gaps — added 2026-09-24
+
+`python -m capstone.evals.redteam` builds 12 adversarial files and runs the shipped
+pipeline on them. With DBNet installed: 0 failures, 2 known gaps, 1 case held for the
+wrong reason. The two gaps are both false approvals.
+
+- **RT05: a hairline embedded in thick ink.** A 0.24 pt line (minimum 0.5 pt) drawn
+  across a filled, outlined shape is approved. On the brightness mask the line joins the
+  shape and becomes one component whose median stroke is the thick part. On colour
+  regions it joins the same-colour outline, and colour regions are only measured when
+  free-standing: measuring every region dropped real-art approval to 32%. Closing this
+  needs a thin-*branch* measure (long runs of thin pixels inside a thick component), and
+  that has to be validated on fresh real art before it ships.
+- **RT06: upscaled low-resolution art.** A 60 DPI file resampled to 300 DPI is approved.
+  Resolution is read from pixel count and metadata. Nothing measures whether the pixels
+  carry detail (high-frequency energy, or the repeated rows and columns of a
+  nearest-neighbour upscale). In the first run this case was rejected, but by accident: it
+  tripped the text-size check instead.
+- **RT04 held for the wrong reason.** Text about 5 ΔE from its backing, inside a busy
+  pattern, is escalated for text size. The contrast check does not fire.
+
+The first run reported two more failures (RT03, RT04). They came from the fallback text
+detector: that run used a Python without `rapidocr_onnxruntime`. The fallback now warns,
+and the red-team report prints which detector ran.
