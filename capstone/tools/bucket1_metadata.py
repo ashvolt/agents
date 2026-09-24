@@ -19,6 +19,7 @@ is sound together; neither is sound alone.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
@@ -109,15 +110,27 @@ def read_metadata(path: str | Path) -> FileMetadata:
         return FileMetadata(p, error=f"unsupported format {p.suffix!r}")
 
     try:
-        with Image.open(p) as probe:
-            probe.verify()  # catches truncation and structural corruption
-        with Image.open(p) as img:
-            img.load()  # catches truncated pixel data that verify() misses
-            mode = img.mode
-            width, height = img.size
-            dpi_pair = img.info.get("dpi")
-            has_alpha = mode in ("RGBA", "LA") or "transparency" in img.info
-    except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:
+        # A decompression bomb (a small file that decodes to hundreds of megapixels) is
+        # an unreadable upload, not a crash. Pillow raises past ~179 MP and only warns
+        # past ~89 MP; the warning is promoted so neither size gets decoded.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(p) as probe:
+                probe.verify()  # catches truncation and structural corruption
+            with Image.open(p) as img:
+                img.load()  # catches truncated pixel data that verify() misses
+                mode = img.mode
+                width, height = img.size
+                dpi_pair = img.info.get("dpi")
+                has_alpha = mode in ("RGBA", "LA") or "transparency" in img.info
+    except (
+        UnidentifiedImageError,
+        OSError,
+        SyntaxError,
+        ValueError,
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+    ) as exc:
         return FileMetadata(p, error=f"{type(exc).__name__}: {exc}")
 
     dpi: float | None = None

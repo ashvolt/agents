@@ -113,6 +113,26 @@ def test_unreadable_short_circuits_other_checks(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
+    "size",
+    [
+        (100, 100),  # 10,000 px: over twice the limit, Pillow raises
+        (40, 40),  # 1,600 px: over the limit, Pillow only warns and would decode
+    ],
+)
+def test_decompression_bomb_reports_unreadable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: tuple[int, int]
+) -> None:
+    # Red-team RT08 crashed the pipeline with a 400 MP PNG of a few hundred KB. The limit
+    # is lowered here so the test does not have to allocate one.
+    p = tmp_path / "bomb.png"
+    Image.new("1", size, 0).save(p)
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1000)
+    meta = read_metadata(p)
+    assert not meta.ok
+    assert "Decompression" in (meta.error or "")
+
+
+@pytest.mark.parametrize(
     ("name", "payload"),
     [
         ("a.png", b"\x89PNG\r\n"),
