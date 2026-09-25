@@ -59,3 +59,6 @@ demo-output/
 capstone/data/ai_cache/
 capstone/data/ai_art_v1/
 capstone/data/ai_art_v2/
+# Builder A/B rebuild of ai_art_v1 with --clean-edges --drawn-stroke-labels: a diagnostic, not a sealed set
+capstone/data/ai_art_v1_ab/
+capstone/data/ai_art_v1_ab.jsonl
