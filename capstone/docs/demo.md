@@ -62,6 +62,8 @@ an upload size limit at the proxy (the app caps at 40 MB), and whether uploads m
 
 ## Not in the demo yet
 
-- AI-generated images (DiffusionDB, a free hosted generator): the environment's network
-  policy blocks Hugging Face, Pollinations and Cloudflare. Allow those hosts to proceed.
+- AI-generated images. DiffusionDB is now reachable and scored as a sealed set
+  (ai-art.md: 54.3% / 0 of 339 wrong approvals). The live generator card still has not
+  run against a real provider (no key here). Before it goes on stage, fix
+  FAKE_TRANSPARENCY: it falsely flags 1.5% of raw AI images (ai-art.md §5).
 - Real customer uploads.

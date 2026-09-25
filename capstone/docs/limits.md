@@ -277,3 +277,13 @@ wrong reason. The two gaps are both false approvals.
 The first run reported two more failures (RT03, RT04). They came from the fallback text
 detector: that run used a Python without `rapidocr_onnxruntime`. The fallback now warns,
 and the red-team report prints which detector ran.
+
+## 16. AI-generated art: safe, but under the approve target — added 2026-09-25
+
+On 1,000 sealed Stable Diffusion sticker images (ai-art.md), the shipped pipeline made
+0 wrong approvals in 339 (exact bound 0.9%) but auto-approved only 54.3%, under SC-001's
+60%. Most of the lost approvals are the images' own sub-minimum detail and garbled small
+lettering, which the labels do not cover and no vector original can referee. The new
+FAKE_TRANSPARENCY check falsely flags 1.5% of raw AI images (16 of 1,100, none of them a
+checkerboard). **Quote AI-art numbers separately from real-art ones; they are a
+different population.**
