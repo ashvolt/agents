@@ -42,6 +42,12 @@ Reads named run files from `capstone/evals/runs/` and writes `static/reports.jso
 the results page comes from a run listed in `build_reports.ROUNDS`; the only typed-in
 figures are the cost assumptions, which say where they come from.
 
+Run files are gitignored. Where a round's run files are missing (a fresh checkout), its
+row is carried over unchanged from the committed `reports.json`, and the build prints
+which rows it carried. Omitting `--mistakes-run` keeps the gallery and samples as they
+are. The AI-art rounds (2026-09-25) were added this way; the older rows are
+byte-identical.
+
 Gallery examples: for each customer process, the largest correctly decided file,
 preferring a defective one where the process produces defects. Size is chosen for
 legibility; the verdict is not a criterion, and the counts sit next to each example.
