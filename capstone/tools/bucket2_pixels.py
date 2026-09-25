@@ -768,6 +768,106 @@ def check_text_detection_inconclusive(boxes: list[TextBox], spec: ProductSpec) -
     ]
 
 
+# A checkerboard painted into the pixels: two light, neutral greys alternating in square
+# cells. AI image tools draw it when asked for "transparent background"; it prints as a
+# grid of grey squares. Neutral = channels within this spread; light = at least this bright.
+CHECKER_NEUTRAL_SPREAD = 14
+CHECKER_MIN_LUMA = 150
+CHECKER_LEVEL_GAP = (10, 90)  # the two greys differ by this much, in 0-255 luma
+CHECKER_CELL_PX = (4, 64)  # cell sizes searched, on the analysis-sized image
+CHECKER_MIN_AGREEMENT = 0.85
+CHECKER_MIN_COVERAGE = 0.10  # share of the image the pattern must cover
+CHECKER_ANALYSIS_LONG_SIDE = 768
+
+
+def measure_checkerboard(image: Image.Image) -> tuple[float, float, int] | None:
+    """(coverage, agreement, cell_px) of the strongest checkerboard, or None.
+
+    Samples one pixel per candidate cell and asks whether the light/dark greys alternate
+    with (row + column) parity, for every cell size and phase. A real transparency grid
+    is regular; a checkered design element (a racing flag, gingham) is dark, coloured or
+    small, and fails one of the neutral, light or coverage tests.
+    """
+    rgb = image.convert("RGB")
+    scale = min(1.0, CHECKER_ANALYSIS_LONG_SIDE / max(rgb.size))
+    if scale < 1.0:
+        rgb = rgb.resize(
+            (max(1, round(rgb.width * scale)), max(1, round(rgb.height * scale))), Image.NEAREST
+        )
+    arr = np.asarray(rgb, dtype=np.int16)
+    if arr.size == 0:
+        return None
+    spread = arr.max(axis=2) - arr.min(axis=2)
+    luma = arr.mean(axis=2)
+    neutral = (spread <= CHECKER_NEUTRAL_SPREAD) & (luma >= CHECKER_MIN_LUMA)
+    if neutral.mean() < CHECKER_MIN_COVERAGE:
+        return None
+
+    hist = np.bincount(np.clip(luma[neutral], 0, 255).astype(np.int32), minlength=256)
+    first = int(hist.argmax())
+    far = hist.copy()
+    far[max(0, first - CHECKER_LEVEL_GAP[0] + 1) : first + CHECKER_LEVEL_GAP[0]] = 0
+    second = int(far.argmax())
+    gap = abs(first - second)
+    if not CHECKER_LEVEL_GAP[0] <= gap <= CHECKER_LEVEL_GAP[1] or hist[second] < 0.2 * hist[first]:
+        return None
+    tolerance = max(3, gap // 3)
+    level = np.full(luma.shape, -1, dtype=np.int8)
+    level[neutral & (np.abs(luma - first) <= tolerance)] = 0
+    level[neutral & (np.abs(luma - second) <= tolerance)] = 1
+
+    height, width = level.shape
+    best: tuple[float, float, int] | None = None
+    for cell in range(CHECKER_CELL_PX[0], CHECKER_CELL_PX[1] + 1):
+        rows, cols = height // cell, width // cell
+        if rows < 4 or cols < 4:
+            break
+        parity = (np.arange(rows)[:, None] + np.arange(cols)[None, :]) % 2
+        for oy in range(0, cell, max(1, cell // 4)):
+            for ox in range(0, cell, max(1, cell // 4)):
+                ys = oy + cell * np.arange(rows) + cell // 2
+                xs = ox + cell * np.arange(cols) + cell // 2
+                ys, xs = ys[ys < height], xs[xs < width]
+                samples = level[np.ix_(ys, xs)]
+                known = samples >= 0
+                if known.sum() < 16:
+                    continue
+                par = parity[: samples.shape[0], : samples.shape[1]]
+                match = (samples == par) & known
+                agree = max(match.sum(), (known & ~match).sum()) / known.sum()
+                ones = (samples[known] == 1).mean()
+                if not 0.3 <= ones <= 0.7:
+                    continue
+                coverage = known.sum() * agree / samples.size
+                if agree >= CHECKER_MIN_AGREEMENT and (best is None or coverage > best[0]):
+                    best = (float(coverage), float(agree), int(round(cell / scale)))
+    return best
+
+
+def check_fake_transparency(image: Image.Image) -> list[Issue]:
+    found = measure_checkerboard(image)
+    if found is None or found[0] < CHECKER_MIN_COVERAGE:
+        return []
+    coverage, agreement, cell = found
+    return [
+        Issue(
+            code=IssueCode.FAKE_TRANSPARENCY,
+            severity=Severity.BLOCKING,
+            message=(
+                "The background is a grey-and-white checkerboard drawn into the image, not "
+                "real transparency. It will print as a grid of grey squares. Export with a "
+                "transparent or solid background instead."
+            ),
+            evidence=Evidence(
+                measured=round(coverage * 100, 1),
+                required=round(CHECKER_MIN_COVERAGE * 100, 1),
+                unit="% of the image",
+                note=f"checkerboard cells ~{cell}px, {agreement:.0%} of sampled cells alternate",
+            ),
+        )
+    ]
+
+
 def analyse_pixels(
     image: Image.Image, spec: ProductSpec, dpi: float
 ) -> tuple[list[Issue], list[TextBox]]:
@@ -775,6 +875,7 @@ def analyse_pixels(
     boxes = detect_text(image)
     issues: list[Issue] = []
     issues += check_transparency(image, spec)
+    issues += check_fake_transparency(image)
     issues += check_contrast(image, spec, boxes + find_faint_text(image, boxes))
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
@@ -785,6 +886,7 @@ def analyse_pixels(
 
 BUCKET2_CHECKS = (
     "check_transparency",
+    "check_fake_transparency",
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
     "check_safe_zone",
@@ -795,6 +897,8 @@ BUCKET2_CHECKS = (
 
 __all__ = [
     "BUCKET2_CHECKS",
+    "check_fake_transparency",
+    "measure_checkerboard",
     "analyse_pixels",
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",

@@ -38,6 +38,7 @@ class IssueCode(StrEnum):
     LOW_CONTRAST = "LOW_CONTRAST"
     UNINTENDED_TRANSPARENCY = "UNINTENDED_TRANSPARENCY"
     TEXT_TOO_SMALL = "TEXT_TOO_SMALL"
+    FAKE_TRANSPARENCY = "FAKE_TRANSPARENCY"  # a checkerboard painted in, common in AI art
 
     # Bucket 3 — judgement, the model
     CONTENT_IN_SAFE_ZONE = "CONTENT_IN_SAFE_ZONE"
@@ -54,6 +55,7 @@ BUCKET_OF: dict[IssueCode, int] = {
     IssueCode.LOW_CONTRAST: 2,
     IssueCode.UNINTENDED_TRANSPARENCY: 2,
     IssueCode.TEXT_TOO_SMALL: 2,
+    IssueCode.FAKE_TRANSPARENCY: 2,
     IssueCode.CONTENT_IN_SAFE_ZONE: 3,
     IssueCode.LOOKS_WRONG: 3,
 }

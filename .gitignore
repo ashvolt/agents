@@ -54,3 +54,6 @@ Thumbs.db
 
 # Local copies of demo recordings and screenshots sent for review
 demo-output/
+
+# AI-generated artwork (DiffusionDB, CC0; hosted generators): fetched, never committed
+capstone/data/ai_cache/

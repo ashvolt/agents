@@ -249,6 +249,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                                     "LOW_CONTRAST",
                                     "UNINTENDED_TRANSPARENCY",
                                     "TEXT_TOO_SMALL",
+                                    "FAKE_TRANSPARENCY",
                                     "CONTENT_IN_SAFE_ZONE",
                                     "LOOKS_WRONG",
                                 ],
