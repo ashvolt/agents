@@ -35,6 +35,7 @@ dev = [
 # openly licensed SVG illustrations at print resolution. Not needed to run the pipeline.
 data = [
     "cairosvg>=2.7",
+    "pyarrow>=15",  # reading DiffusionDB's metadata (capstone/data/fetch_ai_art.py)
 ]
 # The local web demo (capstone/demo): upload a file, see the verdict. Not needed to run
 # the pipeline or the evals.

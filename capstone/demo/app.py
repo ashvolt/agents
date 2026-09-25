@@ -25,6 +25,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageDraw
 
+from capstone.demo import generate as ai
 from capstone.src.deciders import LogisticModel, decide_explained
 from capstone.src.product_specs import UnknownProductError, all_specs, get_spec
 from capstone.src.schemas import Issue, OrderMetadata, PreflightCase, ProductSpec, Severity
@@ -179,6 +180,35 @@ async def check(
         path = Path(tmp) / f"upload{suffix}"
         path.write_bytes(data)
         return JSONResponse(check_file(path, product_id, width_in, height_in))
+
+
+@app.get("/api/generate")
+def generate_status() -> dict[str, object]:
+    return {"available": ai.available(), "provider": ai.provider()}
+
+
+@app.post("/api/generate")
+def generate_and_check(
+    prompt: Annotated[str, Form(min_length=3, max_length=400)],
+    product_id: Annotated[str, Form()],
+    width_in: Annotated[float, Form(gt=0, le=120)],
+    height_in: Annotated[float, Form(gt=0, le=120)],
+) -> JSONResponse:
+    """Make an AI sticker from a prompt, then check it as if a customer uploaded it."""
+    started = time.perf_counter()
+    try:
+        image, provider = ai.generate(prompt)
+    except ai.GenerationError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    generated_ms = round((time.perf_counter() - started) * 1000)
+    with tempfile.TemporaryDirectory(prefix="preflight-gen-") as tmp:
+        with Image.open(io.BytesIO(image)) as img:
+            suffix = ".png" if img.format == "PNG" else ".jpg"
+        path = Path(tmp) / f"generated{suffix}"
+        path.write_bytes(image)
+        result = check_file(path, product_id, width_in, height_in)
+    result["generated"] = {"provider": provider, "prompt": prompt, "ms": generated_ms}
+    return JSONResponse(result)
 
 
 @app.get("/api/samples")

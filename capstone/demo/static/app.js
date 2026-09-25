@@ -75,11 +75,34 @@ function evidenceLine(ev) {
   return parts.join(" · ");
 }
 
+async function loadGenerator() {
+  const status = await (await fetch("/api/generate")).json();
+  if (status.available) $("gencard").hidden = false;
+}
+
+async function runGenerate() {
+  busy("Generating an AI sticker, then checking it…");
+  const form = new FormData();
+  form.append("prompt", $("prompt").value);
+  form.append("product_id", $("product").value);
+  form.append("width_in", $("w").value);
+  form.append("height_in", $("h").value);
+  const res = await fetch("/api/generate", { method: "POST", body: form });
+  const body = await res.json();
+  if (!res.ok) {
+    $("result").innerHTML = `<div class="empty">Generation failed: ${escapeHtml(body.detail)}</div>`;
+    return;
+  }
+  render(body);
+}
+
 function render(r) {
   const vision = r.vision_cost_usd;
   const sample = r.sample
     ? `<p class="subtle" style="margin:0 0 12px"><b>Sample:</b> ${escapeHtml(r.sample.description)}</p>`
-    : "";
+    : r.generated
+      ? `<p class="subtle" style="margin:0 0 12px"><b>AI-generated</b> (${escapeHtml(r.generated.provider)}, ${r.generated.ms} ms): “${escapeHtml(r.generated.prompt)}”</p>`
+      : "";
   const reason = r.escalation_reason
     ? `<p class="subtle">Why a person: ${escapeHtml(REASON_TEXT[r.escalation_reason] || r.escalation_reason)}.</p>`
     : "";
@@ -132,6 +155,7 @@ $("drop").addEventListener("drop", (e) => {
   choose(e.dataTransfer.files[0]);
 });
 $("go").addEventListener("click", runUpload);
+$("gen").addEventListener("click", runGenerate);
 
 async function loadStats() {
   const data = await (await fetch("/static/reports.json")).json();
@@ -143,3 +167,4 @@ async function loadStats() {
 loadProducts();
 loadSamples();
 loadStats();
+loadGenerator();

@@ -47,6 +47,15 @@
           <button class="primary" id="go" disabled>Check artwork</button>
         </div>
 
+        <div class="card" id="gencard" style="margin-top:16px" hidden>
+          <h2>Or make an AI sticker and check it</h2>
+          <p class="subtle" style="margin-top:-6px">Generated live, then checked as if a customer uploaded it, for the product and size above.</p>
+          <input type="text" id="prompt" value="die-cut sticker of a smiling coffee cup, bold outline, transparent background" maxlength="400"
+            style="width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:inherit">
+          <button class="primary" id="gen">Generate and check</button>
+          <div id="genmeta" class="subtle" style="margin-top:8px"></div>
+        </div>
+
         <div class="card" style="margin-top:16px">
           <h2>Or try a real customer mistake</h2>
           <p class="subtle" style="margin-top:-6px">Real illustrations, broken the way customers break them.</p>
