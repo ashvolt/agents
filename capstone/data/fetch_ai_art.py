@@ -32,6 +32,12 @@ BASE = "https://huggingface.co/datasets/poloclub/diffusiondb/resolve/main"
 METADATA = "metadata.parquet"  # the 2M-image subset: 512-ish px PNGs in images/part-*.zip
 
 STICKER_WORDS = re.compile(r"\b(sticker|stickers|decal|die[- ]cut|logo|badge|emblem|patch)\b", re.I)
+# Prompts that ask for transparency, any subject: where painted checkerboards come from.
+# Used to find real positives for the FAKE_TRANSPARENCY check (ai-art.md section 5).
+TRANSPARENT_WORDS = re.compile(
+    r"(transparent background|\bpng\b|no background|alpha channel|checkerboard)", re.I
+)
+PROMPTS = {"sticker": STICKER_WORDS, "transparent": TRANSPARENT_WORDS}
 MAX_NSFW = 0.1  # both the image and the prompt score, as published with the dataset
 
 
@@ -81,8 +87,15 @@ def _download(name: str, dest: Path) -> Path:
     return dest
 
 
-def select(n: int, seed: int) -> list[dict]:
-    """Sticker-like prompts, safe scores, one image per distinct prompt, seeded sample."""
+def select(
+    n: int, seed: int, pattern: re.Pattern = STICKER_WORDS, exclude: set[str] | None = None
+) -> list[dict]:
+    """Matching prompts, safe scores, one image per distinct prompt, seeded sample.
+
+    `exclude` removes image names, and every image made from the same prompt, from the
+    pool *before* sampling, so a fresh draw never reuses an image an earlier draw fetched
+    or another seed of it. With the defaults this is the original draw.
+    """
     import pyarrow.parquet as pq
 
     table = pq.read_table(
@@ -101,11 +114,16 @@ def select(n: int, seed: int) -> list[dict]:
             "prompt_nsfw",
         ],
     ).to_pylist()
-    seen: set[str] = set()
+    # an excluded image's prompt is spent too: another seed of it is a near-duplicate
+    seen: set[str] = {
+        (row["prompt"] or "").strip().lower()
+        for row in table
+        if row["image_name"] in (exclude or ())
+    }
     pool = []
     for row in table:
         prompt = (row["prompt"] or "").strip()
-        if not STICKER_WORDS.search(prompt):
+        if not pattern.search(prompt):
             continue
         if (row["image_nsfw"] or 0) > MAX_NSFW or (row["prompt_nsfw"] or 0) > MAX_NSFW:
             continue
@@ -142,12 +160,25 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("-n", type=int, default=300)
     ap.add_argument("--seed", type=int, default=20261010)
+    ap.add_argument("--prompts", choices=sorted(PROMPTS), default="sticker")
+    ap.add_argument("--name", default="diffusiondb", help="output folder and index name")
+    ap.add_argument(
+        "--exclude",
+        action="append",
+        default=None,
+        help="index (in ai_cache) whose images must not be drawn again; repeatable",
+    )
     args = ap.parse_args()
-    rows = fetch(select(args.n, args.seed), CACHE / "diffusiondb")
-    with (CACHE / "diffusiondb_index.jsonl").open("w", encoding="utf-8") as fh:
+    exclude = {
+        json.loads(line)["image_name"]
+        for name in args.exclude or []
+        for line in (CACHE / name).open(encoding="utf-8")
+    }
+    rows = fetch(select(args.n, args.seed, PROMPTS[args.prompts], exclude), CACHE / args.name)
+    with (CACHE / f"{args.name}_index.jsonl").open("w", encoding="utf-8") as fh:
         for row in rows:
             fh.write(json.dumps({k: row[k] for k in row}, default=str) + "\n")
-    print(f"{len(rows)} images -> {CACHE / 'diffusiondb'}")
+    print(f"{len(rows)} images -> {CACHE / args.name}")
 
 
 if __name__ == "__main__":
