@@ -24,7 +24,7 @@ import argparse
 import json
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -58,6 +58,9 @@ GRADED_CODES = (
     IssueCode.TEXT_TOO_SMALL,
     IssueCode.CONTENT_IN_SAFE_ZONE,
 )
+# A logo colour for a safe-zone mark that lands inside a grey border band.
+IN_BAND_MARK = (196, 48, 40)
+
 BINARY_CODES = (
     IssueCode.WRONG_COLOR_MODE,
     IssueCode.UNINTENDED_TRANSPARENCY,
@@ -80,6 +83,10 @@ class CasePlan:
     perturbations: tuple[Perturbation, ...]
     split: Split
     seed: int
+    # Which edge a CONTENT_IN_SAFE_ZONE mark intrudes from. Always "left" in every dataset
+    # generated before 2026-09-23; `--intrusion-edges any` varies it so a check that has
+    # quietly learned "intrusions are on the left" gets caught.
+    intrusion_edge: str = "left"
 
     def magnitude_for(self, code: IssueCode) -> float:
         """1.0 means 'exactly at the limit'; absent means 'comfortably inside'."""
@@ -103,6 +110,24 @@ def required_canvas_inches(spec: ProductSpec, order: OrderMetadata) -> tuple[flo
         order.width_in + 2 * spec.bleed_in,
         order.height_in + 2 * spec.bleed_in,
     )
+
+
+def aspect_base_px_w(
+    spec: ProductSpec, order: OrderMetadata, bleed_in: float, px_w: int, px_h: int
+) -> int:
+    """The width an ASPECT_MISMATCH stretch is applied to.
+
+    A label's aspect magnitude is deviation / tolerance *against the canvas the spec
+    requires* (check_aspect). When bleed is non-standard, including in-spec extra bleed,
+    the canvas already has a different ratio, and stretching it made the label wrong: a
+    1.1x stretch on a 2x-bleed canvas measured 0.3x (real_art_v3 case-00425). So with
+    non-standard bleed, start from the width that gives the spec's ratio at this height.
+    With standard bleed this returns `px_w` unchanged, so those files stay byte-identical.
+    """
+    if bleed_in == spec.bleed_in:
+        return px_w
+    cw, ch = required_canvas_inches(spec, order)
+    return round(px_h * cw / ch)
 
 
 def _pt_to_px(pt: float, dpi: float) -> float:
@@ -214,7 +239,8 @@ def render(plan: CasePlan) -> tuple[Image.Image, float]:
     # --- ASPECT_MISMATCH ------------------------------------------------------------
     if plan.has(IssueCode.ASPECT_MISMATCH):
         deviation = spec.aspect_tolerance * plan.magnitude_for(IssueCode.ASPECT_MISMATCH)
-        px_w = max(8, round(px_w * (1.0 + deviation)))
+        base_w = aspect_base_px_w(spec, order, bleed_in, px_w, px_h)
+        px_w = max(8, round(base_w * (1.0 + deviation)))
 
     img = Image.new("RGB", (px_w, px_h), BACKGROUND)
     draw = ImageDraw.Draw(img)
@@ -286,9 +312,29 @@ def render(plan: CasePlan) -> tuple[Image.Image, float]:
     if plan.has(IssueCode.CONTENT_IN_SAFE_ZONE):
         intrusion = safe_px * plan.magnitude_for(IssueCode.CONTENT_IN_SAFE_ZONE)
         mark_w = max(6, int(safe_px * 1.5) or 6)
-        x0 = trim[0] + safe_px - intrusion
-        draw.rectangle((x0, sy0 + (sy1 - sy0) * 0.4, x0 + mark_w, sy0 + (sy1 - sy0) * 0.6),
-                       fill=accent)
+        mid_y = (sy0 + (sy1 - sy0) * 0.4, sy0 + (sy1 - sy0) * 0.6)
+        mid_x = (sx0 + (sx1 - sx0) * 0.4, sx0 + (sx1 - sx0) * 0.6)
+        if plan.intrusion_edge == "right":
+            x1 = trim[2] - safe_px + intrusion
+            box = (x1 - mark_w, mid_y[0], x1, mid_y[1])
+        elif plan.intrusion_edge == "top":
+            y0 = trim[1] + safe_px - intrusion
+            box = (mid_x[0], y0, mid_x[1], y0 + mark_w)
+        elif plan.intrusion_edge == "bottom":
+            y1 = trim[3] - safe_px + intrusion
+            box = (mid_x[0], y1 - mark_w, mid_x[1], y1)
+        else:  # "left" - the original placement, unchanged
+            x0 = trim[0] + safe_px - intrusion
+            box = (x0, mid_y[0], x0 + mark_w, mid_y[1])
+        # A top or bottom mark can land inside the accent border band. Drawn in the band's
+        # colour it vanished: the file was pixel-identical to a clean one, and every
+        # shifted_v4/v5 "false approve" was one of these. It is drawn as a distinct logo
+        # colour instead (the body ink is a grey too close to the band's to be a fair
+        # test). Left and right marks never meet a band and keep the accent colour, so
+        # those files are unchanged.
+        band_h = int(bleed_px * 1.5) or 1
+        in_band = box[1] < band_h or box[3] > px_h - band_h
+        draw.rectangle(box, fill=IN_BAND_MARK if in_band else accent)
 
     return img, dpi
 
@@ -468,13 +514,22 @@ def generate(
     out_dir: Path | None = None,
     manifest: Path | None = None,
     clean_fraction: float = 0.40,
+    intrusion_edges: str = "left",
 ) -> Path:
-    """Render the dataset and write the manifest. Returns the manifest path."""
+    """Render the dataset and write the manifest. Returns the manifest path.
+
+    `intrusion_edges="any"` picks the safe-zone intrusion edge per case from the case's own
+    seed, after planning, so every other property of every case is identical to the
+    `"left"` dataset with the same seed. Only the mark moves.
+    """
     root = Path(__file__).resolve().parent
     out_dir = out_dir or root / "cases"
     manifest = manifest or root / "cases.jsonl"
 
     plans = plan_cases(n, seed=seed, clean_fraction=clean_fraction)
+    if intrusion_edges == "any":
+        edges = ("left", "right", "top", "bottom")
+        plans = [replace(p, intrusion_edge=random.Random(p.seed).choice(edges)) for p in plans]
     rows: list[dict] = []
 
     for plan in plans:
@@ -494,6 +549,8 @@ def generate(
                 "rendered_dpi": round(dpi, 3),
             }
         )
+        if plan.intrusion_edge != "left":  # keeps earlier manifests byte-identical
+            rows[-1]["intrusion_edge"] = plan.intrusion_edge
 
     with manifest.open("w", encoding="utf-8") as fh:
         for row in rows:
@@ -516,6 +573,12 @@ def main() -> None:
     )
     ap.add_argument("--out", type=str, default=None, help="manifest filename")
     ap.add_argument("--cases-dir", type=str, default=None, help="directory for the images")
+    ap.add_argument(
+        "--intrusion-edges",
+        choices=["left", "any"],
+        default="left",
+        help="where safe-zone intrusions are drawn. 'left' reproduces every earlier dataset",
+    )
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parent
@@ -525,6 +588,7 @@ def main() -> None:
         clean_fraction=args.clean_fraction,
         manifest=root / args.out if args.out else None,
         out_dir=root / args.cases_dir if args.cases_dir else None,
+        intrusion_edges=args.intrusion_edges,
     )
 
     import collections

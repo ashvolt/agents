@@ -198,3 +198,82 @@ In order:
 2. A successful agent sweep, so the model's contribution is measured rather than argued.
 3. The red-team pass, because injection via rendered image text is the attack this design
    invites and it is currently untested.
+
+## 11. Label flaws found by the CV decider — added 2026-09-23
+
+Building features that describe the cut margin exposed two places where the generator's
+labels and its pixels disagree. Neither is fixed in the generator, because every dataset
+and result in this repo depends on it; both are worked around and recorded.
+
+- **Label text overruns the trim on small products and is labelled clean.** The generator
+  draws its text line from the left of the safe area without constraining its width, so
+  on small stickers the text runs into the keep-out margin and sometimes to the canvas
+  edge. In print that is a defect. The margin measurement excludes detected text so a
+  classifier does not learn "type at the blade is harmless" — which means **text at the
+  blade is currently caught by nothing.**
+- **Some safe-zone defects are pixel-identical to clean files.** A same-colour mark that
+  sits entirely inside a full-width border band of equal thickness leaves no trace
+  (case-00341 in shifted_v3: a 28 px mark inside a 28 px band). No decider can recover
+  it. Real logos are rarely the exact colour of the border they touch, so this is mostly
+  a generator artefact — but a logo that merges with a border *is* real, and is why the
+  band-protrusion guard exists (decider.md §3).
+
+## 12. The model-free pipeline does not meet SC-002 at scale — added 2026-09-23
+
+rules_only scored 0.0% false approves on the 88-case holdout. On three fresh sets of
+400-600 cases it scored 2.1-2.5%, breaching the 1% limit every time. §7 predicted this:
+44 approvals cannot distinguish 0% from 6.8%. The CV decider (decider.md) passes on the
+same sets at no cost; the deterministic-only recommendation in results.md §7 is
+withdrawn.
+
+## 13. Verified fixes are verified by the checks that found the problem — added 2026-09-23
+
+The fix engine (scene-narration.md) re-runs the full preflight on every corrected proof.
+That proves the checks pass, not that the proof is right. Two cases where it misled
+before being tightened: a stretched file padded to the correct canvas passed every rule
+with the design still distorted, and a proof with one unverified fix was approved by
+the decider anyway. Both are now blocked, but the class of failure is structural: **any
+defect the rules cannot see, a fix can hide.** The customer's proof approval is the real
+check, and scaling a design — even to 97% — is only acceptable because it is a proof.
+
+## 14. Real artwork: SC-002 met on the bound, on artwork we laid out — updated 2026-09-24
+
+Four sealed rounds on unseen real illustrations laid out as sticker uploads
+(real-art.md): 6.2% (v2), 1.4% (v3), 0.4% on 1,000 (v4), and **0 of 500 approvals on
+1,000 (v5), exact 95% upper bound 0.6%** at 78.7% auto-approve. On this data SC-002 is
+met with confidence, not just on the point estimate.
+
+Rounds 1-3 used a strict CMYK rule; round 4 converts RGB (a product decision, not a
+tuning choice) and measures element contrast on its solid core, which fixed JPEG false
+rejections (mistakes_v1: 74.6% -> 82.4% auto-approve on the spent set).
+
+What this still is not: real customer uploads. The artwork is real design work, but it
+is laid out and labelled by our builder, which shares assumptions with the checks. The
+customer-mistake set makes the *processes* real (screenshots, chat apps, JPEG, GIF,
+background removers, trim-size exports); the labels are still ours. **Quote the real-art
+number and its bound, never the synthetic headline alone.**
+
+## 15. Red-team gaps — added 2026-09-24
+
+`python -m capstone.evals.redteam` builds 12 adversarial files and runs the shipped
+pipeline on them. With DBNet installed: 0 failures, 2 known gaps, 1 case held for the
+wrong reason. The two gaps are both false approvals.
+
+- **RT05: a hairline embedded in thick ink.** A 0.24 pt line (minimum 0.5 pt) drawn
+  across a filled, outlined shape is approved. On the brightness mask the line joins the
+  shape and becomes one component whose median stroke is the thick part. On colour
+  regions it joins the same-colour outline, and colour regions are only measured when
+  free-standing: measuring every region dropped real-art approval to 32%. Closing this
+  needs a thin-*branch* measure (long runs of thin pixels inside a thick component), and
+  that has to be validated on fresh real art before it ships.
+- **RT06: upscaled low-resolution art.** A 60 DPI file resampled to 300 DPI is approved.
+  Resolution is read from pixel count and metadata. Nothing measures whether the pixels
+  carry detail (high-frequency energy, or the repeated rows and columns of a
+  nearest-neighbour upscale). In the first run this case was rejected, but by accident: it
+  tripped the text-size check instead.
+- **RT04 held for the wrong reason.** Text about 5 ΔE from its backing, inside a busy
+  pattern, is escalated for text size. The contrast check does not fire.
+
+The first run reported two more failures (RT03, RT04). They came from the fallback text
+detector: that run used a Python without `rapidocr_onnxruntime`. The fallback now warns,
+and the red-team report prints which detector ran.

@@ -22,6 +22,8 @@ infrastructure, or anything he explicitly asks to be built.
 - Python 3.13, `anthropic` SDK used directly. No agent framework unless one earns its place
   and the reason is written down.
 - `pydantic` for schemas, `pytest` for tests, `ruff` for lint.
+- `opencv-python-headless` for CV features, `scikit-learn` for fitting the decider (training
+  only; models ship as JSON). Reasons in PLAN.md §11.
 - Models: `claude-opus-5` for graded runs and final sweeps; `claude-haiku-4-5` for
   iteration. Read the model ID from env, never hardcode it in a level exercise.
 

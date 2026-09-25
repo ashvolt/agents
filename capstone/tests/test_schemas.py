@@ -215,8 +215,11 @@ def test_issue_reports_its_bucket() -> None:
     assert not blocking_issue(IssueCode.CONTENT_IN_SAFE_ZONE).is_deterministic
 
 
-def test_deterministic_codes_are_the_nine_computable_ones() -> None:
-    assert len(DETERMINISTIC_CODES) == 9
+def test_deterministic_codes_are_the_ten_computable_ones() -> None:
+    # Nine until 2026-09-25, when FAKE_TRANSPARENCY (a checkerboard painted into the
+    # pixels) was added as a computed check. A change here should be deliberate.
+    assert len(DETERMINISTIC_CODES) == 10
+    assert IssueCode.FAKE_TRANSPARENCY in DETERMINISTIC_CODES
 
 
 # --------------------------------------------------------------------------------------

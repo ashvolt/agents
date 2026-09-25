@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -30,6 +31,42 @@ TRANSPARENCY_REPORT_RATIO = 0.005
 # A connected component must hold at least this share of the file's ink before its
 # thickness counts. Below it we are measuring speckle.
 COMPONENT_MIN_INK_RATIO = 0.002
+
+# ...unless it is at least this long at print size. The ratio above was tuned on sparse
+# synthetic art; next to a dense real illustration a 1.5 in hairline rule holds under
+# 0.2% of the ink and was skipped as speckle (real-art.md). Length is what makes a line.
+STROKE_MIN_LENGTH_IN = 0.08
+
+# Text boxes are excluded from the stroke measurement with this much margin, as a share
+# of the line's height. Without it the antialiased fringe just outside a tight box was
+# measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
+TEXT_EXCLUSION_PAD = 0.15
+
+# Colour regions for the stroke measurement. A quantised colour is a real colour of the
+# artwork if it covers at least this share of the canvas (or REGION_MIN_PX pixels);
+# everything else is antialiasing and is reassigned to the nearest real colour. Real
+# colours closer than REGION_MERGE_DELTA_E are one region, so the 16-level steps of a
+# gradient do not become a stack of thin bands. The merge threshold sits below every
+# product's minimum contrast (15), so two colours a customer can tell apart on press
+# are never merged.
+REGION_MIN_SHARE = 0.0005
+REGION_MIN_PX = 30
+REGION_MERGE_DELTA_E = 10.0
+
+# The brightness mask never demands more than this much luminance difference from the
+# background, however dark the darkest ink in the file is. See `ink_mask`.
+STROKE_MASK_CAP = 24
+
+# A colour-region component counts as a free-standing stroke when at least this share of
+# the pixels just around it are background. Details inside an illustration (a highlight
+# in a face) are surrounded by other ink and are not what a line-weight rule is for:
+# measuring every region took real-art auto-approval from 78% to 32% (real-art.md).
+FREE_STANDING_BG_SHARE = 0.8
+
+# Faint-text search: the image's difference from its background is multiplied by this
+# before a second detection pass. A line that only appears after amplification is, by
+# definition, low-contrast text.
+FAINT_TEXT_GAIN = 4.0
 
 # Opposing-edge ink asymmetry above which the keep-out margin is called suspicious.
 #
@@ -181,7 +218,15 @@ def measure_contrast(
         if int(sub.sum()) < min_pixels:
             continue
         pixels = arr[y0:y1, x0:x1][sub]
-        colour = tuple(float(c) for c in pixels.mean(axis=0))
+        # The element's colour is its solid core, as for text lines: pixels within 80% of
+        # its strongest deviation (a 95th percentile, so one noisy pixel cannot define
+        # it). A plain mean let JPEG chroma subsampling, which smears a thin coloured rule
+        # into the background, read a clearly visible line as a faint one: 36 of 47 wrong
+        # rejections on the customer-mistake set (mistakes_v1, re-saved and chat-app
+        # JPEGs). A genuinely faint element is uniform, so its core is its mean.
+        de_pixels = de_map[y0:y1, x0:x1][sub]
+        core = pixels[de_pixels >= 0.8 * float(np.percentile(de_pixels, 95))]
+        colour = tuple(float(c) for c in (core if core.size else pixels).mean(axis=0))
         de = delta_e76(background, colour)
         if weakest is None or de < weakest[0]:
             weakest = (de, tuple(int(round(c)) for c in colour))  # type: ignore[arg-type]
@@ -192,11 +237,80 @@ def measure_contrast(
     return (weakest[0], bg, weakest[1])  # type: ignore[return-value]
 
 
-def check_contrast(image: Image.Image, spec: ProductSpec) -> list[Issue]:
-    measured = measure_contrast(image)
-    if measured is None:
+def measure_text_contrast(
+    image: Image.Image, boxes: list[TextBox]
+) -> tuple[float, tuple[int, int, int], tuple[int, int, int]] | None:
+    """deltaE between each text line and the background immediately around it; the worst.
+
+    `measure_contrast` finds elements as connected regions and skips regions below a share
+    of the canvas. A caption is many small regions — one per letter — and every one fell
+    under that floor, so a low-contrast caption beside a large illustration was never
+    measured (7 of 17 false approves on real art). Text lines are measured as lines.
+
+    The ink colour is the mean of the line's solid core — pixels within 80% of its
+    strongest deviation — so antialiased edges do not drag it toward the background (a
+    median cut read a grey-222 caption on white as deltaE 3.8; its true value is ~10.7).
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.int16)
+    height, width = arr.shape[:2]
+    worst: tuple[float, tuple[int, int, int], tuple[int, int, int]] | None = None
+    for box in boxes:
+        pad = max(2, box.height_px // 2)
+        around = arr[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad]
+        flat = around.reshape(-1, 3)
+        keys = ((flat >> 4) * np.array([256, 16, 1])).sum(axis=1)
+        background = flat[keys == int(np.bincount(keys).argmax())].mean(axis=0)
+        inside = arr[box.y0 : box.y1, box.x0 : box.x1].reshape(-1, 3)
+        if inside.size == 0:
+            continue
+        deviation = np.abs(inside - background).max(axis=1)
+        if deviation.max() < 8:
+            continue
+        core = inside[deviation >= 0.8 * deviation.max()]
+        ink = core.mean(axis=0)
+        bg_t = tuple(int(round(c)) for c in background)
+        ink_t = tuple(int(round(c)) for c in ink)
+        de = delta_e76(bg_t, ink_t)  # type: ignore[arg-type]
+        if worst is None or de < worst[0]:
+            worst = (de, bg_t, ink_t)  # type: ignore[assignment]
+    return worst
+
+
+def find_faint_text(image: Image.Image, known: list[TextBox]) -> list[TextBox]:
+    """Text lines visible only after amplifying the image's difference from its background.
+
+    A caption pale enough to be a contrast defect can also be too pale for the detector,
+    and if the detector found *anything else* — part of an illustration — the no-text guard
+    stays quiet and the caption is never measured (5 of 14 remaining false approves on
+    real art). Amplify, detect again, and keep the lines the first pass missed; the
+    contrast check then measures them on the original pixels.
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.float32)
+    if arr.size == 0:
         return []
-    delta_e, background, ink = measured
+    flat = arr.reshape(-1, 3).astype(np.int32)
+    keys = ((flat >> 4) * np.array([256, 16, 1])).sum(axis=1)
+    background = flat[keys == int(np.bincount(keys).argmax())].mean(axis=0)
+    boosted = np.clip(background + FAINT_TEXT_GAIN * (arr - background), 0, 255).astype(np.uint8)
+    found = detect_text(Image.fromarray(boosted))
+
+    def overlaps(a: TextBox, b: TextBox) -> bool:
+        return a.x0 < b.x1 and b.x0 < a.x1 and a.y0 < b.y1 and b.y0 < a.y1
+
+    return [box for box in found if not any(overlaps(box, k) for k in known)]
+
+
+def check_contrast(
+    image: Image.Image, spec: ProductSpec, boxes: list[TextBox] | None = None
+) -> list[Issue]:
+    candidates = [
+        m
+        for m in (measure_contrast(image), measure_text_contrast(image, boxes or []))
+        if m is not None
+    ]
+    if not candidates:
+        return []
+    delta_e, background, ink = min(candidates, key=lambda m: m[0])
     if delta_e >= spec.min_contrast_delta_e:
         return []
     return [
@@ -242,7 +356,7 @@ def _run_lengths_along_axis(mask: np.ndarray, axis: int) -> np.ndarray:
 
 
 def measure_min_stroke_px(
-    image: Image.Image, exclude: list[TextBox] | None = None
+    image: Image.Image, exclude: list[TextBox] | None = None, dpi: float | None = None
 ) -> float | None:
     """Thinnest stroke present, in pixels.
 
@@ -259,36 +373,54 @@ def measure_min_stroke_px(
     legitimately thinner than the artwork minimum at small sizes, and counting them here
     would flag every file carrying small type as a thin-line defect.
     """
-    mask = ink_mask(image)
+    candidates = [
+        v
+        for v in (
+            _luminance_min_stroke(image, exclude, dpi),
+            _free_standing_min_stroke(image, exclude, dpi),
+        )
+        if v is not None
+    ]
+    return min(candidates) if candidates else None
+
+
+def _excluded(shape: tuple[int, ...], exclude: list[TextBox] | None) -> np.ndarray:
+    mask = np.zeros(shape[:2], dtype=bool)
+    for box in exclude or []:
+        pad = max(2, round(TEXT_EXCLUSION_PAD * box.height_px))
+        mask[max(0, box.y0 - pad) : box.y1 + pad, max(0, box.x0 - pad) : box.x1 + pad] = True
+    return mask
+
+
+def _luminance_min_stroke(
+    image: Image.Image, exclude: list[TextBox] | None, dpi: float | None
+) -> float | None:
+    """Thinnest stroke on a brightness mask: every ink element, embedded details included."""
+    mask = ink_mask(image, cap=STROKE_MASK_CAP)
     if mask.size == 0 or not mask.any():
         return None
+    mask &= ~_excluded(mask.shape, exclude)
+    if not mask.any():
+        return None
 
-    if exclude:
-        for box in exclude:
-            mask[box.y0 : box.y1, box.x0 : box.x1] = False
-        if not mask.any():
-            return None
-
-    horizontal = _run_lengths_along_axis(mask, axis=1)
-    vertical = _run_lengths_along_axis(mask, axis=0)
-    thickness = np.minimum(horizontal, vertical)
-
+    thickness = np.minimum(
+        _run_lengths_along_axis(mask, axis=1), _run_lengths_along_axis(mask, axis=0)
+    )
     total_ink = int(mask.sum())
     min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
+    min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
 
     thinnest: float | None = None
     for x0, y0, x1, y1 in _label_runs(mask):
         sub_mask = mask[y0:y1, x0:x1]
         area = int(sub_mask.sum())
-        if area < min_component_px:
+        if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
             continue
         values = thickness[y0:y1, x0:x1][sub_mask]
         if values.size == 0:
             continue
         median = float(np.median(values))
-        if median <= 0:
-            continue
-        if thinnest is None or median < thinnest:
+        if median > 0 and (thinnest is None or median < thinnest):
             thinnest = median
 
     if thinnest is None:
@@ -297,6 +429,107 @@ def measure_min_stroke_px(
         values = thickness[mask]
         thinnest = float(values.min()) if values.size else None
     return thinnest
+
+
+def _free_standing_min_stroke(
+    image: Image.Image, exclude: list[TextBox] | None, dpi: float | None
+) -> float | None:
+    """Thinnest free-standing stroke, measured on colour regions.
+
+    Catches what brightness cannot see - a grey rule on navy differs in colour, barely
+    in luminance - while ignoring details embedded in other ink.
+    """
+    regions, background = colour_regions(image)
+    if regions.size == 0:
+        return None
+    excluded = _excluded(regions.shape, exclude)
+    ink = (regions != background) & ~excluded
+    total_ink = int(ink.sum())
+    if total_ink == 0:
+        return None
+    min_component_px = max(4, int(total_ink * COMPONENT_MIN_INK_RATIO))
+    min_length_px = STROKE_MIN_LENGTH_IN * dpi if dpi else float("inf")
+    height, width = regions.shape
+    ring_kernel = np.ones((3, 3), np.uint8)
+
+    thinnest: float | None = None
+    for region in np.unique(regions[ink]).tolist():
+        mask = (regions == region) & ~excluded
+        thickness = np.minimum(
+            _run_lengths_along_axis(mask, axis=1), _run_lengths_along_axis(mask, axis=0)
+        )
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(
+            mask.astype(np.uint8), connectivity=8
+        )
+        for idx in range(1, count):
+            x0, y0, w, h, area = (int(v) for v in stats[idx])
+            if area < min_component_px and max(w, h) < min_length_px:
+                continue
+            ya, yb = max(0, y0 - 1), min(height, y0 + h + 1)
+            xa, xb = max(0, x0 - 1), min(width, x0 + w + 1)
+            component = labels[ya:yb, xa:xb] == idx
+            ring = cv2.dilate(component.astype(np.uint8), ring_kernel).astype(bool) & ~component
+            around = regions[ya:yb, xa:xb][ring]
+            if around.size == 0 or (around == background).mean() < FREE_STANDING_BG_SHARE:
+                continue
+            values = thickness[ya:yb, xa:xb][component]
+            median = float(np.median(values)) if values.size else 0.0
+            if median > 0 and (thinnest is None or median < thinnest):
+                thinnest = median
+    return thinnest
+
+
+def colour_regions(image: Image.Image) -> tuple[np.ndarray, int]:
+    """Each pixel's colour region, and the background region's id.
+
+    The artwork's real colours are the quantised colours that cover a meaningful area.
+    Every other pixel — the antialiased edge between two real colours — takes the nearest
+    real colour, and real colours within REGION_MERGE_DELTA_E of each other are joined,
+    so a gradient is one region rather than a stack of bands.
+    """
+    arr = np.asarray(image.convert("RGB"), dtype=np.uint8)
+    if arr.size == 0:
+        return np.zeros((0, 0), dtype=np.int32), 0
+    flat = arr.reshape(-1, 3)
+    keys = ((flat >> 4).astype(np.int32) * np.array([256, 16, 1], dtype=np.int32)).sum(axis=1)
+    counts = np.bincount(keys, minlength=4096)
+    present = np.flatnonzero(counts)
+    sums = np.stack(
+        [np.bincount(keys, weights=flat[:, c], minlength=4096) for c in range(3)], axis=1
+    )
+    means = sums[present] / counts[present][:, None]
+
+    floor = max(REGION_MIN_PX, int(flat.shape[0] * REGION_MIN_SHARE))
+    major = present[counts[present] >= floor]
+    if major.size == 0:
+        major = present[[int(np.argmax(counts[present]))]]
+    major_means = sums[major] / counts[major][:, None]
+
+    # join real colours closer than the merge threshold (union-find over the palette)
+    parent = list(range(len(major)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    labs = [
+        _srgb_to_lab(tuple(float(c) for c in m))  # type: ignore[arg-type]
+        for m in major_means
+    ]
+    for i in range(len(major)):
+        for j in range(i + 1, len(major)):
+            if math.dist(labs[i], labs[j]) < REGION_MERGE_DELTA_E:
+                parent[find(i)] = find(j)
+
+    # every present quantised colour -> nearest real colour -> its region
+    nearest = np.argmin(((means[:, None, :] - major_means[None, :, :]) ** 2).sum(axis=2), axis=1)
+    lut = np.zeros(4096, dtype=np.int32)
+    lut[present] = np.array([find(int(n)) for n in nearest], dtype=np.int32)
+    regions = lut[keys].reshape(arr.shape[:2])
+    background = int(np.bincount(regions.ravel()).argmax())
+    return regions, background
 
 
 def check_stroke_width(
@@ -311,7 +544,7 @@ def check_stroke_width(
     """
     if dpi <= 0:
         return []
-    min_px = measure_min_stroke_px(image, exclude=exclude)
+    min_px = measure_min_stroke_px(image, exclude=exclude, dpi=dpi)
     if min_px is None or min_px <= 0:
         return []
 
@@ -327,9 +560,7 @@ def check_stroke_width(
                 f"needs {spec.min_stroke_pt:g} pt or heavier. Thinner strokes break up or "
                 "disappear on press."
             ),
-            evidence=Evidence(
-                measured=round(min_pt, 3), required=spec.min_stroke_pt, unit="pt"
-            ),
+            evidence=Evidence(measured=round(min_pt, 3), required=spec.min_stroke_pt, unit="pt"),
         )
     ]
 
@@ -537,6 +768,106 @@ def check_text_detection_inconclusive(boxes: list[TextBox], spec: ProductSpec) -
     ]
 
 
+# A checkerboard painted into the pixels: two light, neutral greys alternating in square
+# cells. AI image tools draw it when asked for "transparent background"; it prints as a
+# grid of grey squares. Neutral = channels within this spread; light = at least this bright.
+CHECKER_NEUTRAL_SPREAD = 14
+CHECKER_MIN_LUMA = 150
+CHECKER_LEVEL_GAP = (10, 90)  # the two greys differ by this much, in 0-255 luma
+CHECKER_CELL_PX = (4, 64)  # cell sizes searched, on the analysis-sized image
+CHECKER_MIN_AGREEMENT = 0.85
+CHECKER_MIN_COVERAGE = 0.10  # share of the image the pattern must cover
+CHECKER_ANALYSIS_LONG_SIDE = 768
+
+
+def measure_checkerboard(image: Image.Image) -> tuple[float, float, int] | None:
+    """(coverage, agreement, cell_px) of the strongest checkerboard, or None.
+
+    Samples one pixel per candidate cell and asks whether the light/dark greys alternate
+    with (row + column) parity, for every cell size and phase. A real transparency grid
+    is regular; a checkered design element (a racing flag, gingham) is dark, coloured or
+    small, and fails one of the neutral, light or coverage tests.
+    """
+    rgb = image.convert("RGB")
+    scale = min(1.0, CHECKER_ANALYSIS_LONG_SIDE / max(rgb.size))
+    if scale < 1.0:
+        rgb = rgb.resize(
+            (max(1, round(rgb.width * scale)), max(1, round(rgb.height * scale))), Image.NEAREST
+        )
+    arr = np.asarray(rgb, dtype=np.int16)
+    if arr.size == 0:
+        return None
+    spread = arr.max(axis=2) - arr.min(axis=2)
+    luma = arr.mean(axis=2)
+    neutral = (spread <= CHECKER_NEUTRAL_SPREAD) & (luma >= CHECKER_MIN_LUMA)
+    if neutral.mean() < CHECKER_MIN_COVERAGE:
+        return None
+
+    hist = np.bincount(np.clip(luma[neutral], 0, 255).astype(np.int32), minlength=256)
+    first = int(hist.argmax())
+    far = hist.copy()
+    far[max(0, first - CHECKER_LEVEL_GAP[0] + 1) : first + CHECKER_LEVEL_GAP[0]] = 0
+    second = int(far.argmax())
+    gap = abs(first - second)
+    if not CHECKER_LEVEL_GAP[0] <= gap <= CHECKER_LEVEL_GAP[1] or hist[second] < 0.2 * hist[first]:
+        return None
+    tolerance = max(3, gap // 3)
+    level = np.full(luma.shape, -1, dtype=np.int8)
+    level[neutral & (np.abs(luma - first) <= tolerance)] = 0
+    level[neutral & (np.abs(luma - second) <= tolerance)] = 1
+
+    height, width = level.shape
+    best: tuple[float, float, int] | None = None
+    for cell in range(CHECKER_CELL_PX[0], CHECKER_CELL_PX[1] + 1):
+        rows, cols = height // cell, width // cell
+        if rows < 4 or cols < 4:
+            break
+        parity = (np.arange(rows)[:, None] + np.arange(cols)[None, :]) % 2
+        for oy in range(0, cell, max(1, cell // 4)):
+            for ox in range(0, cell, max(1, cell // 4)):
+                ys = oy + cell * np.arange(rows) + cell // 2
+                xs = ox + cell * np.arange(cols) + cell // 2
+                ys, xs = ys[ys < height], xs[xs < width]
+                samples = level[np.ix_(ys, xs)]
+                known = samples >= 0
+                if known.sum() < 16:
+                    continue
+                par = parity[: samples.shape[0], : samples.shape[1]]
+                match = (samples == par) & known
+                agree = max(match.sum(), (known & ~match).sum()) / known.sum()
+                ones = (samples[known] == 1).mean()
+                if not 0.3 <= ones <= 0.7:
+                    continue
+                coverage = known.sum() * agree / samples.size
+                if agree >= CHECKER_MIN_AGREEMENT and (best is None or coverage > best[0]):
+                    best = (float(coverage), float(agree), int(round(cell / scale)))
+    return best
+
+
+def check_fake_transparency(image: Image.Image) -> list[Issue]:
+    found = measure_checkerboard(image)
+    if found is None or found[0] < CHECKER_MIN_COVERAGE:
+        return []
+    coverage, agreement, cell = found
+    return [
+        Issue(
+            code=IssueCode.FAKE_TRANSPARENCY,
+            severity=Severity.BLOCKING,
+            message=(
+                "The background is a grey-and-white checkerboard drawn into the image, not "
+                "real transparency. It will print as a grid of grey squares. Export with a "
+                "transparent or solid background instead."
+            ),
+            evidence=Evidence(
+                measured=round(coverage * 100, 1),
+                required=round(CHECKER_MIN_COVERAGE * 100, 1),
+                unit="% of the image",
+                note=f"checkerboard cells ~{cell}px, {agreement:.0%} of sampled cells alternate",
+            ),
+        )
+    ]
+
+
 def analyse_pixels(
     image: Image.Image, spec: ProductSpec, dpi: float
 ) -> tuple[list[Issue], list[TextBox]]:
@@ -544,7 +875,8 @@ def analyse_pixels(
     boxes = detect_text(image)
     issues: list[Issue] = []
     issues += check_transparency(image, spec)
-    issues += check_contrast(image, spec)
+    issues += check_fake_transparency(image)
+    issues += check_contrast(image, spec, boxes + find_faint_text(image, boxes))
     issues += check_stroke_width(image, spec, dpi, exclude=boxes)
     issues += check_text_size(boxes, spec, dpi)
     issues += check_safe_zone(image, spec, dpi)
@@ -554,6 +886,7 @@ def analyse_pixels(
 
 BUCKET2_CHECKS = (
     "check_transparency",
+    "check_fake_transparency",
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
     "check_safe_zone",
@@ -564,6 +897,8 @@ BUCKET2_CHECKS = (
 
 __all__ = [
     "BUCKET2_CHECKS",
+    "check_fake_transparency",
+    "measure_checkerboard",
     "analyse_pixels",
     "SAFE_ZONE_ASYMMETRY_THRESHOLD",
     "check_contrast",
@@ -575,5 +910,8 @@ __all__ = [
     "delta_e76",
     "measure_contrast",
     "measure_min_stroke_px",
+    "measure_text_contrast",
+    "colour_regions",
+    "find_faint_text",
     "measure_safe_zone",
 ]

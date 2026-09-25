@@ -3,11 +3,20 @@
 PLAN.md's L5 exit test is "a red CI build caused by an agent quality regression, not a
 code bug." This is the thing that makes that possible.
 
-It runs the deterministic arm — no API key, no spend, no network — against the committed
-baseline in `capstone/evals/baseline.json` and fails the build when quality moves the
-wrong way. The agent arm costs money and is not run in CI; the deterministic pipeline is
-the system of record (results.md §7), so gating on it protects the thing that actually
-ships.
+It runs **the pipeline that ships** — the CV decider (decider.md): rules, OpenCV features,
+guards, a JSON logistic model; no API key, no spend — against committed baselines, and
+fails the build when quality moves the wrong way. Until 2026-09-24 it gated `rules_only`,
+which breaches SC-002 on every 600-case holdout; gating the thing that does not ship
+protected nothing.
+
+Two suites, because the evidence behind them differs:
+
+- **synthetic** (`baseline.json`, cases_large train): the full SC-002 constraint applies.
+  The shipped pipeline meets it here, so a breach is a regression.
+- **real** (`baseline_real.json`, real_art_v3): regression-only. Real artwork does not
+  yet meet SC-002 with confidence (real-art.md), so an absolute check would be red on
+  every build and teach everyone to ignore it. Instead the build fails if real-art
+  false approves rise or approvals drop against the recorded numbers.
 
 Three ways to fail, in order of seriousness:
 
@@ -19,8 +28,9 @@ Three ways to fail, in order of seriousness:
    — which the aggregate would hide.
 
 Usage:
-    python -m capstone.evals.gate                 # check against the baseline
-    python -m capstone.evals.gate --update        # record a new baseline (deliberate)
+    python -m capstone.evals.gate                           # synthetic suite
+    python -m capstone.evals.gate --suite real              # real-art suite (needs the art)
+    python -m capstone.evals.gate --suite real --update     # record a baseline (deliberate)
 """
 
 from __future__ import annotations
@@ -29,14 +39,26 @@ import argparse
 import json
 from pathlib import Path
 
-from capstone.evals.baselines import rules_only
 from capstone.evals.harness import load_cases, sweep
 from capstone.evals.metrics import FALSE_APPROVE_LIMIT, SweepReport
+from capstone.src.deciders import make_cv_decider_triage
 from capstone.src.schemas import Split
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-BASELINE = REPO_ROOT / "capstone" / "evals" / "baseline.json"
-MANIFEST = REPO_ROOT / "capstone" / "data" / "cases_large.jsonl"
+EVALS = REPO_ROOT / "capstone" / "evals"
+DATA = REPO_ROOT / "capstone" / "data"
+
+# suite -> (manifest, split, baseline file, whether the absolute SC-002 check applies)
+SUITES: dict[str, tuple[Path, Split | None, Path, bool]] = {
+    "synthetic": (DATA / "cases_large.jsonl", Split.TRAIN, EVALS / "baseline.json", True),
+    "real": (DATA / "real_art_v3.jsonl", None, EVALS / "baseline_real.json", False),
+}
+BASELINE = SUITES["synthetic"][2]
+MANIFEST = SUITES["synthetic"][0]
+
+# Real-art suite: how far the false-approve rate may rise before the build fails. One or
+# two cases of noise across library versions (cairosvg, Pillow) should not block a merge.
+FALSE_APPROVE_RISE_TOLERANCE = 0.01
 
 # How far a number may drift before the build goes red. Not zero: the deterministic arm
 # is bit-identical run to run (SC-008), so any movement here is a real change in
@@ -46,29 +68,44 @@ APPROVE_RATE_TOLERANCE = 0.02
 RECALL_TOLERANCE = 0.05
 
 
-def measure() -> SweepReport:
-    """Run the deterministic arm on the train split. Free, offline, reproducible."""
-    pairs = load_cases(manifest=MANIFEST, split=Split.TRAIN)
-    report, _ = sweep(rules_only, pairs, arm="rules_only")
+def measure(suite: str = "synthetic") -> SweepReport:
+    """Run the shipped pipeline on the suite's cases. Free, offline, reproducible."""
+    manifest, split, _baseline, _absolute = SUITES[suite]
+    pairs = load_cases(manifest=manifest, split=split)
+    report, _ = sweep(make_cv_decider_triage(), pairs, arm="cv_decider")
     return report
 
 
-def load_baseline() -> dict | None:
-    if not BASELINE.exists():
+def load_baseline(suite: str = "synthetic") -> dict | None:
+    path = SUITES[suite][2]
+    if not path.exists():
         return None
-    return json.loads(BASELINE.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
-def save_baseline(report: SweepReport) -> Path:
-    BASELINE.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
-    return BASELINE
+def save_baseline(report: SweepReport, suite: str = "synthetic") -> Path:
+    path = SUITES[suite][2]
+    path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
+    return path
 
 
-def check(report: SweepReport, baseline: dict) -> list[str]:
-    """Return a list of failures. Empty means the gate passes."""
+def check(report: SweepReport, baseline: dict, absolute: bool = True) -> list[str]:
+    """Return a list of failures. Empty means the gate passes.
+
+    `absolute=False` (the real-art suite) replaces the SC-002 limit with a no-worse-than-
+    recorded check on the false-approve rate.
+    """
     failures: list[str] = []
 
-    if not report.meets_constraint:
+    if not absolute:
+        was_fa = baseline.get("false_approve_rate", 0.0)
+        if report.false_approve_rate > was_fa + FALSE_APPROVE_RISE_TOLERANCE:
+            failures.append(
+                f"REGRESSION: false-approve {was_fa:.2%} -> {report.false_approve_rate:.2%} "
+                f"(tolerance +{FALSE_APPROVE_RISE_TOLERANCE:.0%}). More wrong approvals "
+                "on real artwork."
+            )
+    elif not report.meets_constraint:
         failures.append(
             f"SC-002 BREACH: false-approve {report.false_approve_rate:.2%} exceeds the "
             f"{FALSE_APPROVE_LIMIT:.0%} limit "
@@ -103,6 +140,7 @@ def check(report: SweepReport, baseline: dict) -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Eval regression gate. Free, no API calls.")
+    ap.add_argument("--suite", choices=sorted(SUITES), default="synthetic")
     ap.add_argument(
         "--update",
         action="store_true",
@@ -110,19 +148,22 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    report = measure()
+    report = measure(args.suite)
     print(report.render())
     print()
 
     if args.update:
-        path = save_baseline(report)
+        path = save_baseline(report, args.suite)
         print(f"baseline updated -> {path}")
         print("Commit it, and say in the message WHY the numbers moved.")
         raise SystemExit(0)
 
-    baseline = load_baseline()
+    baseline = load_baseline(args.suite)
     if baseline is None:
-        print("No baseline recorded. Run: python -m capstone.evals.gate --update")
+        print(
+            "No baseline recorded. Run: "
+            f"python -m capstone.evals.gate --suite {args.suite} --update"
+        )
         raise SystemExit(1)
 
     print(
@@ -130,7 +171,7 @@ def main() -> None:
         f"false-approve {baseline['false_approve_rate']:.2%}"
     )
 
-    failures = check(report, baseline)
+    failures = check(report, baseline, absolute=SUITES[args.suite][3])
     if failures:
         print("\n*** GATE FAILED ***")
         for f in failures:
@@ -145,4 +186,4 @@ if __name__ == "__main__":
     main()
 
 
-__all__ = ["check", "load_baseline", "measure", "save_baseline"]
+__all__ = ["SUITES", "check", "load_baseline", "measure", "save_baseline"]
