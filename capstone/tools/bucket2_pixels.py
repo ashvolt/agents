@@ -37,6 +37,12 @@ COMPONENT_MIN_INK_RATIO = 0.002
 # 0.2% of the ink and was skipped as speckle (real-art.md). Length is what makes a line.
 STROKE_MIN_LENGTH_IN = 0.08
 
+# Detail shorter than this at print size is not judged as a stroke at all. 0 = off, and
+# off is what ships: whether sub-minimum *detail* (AI speckle, texture) may print is a
+# spec decision, not a tuning one. The constant exists so candidate rules can be priced
+# with exactly the code that would ship (evals/price_detail_rule.py, ai-art.md section 9).
+STROKE_MIN_DETAIL_IN = 0.0
+
 # Text boxes are excluded from the stroke measurement with this much margin, as a share
 # of the line's height. Without it the antialiased fringe just outside a tight box was
 # measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
@@ -416,6 +422,8 @@ def _luminance_min_stroke(
         area = int(sub_mask.sum())
         if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
             continue
+        if dpi and max(x1 - x0, y1 - y0) < STROKE_MIN_DETAIL_IN * dpi:
+            continue
         values = thickness[y0:y1, x0:x1][sub_mask]
         if values.size == 0:
             continue
@@ -423,7 +431,7 @@ def _luminance_min_stroke(
         if median > 0 and (thinnest is None or median < thinnest):
             thinnest = median
 
-    if thinnest is None:
+    if thinnest is None and not STROKE_MIN_DETAIL_IN:
         # Everything was below the component floor; fall back to the global minimum so a
         # file made entirely of hairlines is not silently reported as clean.
         values = thickness[mask]
@@ -464,6 +472,8 @@ def _free_standing_min_stroke(
         for idx in range(1, count):
             x0, y0, w, h, area = (int(v) for v in stats[idx])
             if area < min_component_px and max(w, h) < min_length_px:
+                continue
+            if dpi and max(w, h) < STROKE_MIN_DETAIL_IN * dpi:
                 continue
             ya, yb = max(0, y0 - 1), min(height, y0 + h + 1)
             xa, xb = max(0, x0 - 1), min(width, x0 + w + 1)
