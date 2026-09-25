@@ -205,11 +205,8 @@ def render_real(
         achieved_de = delta_e76(background, ink)
     else:
         ink, achieved_de = caption_colour(background, target_de)
-    stroke_pt = spec.min_stroke_pt * 2.0
-    if plan.has(IssueCode.THIN_LINES):
-        stroke_pt = spec.min_stroke_pt / plan.magnitude_for(IssueCode.THIN_LINES)
     text_px = max(4, round(_pt_to_px(text_pt, dpi)))
-    stroke_px = max(1, round(_pt_to_px(stroke_pt, dpi)))
+    stroke_px = rule_stroke_px(plan, dpi)
 
     # --- the illustration --------------------------------------------------------------
     art_zone_h = safe_h * 0.68
@@ -259,18 +256,48 @@ def render_real(
     return img, dpi, achieved_de
 
 
+def rule_stroke_px(plan: CasePlan, dpi: float) -> int:
+    """Width of the rule under the caption, in whole pixels, as drawn."""
+    stroke_pt = plan.spec.min_stroke_pt * 2.0
+    if plan.has(IssueCode.THIN_LINES):
+        stroke_pt = plan.spec.min_stroke_pt / plan.magnitude_for(IssueCode.THIN_LINES)
+    return max(1, round(_pt_to_px(stroke_pt, dpi)))
+
+
 def drawn_perturbations(
-    plan: CasePlan, achieved_de: float, legacy_grey_captions: bool = False
+    plan: CasePlan,
+    achieved_de: float,
+    legacy_grey_captions: bool = False,
+    drawn_stroke_dpi: float | None = None,
 ) -> tuple[Perturbation, ...]:
-    """The plan's perturbations, with LOW_CONTRAST at the contrast actually drawn."""
-    if not plan.has(IssueCode.LOW_CONTRAST) or legacy_grey_captions:
-        return plan.perturbations
-    return tuple(
-        Perturbation(code=p.code, magnitude=round(plan.spec.min_contrast_delta_e / achieved_de, 3))
-        if p.code is IssueCode.LOW_CONTRAST
-        else p
-        for p in plan.perturbations
-    )
+    """The plan's perturbations, with LOW_CONTRAST at the contrast actually drawn.
+
+    With `drawn_stroke_dpi` (the dpi the case was rendered at), THIN_LINES is also labelled
+    from the rule's drawn width. A stroke is whole pixels: "0.9x" is 0.556 pt, 1.16 px at
+    150 dpi, drawn as 1 px = 0.48 pt, *under* a 0.5 pt minimum. ai_art_v1 labelled 11 such
+    files clean and the engine was scored as rejecting them wrongly (ai-art.md section 4).
+    Off by default so every earlier set rebuilds byte-for-byte.
+    """
+    perturbations = plan.perturbations
+    if plan.has(IssueCode.LOW_CONTRAST) and not legacy_grey_captions:
+        perturbations = tuple(
+            Perturbation(
+                code=p.code, magnitude=round(plan.spec.min_contrast_delta_e / achieved_de, 3)
+            )
+            if p.code is IssueCode.LOW_CONTRAST
+            else p
+            for p in perturbations
+        )
+    if drawn_stroke_dpi is None:
+        return perturbations
+    drawn_pt = rule_stroke_px(plan, drawn_stroke_dpi) / drawn_stroke_dpi * 72.0
+    magnitude = round(plan.spec.min_stroke_pt / drawn_pt, 3)
+    if not plan.has(IssueCode.THIN_LINES) and magnitude <= 1.0:
+        return perturbations
+    drawn = Perturbation(code=IssueCode.THIN_LINES, magnitude=magnitude)
+    if not plan.has(IssueCode.THIN_LINES):
+        return (*perturbations, drawn)
+    return tuple(drawn if p.code is IssueCode.THIN_LINES else p for p in perturbations)
 
 
 def build(

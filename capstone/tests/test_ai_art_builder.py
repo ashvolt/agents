@@ -102,3 +102,67 @@ def test_an_uncut_pale_margin_is_not_counted_as_ink() -> None:
     assert _visible_ink_box(art, (255, 255, 255)) == (40, 30, 160, 130)
     # on a navy sticker the same field is plainly visible
     assert _visible_ink_box(art, (29, 53, 87)) == (0, 0, 200, 160)
+
+
+def _antialiased_logo() -> Image.Image:
+    # drawn at 4x and downsampled, so its edge has the in-between pixels a real image has
+    big = Image.new("RGB", (800, 640), (255, 255, 255))
+    ImageDraw.Draw(big).ellipse((200, 120, 600, 520), fill=(20, 20, 20))
+    img = big.resize((200, 160), Image.Resampling.LANCZOS)
+    ImageDraw.Draw(img).rectangle((10, 10, 11, 11), fill=(120, 120, 120))  # a 2 x 2 speck
+    return img
+
+
+def test_clean_edges_mattes_the_halo_and_drops_residue() -> None:
+    raw, _ = cut_out(_antialiased_logo())
+    clean, cutout = cut_out(_antialiased_logo(), clean_edges=True)
+    assert cutout
+    raw_a, clean_a = np.asarray(raw)[..., 3], np.asarray(clean)[..., 3]
+    assert raw_a[10, 10] == 255 and clean_a[10, 10] == 0  # the speck is gone
+    rgb = np.asarray(clean)[..., :3].max(axis=2)
+    # a larger share of what is kept is solid ink: most pale in-between pixels were the halo
+    assert (rgb[clean_a > 0] < 200).mean() > (
+        np.asarray(raw)[..., :3].max(axis=2)[raw_a > 0] < 200
+    ).mean()
+    assert clean_a[80, 100] == 255  # the logo itself is kept
+
+
+def test_clean_edges_is_off_by_default() -> None:
+    a, _ = cut_out(_antialiased_logo())
+    b, _ = cut_out(_antialiased_logo(), clean_edges=False)
+    assert np.array_equal(np.asarray(a), np.asarray(b))
+
+
+def test_stroke_label_records_the_drawn_pixel_width() -> None:
+    from capstone.data.generate import plan_cases
+    from capstone.data.real_art import drawn_perturbations, rule_stroke_px
+    from capstone.src.schemas import IssueCode
+
+    plans = [p for p in plan_cases(400, seed=11) if p.has(IssueCode.THIN_LINES)]
+    assert plans
+    for plan in plans:
+        dpi = float(plan.spec.min_dpi)
+        drawn_pt = rule_stroke_px(plan, dpi) / dpi * 72.0
+        label = {p.code: p.magnitude for p in drawn_perturbations(plan, 1.0, drawn_stroke_dpi=dpi)}
+        assert label[IssueCode.THIN_LINES] == round(plan.spec.min_stroke_pt / drawn_pt, 3)
+        # off by default: the planned magnitude, as every earlier set was labelled
+        legacy = {p.code: p.magnitude for p in drawn_perturbations(plan, 1.0)}
+        assert legacy[IssueCode.THIN_LINES] == plan.magnitude_for(IssueCode.THIN_LINES)
+
+
+def test_a_within_spec_stroke_that_rounds_under_the_limit_is_labelled_defective() -> None:
+    # ai_art_v1: "0.9x" of a 0.5 pt minimum is 0.556 pt = 1.16 px at 150 dpi, drawn as 1 px
+    from capstone.data.generate import plan_cases
+    from capstone.data.real_art import drawn_perturbations
+    from capstone.src.schemas import IssueCode
+
+    plan = next(
+        p
+        for p in plan_cases(2000, seed=11)
+        if p.has(IssueCode.THIN_LINES)
+        and p.magnitude_for(IssueCode.THIN_LINES) == 0.9
+        and p.spec.min_stroke_pt == 0.5
+        and p.spec.min_dpi == 150
+    )
+    label = {p.code: p.magnitude for p in drawn_perturbations(plan, 1.0, drawn_stroke_dpi=150.0)}
+    assert label[IssueCode.THIN_LINES] == round(0.5 / (1 / 150 * 72), 3) > 1.0
