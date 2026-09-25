@@ -93,6 +93,26 @@ def _ink_box(art: Image.Image) -> tuple[int, int, int, int]:
     return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
 
 
+VISIBLE_LEVELS = 24  # the stroke mask's foreground threshold (bucket2_pixels)
+
+
+def _visible_ink_box(
+    art: Image.Image, background: tuple[int, int, int]
+) -> tuple[int, int, int, int]:
+    """The box of the pixels that will show on this background.
+
+    A raster illustration can keep a margin of near-background colour (an off-white
+    field on a white sticker). Placing by the alpha box would count that margin as ink,
+    and a planned safe-zone intrusion would cross the line with nothing anyone can see.
+    """
+    rgba = np.asarray(art).astype(np.int16)
+    differs = np.abs(rgba[..., :3] - np.array(background)).max(axis=2) > VISIBLE_LEVELS
+    ys, xs = np.nonzero(differs & (rgba[..., 3] > 16))
+    if xs.size == 0:
+        return _ink_box(art)
+    return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+
+
 def caption_colour(
     background: tuple[int, int, int], target_de: float
 ) -> tuple[tuple[int, int, int], float]:
@@ -118,9 +138,16 @@ def caption_colour(
     return best[1], best[2]
 
 
+def _fit_raster(art: Image.Image, side: int) -> Image.Image:
+    """A raster illustration scaled to fit a side x side box, keeping its aspect."""
+    scale = side / max(art.width, art.height)
+    size = (max(1, round(art.width * scale)), max(1, round(art.height * scale)))
+    return art.convert("RGBA").resize(size, Image.Resampling.LANCZOS)
+
+
 def render_real(
     plan: CasePlan,
-    svg: Path,
+    svg: Path | Image.Image,
     style_seed: int,
     oversample: float = 1.0,
     legacy_grey_captions: bool = False,
@@ -131,6 +158,9 @@ def render_real(
     for adjudication, not for the dataset: the artwork is vector, so a 4x render is the
     ground truth for "is this stroke really thinner than the limit, or did rasterising at
     print resolution make it look that way" (real-art.md).
+
+    `svg` may instead be a raster image (ai_art.py): it is scaled to the same box, and
+    its alpha, if any, decides where the ink is. No vector original means no oracle.
     """
     spec, order = plan.spec, plan.order
     rng = random.Random(style_seed)
@@ -184,8 +214,12 @@ def render_real(
     # --- the illustration --------------------------------------------------------------
     art_zone_h = safe_h * 0.68
     side = max(8, round(min(safe_w, art_zone_h) * rng.uniform(0.7, 0.95)))
-    art = _rasterise(svg, side)
-    ix0, iy0, ix1, iy1 = _ink_box(art)
+    if isinstance(svg, Path):
+        art = _rasterise(svg, side)
+        ix0, iy0, ix1, iy1 = _ink_box(art)
+    else:
+        art = _fit_raster(svg, side)
+        ix0, iy0, ix1, iy1 = _visible_ink_box(art, background)
     ink_w, ink_h = ix1 - ix0, iy1 - iy0
 
     edge = None
@@ -223,6 +257,20 @@ def render_real(
     rule_y = ty + text_px * 1.25 + stroke_px
     draw.line((sx0 + safe_w * 0.2, rule_y, sx1 - safe_w * 0.2, rule_y), fill=ink, width=stroke_px)
     return img, dpi, achieved_de
+
+
+def drawn_perturbations(
+    plan: CasePlan, achieved_de: float, legacy_grey_captions: bool = False
+) -> tuple[Perturbation, ...]:
+    """The plan's perturbations, with LOW_CONTRAST at the contrast actually drawn."""
+    if not plan.has(IssueCode.LOW_CONTRAST) or legacy_grey_captions:
+        return plan.perturbations
+    return tuple(
+        Perturbation(code=p.code, magnitude=round(plan.spec.min_contrast_delta_e / achieved_de, 3))
+        if p.code is IssueCode.LOW_CONTRAST
+        else p
+        for p in plan.perturbations
+    )
 
 
 def build(
@@ -265,18 +313,7 @@ def build(
                 # rebuild byte-for-byte.
                 print(f"skipped unrenderable art {style}/{svg.name}: {type(exc).__name__}")
                 used.add(f"{style}/{svg.name}")
-        perturbations = plan.perturbations
-        if plan.has(IssueCode.LOW_CONTRAST) and not legacy_grey_captions:
-            # the label records the contrast actually drawn, not the one requested
-            perturbations = tuple(
-                Perturbation(
-                    code=p.code,
-                    magnitude=round(plan.spec.min_contrast_delta_e / achieved_de, 3),
-                )
-                if p.code is IssueCode.LOW_CONTRAST
-                else p
-                for p in perturbations
-            )
+        perturbations = drawn_perturbations(plan, achieved_de, legacy_grey_captions)
         path = save_case(img, dpi, plan, out_dir)
         label = GoldLabel(case_id=plan.case_id, perturbations=perturbations, split=plan.split)
         rows.append(
