@@ -58,7 +58,7 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
 | [scene-narration.md](capstone/docs/scene-narration.md) | **Parked (out of scope, brief §11).** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
 | [real-art.md](capstone/docs/real-art.md) | **Reality check.** Real illustrations as sticker uploads: four sealed rounds, 6.2% → 1.4% → 0.4% → **0 of 500 wrong approvals (exact bound 0.6%)** on 1,000 unseen files |
-| [ai-art.md](capstone/docs/ai-art.md) | **AI art.** 1,000 Stable Diffusion sticker images (DiffusionDB): **0 of 339 wrong approvals (bound 0.9%)** but 54.3% auto-approve, under target; the painted-checkerboard check false-fires on 1.5% of raw AI images |
+| [ai-art.md](capstone/docs/ai-art.md) | **AI art.** 1,000 Stable Diffusion sticker images (DiffusionDB): **0 of 339 wrong approvals (bound 0.9%)** but 54.3% auto-approve, under target. The painted-checkerboard check no longer false-fires (0 of 1,000 fresh) but misses real AI checkerboards (0 of 3) |
 | [demo.md](capstone/docs/demo.md) | **The demo.** Local web app over the shipped pipeline, results page, customer-mistake gallery, scripted video walkthrough |
 | [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |

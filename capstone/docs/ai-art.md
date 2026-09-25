@@ -146,7 +146,7 @@ measurement). Whether it *should* is a product question: a speck that
 disappears on press does not hurt anybody. That question belongs to the spec, not to a
 threshold tweak.
 
-## 5. FAKE_TRANSPARENCY is not ready (found on the raw images)
+## 5. FAKE_TRANSPARENCY: false alarms fixed, real AI checkerboards still missed
 
 The painted-checkerboard check (ac59d65) was built for exactly this kind of image but had
 never seen one. It fired **0 times** in the scored run, because inside the layout the
@@ -164,9 +164,52 @@ grey field clears 85% parity agreement somewhere by chance. Every false hit sits
 38–60 px cells with 0.85–0.94 agreement; a painted grid alternates at near 1.0 over many
 cells. No real checkerboard turned up among the 1,100 images.
 
-It was not fixed here. A fix has to be validated on AI images it was not diagnosed on,
-and these 16 are now spent. The live-generation card in the demo (`/api/generate`)
-checks a fresh image as an upload, so this false reject can happen on stage.
+### 5a. The fix, and a validation on unseen images (51f2f35)
+
+The cause was narrower than multiple comparisons alone. On a textured grey backdrop, the
+two "greys" the check picked were 10 levels apart *inside one noisy distribution*
+(image 2382746d: 155 and 165 on paper whose luma runs from 130 to 170). The rule was
+changed, and committed with its validation plan **before any validation image was
+fetched**. All three conditions must now hold:
+
+- the luma histogram dips between the two greys (the valley is at most half the lower
+  peak): painted greys are two peaks, paper texture is one hump;
+- at least 64 sampled cells (an 8 × 8 grid), not 16;
+- at least 95% of those cells alternate, not 85%.
+
+Every change is stricter, so no file can newly fire; the only risk is lost true
+positives. The new test is 20 synthetic textured backdrops; the old rule fires on 6 of
+them.
+
+The validation was run once:
+
+| Set (never seen before; spent prompts excluded) | Old rule | New rule |
+|---|---|---|
+| 1,000 sticker-prompt images, seed 20261012 | 8 flagged, **all false** | **0** (95% bound 0.3%) |
+| 400 images whose prompt asks for transparency, seed 20261013: 3 light painted checkerboards, 2 black-and-white ones, labelled by eye before either rule ran | 0 of 3, 0 of 2; 3 false flags | 0 of 3, 0 of 2; 0 false flags |
+
+**The fix removes the false alarms: 0 of 1,000, against 8 for the old rule (and 16 of
+1,100 on the first set). But neither rule catches a real Stable Diffusion
+checkerboard.** Diagnosed on the three light ones, which are now spent:
+
+- Their levels are fine (253 and 168 on one, 253 and 238 on another).
+- The grid is what fails. The best fixed lattice fits only 70–83% of cells, and only at
+  62–63 px cells with about 30 sampled cells, while the visible cells are about 13 px.
+  Stable Diffusion paints an *impression* of a checkerboard: cell size drifts and rows
+  bend. One period and one phase across the whole image never line up with that.
+- One of the three has mid-grey (75) dark cells, below the check's lightness floor.
+
+The check's only positives were ever perfectly regular synthetic grids. It still makes
+sense for a checkerboard pasted in from a real editor, which is regular, but as shipped
+**it does not detect the AI case it was written for.** Detecting that needs a *local*
+alternation test (small windows, each with its own period and phase), and more than 3
+examples to validate it. At about 0.75% of transparency prompts, 3 examples is what 400
+images yield, so a real positive set means fetching several thousand, or using the 14M
+DiffusionDB-large.
+
+The tightened rule is kept. It is strictly safer, and a check that fires on nothing real
+does no harm as long as nothing claims otherwise. The demo must not present
+FAKE_TRANSPARENCY as catching AI checkerboards.
 
 ## 6. What this does not show
 
@@ -181,14 +224,16 @@ checks a fresh image as an upload, so this false reject can happen on stage.
 
 ## 7. Next
 
-1. **FAKE_TRANSPARENCY:** require a minimum number of sampled cells (not 16) and near-
-   perfect alternation, or verify sharp edges at the cell boundaries. Validate on a fresh
-   draw from the 5,635 unfetched images in the pool, plus real painted checkerboards.
-2. **The 0.9× stroke label:** round the drawn stroke *up* for within-spec plans, or
-   record the drawn width in the label (as LOW_CONTRAST already does). This is a builder
-   fix and needs no engine change.
-3. **Cut-out fringe:** decontaminate the halo (a 1 px erode of the cut) in the next
-   builder version, behind a flag so that ai_art_v1 still rebuilds byte-for-byte.
-4. **The product question in §4:** whether sub-minimum *detail* (as opposed to lines
+1. ~~FAKE_TRANSPARENCY false alarms~~: fixed and validated, 51f2f35 (§5a). **Still open:**
+   a local alternation test that catches Stable Diffusion's irregular checkerboards,
+   validated on a positive set of dozens, not 3.
+2. ~~The 0.9× stroke label~~ and 3. ~~the cut-out fringe~~: builder flags
+   `--drawn-stroke-labels` and `--clean-edges`, 53942b9. Both are off by default, so
+   ai_art_v1 rebuilds identically. They are used from ai_art_v2 on.
+4. **ai_art_v2:** a sealed set on 1,100 unseen images (seed 20261014, excluding every
+   earlier fetch) with both flags on, scored once against the engine at 51f2f35. It
+   measures what the builder fixes change. It will not move FAKE_TRANSPARENCY, which
+   cannot fire on a laid-out file.
+5. **The product question in §4:** whether sub-minimum *detail* (as opposed to lines
    and type the customer designed) should block. That is a spec change, and it needs a
    printer's answer, not ours.
