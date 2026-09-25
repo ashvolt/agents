@@ -58,3 +58,4 @@ demo-output/
 # AI-generated artwork (DiffusionDB, CC0; hosted generators): fetched, never committed
 capstone/data/ai_cache/
 capstone/data/ai_art_v1/
+capstone/data/ai_art_v2/
