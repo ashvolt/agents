@@ -88,7 +88,7 @@ def main() -> None:
                 "auto_approve_rate": report.auto_approve_rate,
                 "approved": report.approved,
                 "wrong_approvals": report.approved_defective,
-                "bound_95": report.false_approve_ci_upper_95,
+                "bound_95": report.false_approve_ci_upper,
                 "newly_approved": len(new),
                 "newly_approved_wrong": len(new & wrong),
             }
@@ -96,7 +96,7 @@ def main() -> None:
             print(
                 f"{name:18s} L={length:<5g} approve {report.auto_approve_rate:6.1%}  wrong "
                 f"{report.approved_defective:>2} of {report.approved:<4} bound "
-                f"{report.false_approve_ci_upper_95:5.1%}  new approvals {len(new):>3} "
+                f"{report.false_approve_ci_upper:5.1%}  new approvals {len(new):>3} "
                 f"(wrong {len(new & wrong)})   published at 0: {published}",
                 flush=True,
             )
