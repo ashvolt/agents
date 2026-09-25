@@ -251,6 +251,43 @@ TEXT_TOO_SMALL 86, on detail and lettering Stable Diffusion drew itself. No buil
 change removes that, and no threshold should be tuned to hide it. Crossing 60% on AI art
 is the product question in §4, not an engineering one.
 
+## 9. Pricing the spec option: "detail shorter than L is not a stroke"
+
+Priced with the code that would ship (`bucket2_pixels.STROKE_MIN_DETAIL_IN`; 0 = off, and
+off is what ships) by `python -m capstone.evals.price_detail_rule`. This is a diagnostic
+on spent sets, not a sealed score. real_art_v5 and mistakes_v2 were rebuilt here, and
+their manifests are identical to the sealed ones. At L = 0 every set reproduces its
+published score exactly.
+
+| Set, cv_decider | L = 0 (ships) | 0.02 in | 0.04 in | 0.08 in (2 mm) |
+|---|---|---|---|---|
+| ai_art_v1 | 54.3% / 0 of 339 | 54.3% | 55.0% (+4 files) | 58.8% (+28) |
+| ai_art_v2 | 57.1% / 0 of 354 | 57.1% | 57.6% (+3) | **59.2%** (+13) |
+| real_art_v5 | 78.7% / 0 of 500 | 78.7% | 79.2% (+3) | 79.5% (+5) |
+| mistakes_v2 | 87.0% / 0 of 240 | 87.0% | 87.0% | 88.0% (+3) |
+| synthetic gate | 84.8% / 0 of 167 | 84.8% | 84.8% | 84.8% |
+
+Wrong approvals by label: **0 at every length on every set**, and the red team is
+unchanged (0 failed, the same 2 known gaps). Two things to read correctly:
+
+- **Even the loosest rule does not reach 60% on AI art** (59.2% on v2). Short detail is
+  only part of it. Longer thin detail and TEXT_TOO_SMALL (86 clean files blocked on
+  v2, garbled lettering) are the rest.
+- **"0 wrong" means nothing is wrong by label, not that nothing is wrong.** Labels cover
+  injected defects, so every newly approved file (13 to 28 per AI set) carries real
+  sub-minimum detail shorter than L that will print. That is the spec risk, and it is a
+  printer's call.
+
+**The decision this leaves.** Either:
+- (a) quote AI art honestly at ~57%, safe, and let the reviewer queue take the rest;
+- (b) adopt L = 0.08 in for about +2 points if a printer confirms specks under 2 mm are
+  acceptable, then seal a fresh set;
+- (c) accept that the remaining gap is the semantic question "is this lettering real
+  text or texture", which measurement cannot answer and which would need a model, as
+  advice to the reviewer only.
+
+Nothing is adopted here. The constant stays at 0.
+
 ## 7. Next
 
 1. ~~FAKE_TRANSPARENCY false alarms~~: fixed and validated, 51f2f35 (§5a). **Still open:**
@@ -261,6 +298,6 @@ is the product question in §4, not an engineering one.
    ai_art_v1 rebuilds identically. They are used from ai_art_v2 on.
 4. ~~ai_art_v2~~: sealed and scored, §8. 57.1% / 0 of 354; the builder fixes are worth
    about 3.4 points on the same images.
-5. **The product question in §4:** whether sub-minimum *detail* (as opposed to lines
-   and type the customer designed) should block. That is a spec change, and it needs a
-   printer's answer, not ours.
+5. **The product question in §4:** priced in §9. The stroke side alone buys at most
+   about +2 points (59.2% at 2 mm, still under 60%). Decision (a), (b) or (c) in §9 is
+   the owner's, with a printer's answer on specks.

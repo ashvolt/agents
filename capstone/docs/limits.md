@@ -287,4 +287,6 @@ lettering, which the labels do not cover and no vector original can referee. The
 FAKE_TRANSPARENCY check falsely flagged 1.5% of raw AI images; after the fix it flags 0
 of 1,000 fresh ones, **but it catches none of the real AI-painted checkerboards found (0
 of 3)**. Stable Diffusion's grids are irregular, and the check fits one global lattice. **Quote AI-art numbers separately from real-art ones; they are a
-different population.**
+different population.** Letting detail shorter than 2 mm pass as not-a-stroke buys at most about
++2 points (59.2%), with 0 wrong approvals by label but real sub-minimum specks printed
+(ai-art.md section 9). It is not adopted.
