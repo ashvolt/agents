@@ -14,6 +14,7 @@
 |---|---|---|
 | real_art_v5: 1,000 real illustrations (round 4, for comparison) | 73.9% / 3.9% FAIL | **78.7% / 0.0%** (0 of 500, UB 0.6%) |
 | **ai_art_v1: 1,000 Stable Diffusion sticker images** | 51.6% / 4.2% FAIL | **54.3% / 0.0%** (0 of 339, UB 0.9%) **FAIL on SC-001** |
+| **ai_art_v2: 1,000 unseen images, fixed builder (§8)** | 55.6% / 1.4% FAIL | **57.1% / 0.0%** (0 of 354, UB 0.8%) **FAIL on SC-001** |
 
 *Auto-approve / false-approve. SC-001 ≥ 60%, SC-002 ≤ 1%. UB is the exact one-sided
 95% upper bound (Clopper-Pearson).*
@@ -222,6 +223,34 @@ FAKE_TRANSPARENCY as catching AI checkerboards.
   ground truth. The 14 / 5 / 1 split above comes from eyeballing 20 files, not from a
   measurement.
 
+## 8. ai_art_v2: the builder fixes, measured
+
+Sealed at a61d2ed (frozen at 1777f80; engine last changed at 51f2f35), 1,000 images
+that no earlier set, validation or diagnosis had seen, built with `--clean-edges
+--drawn-stroke-labels`, scored once (runs `20260925T113546Z-cv_decider`,
+`20260925T111800Z-rules_only`):
+
+- **cv_decider 57.1% / 0 of 354 wrong approvals (exact bound 0.8%).** Safe again, and
+  still under the 60% target.
+- rules_only 55.6% / 1.4% (5 wrong, all safe-zone intrusions). It breaches, as always.
+- THIN_LINES recall 67/67. CONTENT_IN_SAFE_ZONE 39/56: none of the misses was approved.
+
+v2 draws different images from v1, so on its own it cannot say how much of the change is
+the builder. **A same-image A/B does:** the v1 images rebuilt with both flags on, scored
+with cv_decider (run `20260925T121827Z-cv_decider`, a diagnostic, not a sealed claim):
+
+| v1 images, cv_decider | Auto-approve | Wrong approvals | Cut-out clean files blocked | Whole-rectangle clean files blocked | THIN_LINES on clean files |
+|---|---|---|---|---|---|
+| flags off (as sealed) | 54.3% | 0 of 339 | 140/272 (51%) | 145/352 (41%) | 181 |
+| flags on | 57.7% | 0 of 356 | 118/267 (44%) | 143/350 (41%) | 146 |
+
+The fixes are worth about 3.4 points. The cut-out penalty is mostly gone, and 7 files
+move from clean to defective because their rule is really drawn under the limit. **What
+is left is the images' own content:** THIN_LINES still blocks 146 clean files and
+TEXT_TOO_SMALL 86, on detail and lettering Stable Diffusion drew itself. No builder
+change removes that, and no threshold should be tuned to hide it. Crossing 60% on AI art
+is the product question in §4, not an engineering one.
+
 ## 7. Next
 
 1. ~~FAKE_TRANSPARENCY false alarms~~: fixed and validated, 51f2f35 (§5a). **Still open:**
@@ -230,10 +259,8 @@ FAKE_TRANSPARENCY as catching AI checkerboards.
 2. ~~The 0.9× stroke label~~ and 3. ~~the cut-out fringe~~: builder flags
    `--drawn-stroke-labels` and `--clean-edges`, 53942b9. Both are off by default, so
    ai_art_v1 rebuilds identically. They are used from ai_art_v2 on.
-4. **ai_art_v2:** a sealed set on 1,100 unseen images (seed 20261014, excluding every
-   earlier fetch) with both flags on, scored once against the engine at 51f2f35. It
-   measures what the builder fixes change. It will not move FAKE_TRANSPARENCY, which
-   cannot fire on a laid-out file.
+4. ~~ai_art_v2~~: sealed and scored, §8. 57.1% / 0 of 354; the builder fixes are worth
+   about 3.4 points on the same images.
 5. **The product question in §4:** whether sub-minimum *detail* (as opposed to lines
    and type the customer designed) should block. That is a spec change, and it needs a
    printer's answer, not ours.
