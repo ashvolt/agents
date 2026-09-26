@@ -77,3 +77,30 @@ answer is *real text, too small*), shuffled.
 
 **Use.** If the controls agree at least 90% of the time, the labels drive at most three
 rule hypotheses (step 2), and the rest follows §2.
+
+### Round 1 result: the consistency gate failed (85% < 90%)
+
+Labelled 2026-09-26, all 113 items (`evals/labels/lettering_round1.jsonl`, with the key).
+Controls: 17 of 20 "real text", 3 "can't tell", none answered wrongly. Under §3 the round
+is **not used for rules**.
+
+Diagnosed afterwards: the fault was the page, not the labeller. The close-up padded the
+crop by twice the box's *width*, so a wide, thin caption showed about 7 px tall. 16 of the
+20 controls were shown under 14 px tall, and all 3 misses are among them; the 4 controls
+shown legibly were all answered correctly. 25 of the 93 main items were shown under 14 px
+too. Two main items looked like "our caption called not text", but on inspection the box
+was on the AI image's own detail (the position filter misfired), and "not text" was right.
+
+### Round 1b: fix the display, then measure consistency (pre-registered)
+
+A new close-up crops to the box (about 5× its height, its width plus 30%), so letters
+show 25-60 px tall. 60 items, shuffled, new ids:
+
+- the 25 main items round 1 showed under 14 px, labelled again;
+- 20 new controls: injected sub-minimum captions from ai_art_v1/v2, each confirmed by eye
+  to be a legible caption under the new zoom (not a bar, not art);
+- 15 main items round 1 showed legibly, repeated unannounced (test-retest).
+
+**Pass:** controls ≥ 90% "real text" **and** repeats ≥ 80% identical to round 1. **If it
+passes,** the round-1 labels are used, with the 25 small-shown items replaced by their 1b
+answers. **If it fails,** no rule is proposed from these labels.
