@@ -217,8 +217,8 @@ FAKE_TRANSPARENCY as catching AI checkerboards.
 - **Not customer uploads.** These are real AI images, but the layout, caption, rule and
   labels are ours, as in real-art.md.
 - **2022 Stable Diffusion, 512 px.** Current generators (FLUX, which the demo uses)
-  produce cleaner edges and better lettering. The demo's generator has still not been run
-  against a live provider.
+  produce cleaner edges and better lettering. §10 is a first live look at FLUX: 19
+  images, unlabelled.
 - **The fine-detail findings are unrefereed.** With no vector original there is no 4×
   ground truth. The 14 / 5 / 1 split above comes from eyeballing 20 files, not from a
   measurement.
@@ -287,6 +287,35 @@ unchanged (0 failed, the same 2 known gaps). Two things to read correctly:
   advice to the reviewer only.
 
 Nothing is adopted here. The constant stays at 0.
+
+## 10. Live generation in the demo: FLUX.1-schnell, measured 2026-09-26
+
+The demo's generate card had never run. It does now, with the environment's Cloudflare
+keys (`generate.provider()` reports `cloudflare`), through the demo's own
+`POST /api/generate`: 20 prompts, each checked as a 3 × 3 in die-cut sticker. These are
+observations, not a scored set. Generated images have no labels.
+
+- **19 of 20 generated,** in 1.5–4.2 s each, as 1024 × 1024 RGB JPEGs with no DPI (341 dpi
+  effective at 3 in). All 19 were checked; none crashed.
+- **Verdicts:** 3 approved, 4 escalated (all 4 the no-text guard: the detector found no
+  text, so a person confirms), 12 sent back.
+- **Why sent back:** THIN_LINES on 8 (nearly all 0.46 pt, which is 2 px of hairline
+  detail at this size), LOW_CONTRAST on 3 (one a faint drop shadow FLUX paints under
+  the sticker, 243 on 253), TEXT_TOO_SMALL on 3 (e.g. a 2.5 pt tagline under a bakery
+  logo). The same pattern as DiffusionDB: generated fine detail measures under the
+  minimums.
+- **No painted checkerboards.** 5 prompts asking for a transparent background, run
+  twice, gave 10 images on plain white, cream or colour backgrounds. FAKE_TRANSPARENCY
+  stayed silent, correctly. The checkerboard problem is an older-generator one.
+- **The lettering is still garbled** ("SKATE BOARD", "Slakeboard" for "skateboard").
+- **One false refusal:** "sticker of a pizza slice with the text PIZZA TIME" is refused
+  by Cloudflare's safety filter as NSFW, every time.
+
+Two bugs were fixed. The page used to show the provider's raw error on a refusal; it now
+says the safety filter refused the prompt and suggests rewording (`_explain`). And a
+`seed` made every Cloudflare call fail (error 5006: the model does not accept the
+field), so it is no longer sent. The demo never passed one, but any caller that did
+got nothing. Both fixes are tested without network, and both were checked live.
 
 ## 7. Next
 

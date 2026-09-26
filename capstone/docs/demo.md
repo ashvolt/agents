@@ -68,9 +68,11 @@ an upload size limit at the proxy (the app caps at 40 MB), and whether uploads m
 
 ## Not in the demo yet
 
-- AI-generated images. DiffusionDB is now reachable and scored as a sealed set
-  (ai-art.md: 54.3% / 0 of 339 wrong approvals). The live generator card still has not
-  run against a real provider (no key here). FAKE_TRANSPARENCY no longer false-alarms
-  (0 of 1,000 fresh AI images), but it also misses real AI-painted checkerboards
-  (ai-art.md §5a). Do not present it as catching them.
+- AI-generated images are in: two sealed DiffusionDB sets on the results page, and the
+  live generator card now runs against Cloudflare Workers AI (FLUX.1-schnell; the
+  environment's CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN). Measured 2026-09-26 in
+  ai-art.md §10. On stage, expect most generated stickers to be sent back for hairline
+  detail, and the provider's safety filter to refuse some harmless prompts (the page
+  says so plainly). FAKE_TRANSPARENCY misses AI-painted checkerboards (ai-art.md §5a),
+  though FLUX did not paint any in 10 of 10 tries.
 - Real customer uploads.
