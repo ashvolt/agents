@@ -286,7 +286,7 @@ unchanged (0 failed, the same 2 known gaps). Two things to read correctly:
   text or texture", which measurement cannot answer and which would need a model, as
   advice to the reviewer only.
 
-Nothing is adopted here. The constant stays at 0.
+Nothing is adopted here. The constant stays at 0. **Decided 2026-09-26: (a).** See §7 item 5.
 
 ## 10. Live generation in the demo: FLUX.1-schnell, measured 2026-09-26
 
@@ -327,6 +327,10 @@ got nothing. Both fixes are tested without network, and both were checked live.
    ai_art_v1 rebuilds identically. They are used from ai_art_v2 on.
 4. ~~ai_art_v2~~: sealed and scored, §8. 57.1% / 0 of 354; the builder fixes are worth
    about 3.4 points on the same images.
-5. **The product question in §4:** priced in §9. The stroke side alone buys at most
-   about +2 points (59.2% at 2 mm, still under 60%). Decision (a), (b) or (c) in §9 is
-   the owner's, with a printer's answer on specks.
+5. ~~The product question in §4~~: **decided 2026-09-26, option (a): quote AI art honestly
+   at ~57%, keep blocking sub-minimum detail and lettering, and let the reviewer queue
+   take the rest.** The stroke side was priced in §9 (at most +2 points). The lettering
+   side went through the rule loop (rule-loop.md, round 1/1b): the judgement "is this AI
+   lettering real text?" did not repeat (9 of 15), so no rule could be built on it.
+   **Revisit when** real customer uploads and reviewer decisions exist (limits.md §10),
+   or when a printer confirms specks under 2 mm do not matter (then §9 option (b)).

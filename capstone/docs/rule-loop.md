@@ -127,6 +127,11 @@ per-file judgement, even for the person who owns the product. A rule that approv
 "garbled" lettering would encode a call that flips on a second look. The loop did its
 job: it stopped a rule built on labels that do not repeat.
 
+**Decision (2026-09-26, the owner).** Keep blocking. TEXT_TOO_SMALL keeps blocking AI
+lettering, which is the safe default, and AI art is quoted at ~57% auto-approve (ai-art.md
+§7). Revisit with real uploads and reviewer decisions (limits.md §10): the review queue's
+`export` feeds step 1 of this loop the moment such decisions exist.
+
 **Consequence.** TEXT_TOO_SMALL keeps blocking AI lettering, which is the safe default.
 The lettering question is a *policy* decision (block all sub-minimum lettering, or treat
 AI-drawn lettering as advisory and let the customer's proof approval decide), not
