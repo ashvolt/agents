@@ -104,3 +104,30 @@ show 25-60 px tall. 60 items, shuffled, new ids:
 **Pass:** controls ≥ 90% "real text" **and** repeats ≥ 80% identical to round 1. **If it
 passes,** the round-1 labels are used, with the 25 small-shown items replaced by their 1b
 answers. **If it fails,** no rule is proposed from these labels.
+
+### Round 1b result: controls pass, repeats fail. No rule from these labels.
+
+Labelled 2026-09-26 (`evals/labels/lettering_round1b.jsonl`).
+
+| Gate | Result | Bar |
+|---|---|---|
+| Controls, legible captions | 20 / 20 "real text" | ≥ 90%: pass |
+| Repeats, same answer as round 1 | 9 / 15 | ≥ 80%: **fail** |
+
+With the display fixed, the labeller reads text reliably. What does not hold is the
+judgement itself. All 6 changed answers involve Stable Diffusion's own lettering, and 5
+involve "garbled": garbled → not text (2), garbled → real text (2), not text → real text
+(1), can't tell → garbled (1). Three of the six cross the line that matters for printing
+(block vs fine to print). One caveat: the repeats were shown with the new, larger
+close-up, so some change may come from seeing more. That does not rescue the round. A
+rule would be judged on whatever view a reviewer has.
+
+**What this shows.** Whether a piece of AI lettering is "real text" is not a stable
+per-file judgement, even for the person who owns the product. A rule that approves
+"garbled" lettering would encode a call that flips on a second look. The loop did its
+job: it stopped a rule built on labels that do not repeat.
+
+**Consequence.** TEXT_TOO_SMALL keeps blocking AI lettering, which is the safe default.
+The lettering question is a *policy* decision (block all sub-minimum lettering, or treat
+AI-drawn lettering as advisory and let the customer's proof approval decide), not
+something to learn from per-file labels.
