@@ -45,10 +45,34 @@ Integration tests are marked and deselected by default. Run them deliberately.
 |-------|-------|--------|
 | [L0](levels/L0_raw_api/) | Raw API: messages, params, stop reasons, token accounting, cost | in progress |
 | L1-L8 | Tool loops, structured output, state, patterns, evals, MCP, production | folded into the capstone |
-| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | brief written |
+| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | **[RESULTS](capstone/docs/results.md)** — both criteria met on a held-out split |
 
 Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill in),
 `test_exercise.py` (the bar), and `NOTES.md` (what I got wrong, in my own words).
+
+## Capstone documents
+
+| Document | What it is |
+|---|---|
+| [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
+| [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
+| [scene-narration.md](capstone/docs/scene-narration.md) | **Parked (out of scope, brief §11).** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
+| [real-art.md](capstone/docs/real-art.md) | **Reality check.** Real illustrations as sticker uploads: four sealed rounds, 6.2% → 1.4% → 0.4% → **0 of 500 wrong approvals (exact bound 0.6%)** on 1,000 unseen files |
+| [ai-art.md](capstone/docs/ai-art.md) | **AI art.** Two sealed sets of 1,000 Stable Diffusion sticker images (DiffusionDB): **0 wrong approvals (bounds 0.9%, 0.8%)** but 54.3% → 57.1% auto-approve, under target; the rest is the images' own detail. The painted-checkerboard check no longer false-fires (0 of 1,000 fresh) but misses real AI checkerboards (0 of 3) |
+| [rule-loop.md](capstone/docs/rule-loop.md) | **How rules change.** A model proposes, a person supplies ground truth and decides, a fresh sealed set judges. Round 1 (AI lettering) stopped at its consistency gate |
+| [mcp.md](capstone/docs/mcp.md) | **MCP server.** The checker's tools for any MCP client: the shipped verdict and the exact measurements, read-only, files confined to one root |
+| [demo.md](capstone/docs/demo.md) | **The demo.** Local web app over the shipped pipeline, results page, customer-mistake gallery, scripted video walkthrough |
+| [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
+| [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
+| [limits.md](capstone/docs/limits.md) | Sixteen things this system cannot do, most found by measuring |
+| [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
+| [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
+| [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
+
+**Headline:** on a held-out split scored once — 82.0% auto-approve, 0 false approves in 41
+approvals, both criteria met. The deterministic pipeline passes *without* the model; the
+model's entire measured contribution is a 3.4 pp reduction in escalation rate. Total API
+spend for the project: ~$4.30.
 
 ## Learning log
 
@@ -57,3 +81,14 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | 2026-09-20 | Plan written, repo scaffolded, L0 started |
 | 2026-09-20 | Ladder abandoned for the deadline. L1-L8 now learned inside the capstone, driven by evals. |
 | 2026-09-20 | Capstone picked: artwork preflight triage. Brief written, gate cleared. |
+| 2026-09-21 | Architecture doc + editable excalidraw diagram written. Local env set up; L0 in progress. |
+| 2026-09-22 | Spec-kit docs, schemas, generator, deterministic checks, eval harness, agent. First baselines. |
+| 2026-09-23 | **Holdout scored once: 82.0% auto-approve, 0 false approves, both arms.** Tool loop measured as worse AND costlier than a single call. Model contributes one extra detection per 312 files. See [results.md](capstone/docs/results.md). |
+| 2026-09-23 | **Vision model removed.** OpenCV margin features + a 5-feature logistic decider: 84.4% / 0.0% and 84.6% / 0.5% on two fresh sealed sets, $0/file. The model-free rules breach SC-002 at n=600 (2.4%) — the earlier pass was luck. See [decider.md](capstone/docs/decider.md). |
+| 2026-09-23 | **Scene documents + verified fixes (spike).** Redraw-from-text fidelity 0.975 median; 23-31% of rejected files become print-ready proofs with no human; every proof re-verified and structure-checked; narration claim-checked. Live model run blocked: no API key here. See [scene-narration.md](capstone/docs/scene-narration.md). |
+| 2026-09-24 | **Real artwork.** OpenMoji/Twemoji/Noto as sticker uploads; the synthetic results did not transfer (7.8% false-approve). DBNet text detection, line-level contrast, stroke-mask fixes and a cut-line guard: synthetic holdout 86.7% / 0.0%, unseen real art 78.1% / 6.2%. Local-model narration via Ollama built and tested; blocked here by network policy. See [real-art.md](capstone/docs/real-art.md). |
+| 2026-09-24 | **Round 4 and the demo.** RGB converted (product decision); JPEG false rejects fixed; customer-mistake simulator (real processes on real art). Sealed: real art 78.7% / 0 of 500 (bound 0.6%), customer mistakes 87.0% / 0 of 240. Web demo, results page and recorded walkthrough. See [demo.md](capstone/docs/demo.md). |
+| 2026-09-25 | **AI-generated art.** DiffusionDB range-read fetcher working; `ai_art_v1` sealed (1,000 Stable Diffusion sticker images) and scored once: 54.3% / 0 of 339 (bound 0.9%), under the 60% approve target; rules alone breach again (4.2%). Lost approvals are mostly the images' own fine detail and garbled lettering. FAKE_TRANSPARENCY false-fires on 1.5% of raw AI images. RapidOCR pinned <1.3 after a fresh install broke the detector. See [ai-art.md](capstone/docs/ai-art.md). |
+| 2026-09-25 | **FAKE_TRANSPARENCY fixed and ai_art_v2.** Pre-registered fix validated once on unseen images: false alarms 8 → 0 of 1,000, but real AI checkerboards caught 0 of 3 before and after (SD's grids are irregular). Builder fixes (drawn-width stroke labels, matted cut-outs): +3.4 points on the same images; sealed ai_art_v2 57.1% / 0 of 354 (bound 0.8%). See [ai-art.md](capstone/docs/ai-art.md) §5a, §8. |
+| 2026-09-26 | **Rule loop, round 1: no rule, by design.** A model proposes rules, a person labels and decides, a sealed set judges ([rule-loop.md](capstone/docs/rule-loop.md)). Live FLUX generation working; two provider bugs fixed. The garbled-lettering labels passed their controls (20/20) but not the repeat test (9/15), so no rule was built on them. Decision: keep blocking; AI art quoted at ~57%, 0 wrong approvals. |
+| 2026-09-27 | **MCP server** (plan day 8). Five read-only tools over the shipped pipeline (`check_artwork`, measurements, product specs); files confined to one root; tested through a real MCP client, in-process and over stdio. `main` brought up to date. See [mcp.md](capstone/docs/mcp.md). |

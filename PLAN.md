@@ -297,6 +297,18 @@ a local model earns a slot is as the **L2 hostile mock** — a cheap generator o
 and adversarial output to test the repair path. A plain stub that returns garbage 30% of
 the time serves the same purpose for free, so this is optional.
 
+**Re-examined 2026-09-21, specifically for the capstone's vision pass**, and the answer
+held — but on arithmetic this time rather than on the scope argument above. At the assumed
+4,000 files/day, Haiku 4.5 vision costs ~$2.3K/year against ~$7K/year for a single L4-class
+GPU before redundancy or operator time. Self-hosting is *more* expensive here; the
+crossover is near 30K files/day. Calibration is the second reason: escalation is
+threshold-based, and a confidently-wrong small VLM goes straight through the 1%
+false-approve constraint. Full numbers in [capstone/docs/brief.md §8](capstone/docs/brief.md).
+
+One genuine local-model slot did open up, and it is not a language model: a CPU **text
+detector** (PaddleOCR / Tesseract / CRAFT) for locating text boxes, which beats any VLM at
+that job for free. See the bucket-2 reassignment below.
+
 Everything around the model is open source anyway: pytest, pydantic, ruff,
 OpenTelemetry for tracing, MCP as an open protocol.
 
@@ -327,16 +339,20 @@ one squashed commit. Do not tidy the history.
 
 ## 9. Open questions
 
-1. **Vision** — capstone options 1 and 3 depend on image input. Confirm availability
-   before the Day 5 gate.
-2. **Demo surface** — CLI only, or a thin web UI? A reviewer queue with real screenshots is
+1. **Demo surface** — CLI only, or a thin web UI? A reviewer queue with real screenshots is
    far more persuasive than terminal output, and costs about a day.
-3. **Deployment target** — does "deployed" mean a live URL, or a container plus a convincing
+2. **Deployment target** — does "deployed" mean a live URL, or a container plus a convincing
    runbook? A live URL is more impressive and adds a day.
-4. **Job posting** — not available yet. If it surfaces, re-tune the plan to the stack and
+3. **Job posting** — not available yet. If it surfaces, re-tune the plan to the stack and
    signals it screens for.
+4. ~~**Text detector choice**~~ — **decided 2026-09-24: PaddleOCR's DBNet** (via
+   `rapidocr_onnxruntime`, CPU, model bundled). Found text in 438/442 real-art files vs
+   311 for the component detector. See capstone/docs/real-art.md.
 
 *(Resolved: API budget — see section 8. Project ceiling is $50-100.)*
+*(Resolved 2026-09-21: vision — every current Claude model accepts image input. Per-image
+cost estimated at ~1,600 tokens; to be replaced with a measured `count_tokens` number
+before the first sweep.)*
 
 ---
 
@@ -346,3 +362,63 @@ one squashed commit. Do not tidy the history.
 |------|-------|--------|-------|
 | 2026-09-20 | — | plan drafted | awaiting approval |
 | 2026-09-20 | — | cost + licensing settled | section 8 added; budget question closed |
+| 2026-09-21 | — | architecture doc written | `capstone/docs/architecture.md` + editable excalidraw diagram |
+| 2026-09-21 | — | **design decision revised** | the code/model split went from 2 buckets to 3. Four checks moved out of judgement into deterministic pixel analysis. Vision now handles one check plus gestalt. |
+| 2026-09-21 | — | self-hosted VLM rejected | on arithmetic: local costs more than Haiku below ~30K files/day. Recorded with numbers in brief §8. |
+| 2026-09-21 | L5 | eval circularity trap caught | deterministic defects must be injected straddling the threshold, not at one value. brief §9. Caught on paper, before any data existed. |
+| 2026-09-21 | L0 | in progress | local env running; 15 free tests red, `MODEL_PRICING` + `estimate_cost` next |
+| 2026-09-23 | — | **vision model removed** | OpenCV features + logistic decider pass two fresh sealed sets at $0/file; rules-only breaches SC-002 at n=600. `capstone/docs/decider.md` |
+| 2026-09-23 | — | deps added | `opencv-python-headless`, `scikit-learn`. Reasons in §11 |
+| 2026-09-23 | — | scene + fix + narration spike | model narrates, never measures; blocked on an API key for the live run. `capstone/docs/scene-narration.md` |
+| 2026-09-24 | — | real artwork + DBNet + Ollama | OQ-4 decided by measurement: DBNet (PaddleOCR) over components. Unseen real art 6.2% false-approve; not yet shippable. `capstone/docs/real-art.md` |
+| 2026-09-24 | — | **scope reset** | proof generation and LLM narration parked: brief §11 non-goals. Effort back on the one metric (real-art false approves), then CI gate, review queue, red team |
+| 2026-09-24 | — | sealed round 2 + gate + queue + red team | real_art_v3 1.4% false-approve (0.9% label-corrected), holdout_v5 0.0% PASS, shifted_v5 1.5%. All remaining misses are safe-zone. CI gate now runs the CV decider on synthetic (SC-002) and real art (regression). Review queue built. Red team: 12 attacks, 2 known gaps (embedded hairline, upscaled art). `capstone/docs/real-art.md`, limits.md §14–15 |
+| 2026-09-24 | — | **sealed round 3** | real_art_v4 (1,000 unseen real illustrations): **79.5% / 0.4% — meets SC-001 and SC-002 on the point estimate**; exact 95% bound 1.3%. holdout_v6 0.0%, shifted_v6 0.0%. Fixes before the freeze: aspect-label bug, text boxes hiding art, invisible/undetected marks in border bands. Harness bound now exact. `capstone/docs/real-art.md` |
+| 2026-09-24 | — | **round 4 + demo** | RGB converted (product decision); JPEG false rejects fixed. Sealed real_art_v5: **78.7% / 0 of 500, exact bound 0.6%**. Customer-mistake set (real processes): 87.0% / 0 of 240. Local web demo, results page, scripted video walkthrough. `capstone/docs/demo.md` |
+| 2026-09-25 | — | **AI-generated art** | DiffusionDB fetcher (range reads); `ai_art_v1` sealed: 54.3% / 0 of 339, under SC-001. FAKE_TRANSPARENCY false alarms found (1.5% of raw AI images). RapidOCR pinned below 1.3 after a fresh install broke the detector. `capstone/docs/ai-art.md` |
+| 2026-09-25 | — | checkerboard fix + ai_art_v2 | pre-registered fix validated once on unseen images: false alarms 8 → 0 of 1,000; real AI checkerboards still 0 of 3. Builder fixes +3.4 pts; `ai_art_v2` 57.1% / 0 of 354 (bound 0.8%) |
+| 2026-09-26 | — | **rule loop + policy decision** | spec option priced (detail < 2 mm: at most +2 pts); live FLUX generation working, two provider bugs fixed. Rule loop adopted (`capstone/docs/rule-loop.md`): lettering labels passed controls (20/20) but not the repeat test (9/15), so no rule. Decision: keep blocking; AI art quoted at ~57% |
+| 2026-09-27 | — | docs brought current | architecture.md and limits.md §8 statuses; this log. `main` updated to the full history (PR) |
+| 2026-09-27 | L6 | **MCP server** | `capstone/mcp_server.py`: `check_artwork` (the shipped verdict), `inspect_file`, `analyse_pixels`, `get_product_spec`, `list_products`; read-only, confined to `PREFLIGHT_MCP_ROOT`. 17 tests through a real MCP client; checked over stdio. `capstone/docs/mcp.md` |
+
+---
+
+## 11. Skipping the vision model — CV decider now, Jev later
+
+**Decided 2026-09-23.** Founder framing: at 4,000 files/day the vision call cost ~$26/day
+while human review of escalations cost ~$950/day. Tokens were never the expensive line;
+escalations were. So the question was not "cheaper model" but "can measurement plus a
+cheap decider match what the model bought" — which, per results.md §2, was exactly one
+thing: escalations from 17.0% down to 13.6%.
+
+**Answer: yes, at $0.** Numbers and method in
+[capstone/docs/decider.md](capstone/docs/decider.md).
+
+### Dependencies, and why each earns its place
+
+| Package | Why | Why not the alternative |
+|---|---|---|
+| `opencv-python-headless` | `connectedComponentsWithStats`: every element's bbox and area in one C pass, which is what the margin-object feature is built on | hand-rolled numpy labelling exists in `text_detect` but returns no per-component stats; headless build avoids GUI/Qt deps |
+| `scikit-learn` | fits the decider and runs the out-of-fold model selection | used at training time only — the model ships as JSON coefficients, so inference imports neither sklearn nor pickle |
+
+Rejected: **SimpleCV** (unmaintained, Python 2 only). **scikit-image** not needed yet;
+revisit if a skeleton-based stroke measurement replaces run lengths.
+
+### Where Jev fits
+
+Jev (TypeSafe AI, early access 2026-09-15) takes structured state and returns calibrated
+probabilities over declared options. It is text-only, so it can never replace the vision
+step — it can only replace the decider, which is exactly the slot `Decider` in
+`capstone/src/deciders.py` defines. Adding it is one class and one harness arm.
+
+**Decision rule, fixed before any Jev result exists:**
+
+> Jev replaces the logistic decider only if it holds false approves at or below the
+> logistic decider's on a fresh sealed holdout **and** either lowers the escalation rate,
+> or matches it on a product the logistic model has no training labels for.
+
+Why the second clause: the logistic model already separates train out-of-fold on five
+features, so Jev's plausible advantage is not accuracy but day-one coverage of a product
+with no labels. Vendor risk (single company, early access, possibly subsidised pricing)
+is accepted only because the pipeline runs without it.
+

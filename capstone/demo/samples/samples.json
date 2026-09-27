@@ -1,0 +1,106 @@
+[
+  {
+    "file": "print_ready.tif",
+    "thumb": "print_ready-thumb.jpg",
+    "title": "Print-ready file",
+    "description": "A careful designer's CMYK TIFF with bleed. The control.",
+    "order": {
+      "order_id": "ORD-00253",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 250
+    }
+  },
+  {
+    "file": "screenshot.png",
+    "thumb": "screenshot-thumb.jpg",
+    "title": "Screenshot",
+    "description": "Copied from a browser or preview: screen pixels, no DPI.",
+    "order": {
+      "order_id": "ORD-00251",
+      "product_id": "die-cut-sticker",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 50
+    }
+  },
+  {
+    "file": "messaging_app.jpg",
+    "thumb": "messaging_app-thumb.jpg",
+    "title": "Sent over a chat app",
+    "description": "Long side capped at 1600 px, recompressed, metadata stripped.",
+    "order": {
+      "order_id": "ORD-00348",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 500
+    }
+  },
+  {
+    "file": "jpeg_resaves.jpg",
+    "thumb": "jpeg_resaves-thumb.jpg",
+    "title": "Re-saved as JPEG",
+    "description": "Opened and saved as JPEG a few times. Should still pass.",
+    "order": {
+      "order_id": "ORD-00043",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 1000
+    }
+  },
+  {
+    "file": "via_gif.png",
+    "thumb": "via_gif-thumb.jpg",
+    "title": "Through a GIF tool",
+    "description": "Reduced to a small dithered palette, exported to PNG.",
+    "order": {
+      "order_id": "ORD-00438",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 250
+    }
+  },
+  {
+    "file": "gif_upload.gif",
+    "thumb": "gif_upload-thumb.jpg",
+    "title": "Uploaded as .gif",
+    "description": "Not a print format.",
+    "order": {
+      "order_id": "ORD-00298",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 100
+    }
+  },
+  {
+    "file": "background_removed.png",
+    "thumb": "background_removed-thumb.jpg",
+    "title": "Background remover",
+    "description": "Background made transparent, soft haloed edge.",
+    "order": {
+      "order_id": "ORD-00338",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 100
+    }
+  },
+  {
+    "file": "trim_size_export.png",
+    "thumb": "trim_size_export-thumb.jpg",
+    "title": "Exported without bleed",
+    "description": "Design-tool default: the ordered size, no bleed.",
+    "order": {
+      "order_id": "ORD-00133",
+      "product_id": "roll-label",
+      "width_in": 5.0,
+      "height_in": 3.0,
+      "quantity": 500
+    }
+  }
+]

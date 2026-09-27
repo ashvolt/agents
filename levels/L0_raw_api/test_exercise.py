@@ -1,7 +1,7 @@
 """The bar for L0. These are failing until exercise.py is filled in.
 
-Free tests run with:      pytest levels/L0-raw-api -m "not integration"
-Everything, costs money:  pytest levels/L0-raw-api
+Free tests run with:      pytest levels/L0_raw_api -m "not integration"
+Everything, costs money:  pytest levels/L0_raw_api
 """
 
 from __future__ import annotations

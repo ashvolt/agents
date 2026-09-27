@@ -1,0 +1,55 @@
+name: eval gate
+
+# Runs the deterministic arm against the committed baseline. No API key, no spend.
+# The agent arm costs money and is deliberately not run here - the deterministic
+# pipeline is the system of record (capstone/docs/results.md S7), so gating on it
+# protects the thing that actually ships.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        # libcairo2 for cairosvg, which renders the real-art set from its SVG originals.
+        run: |
+          sudo apt-get update && sudo apt-get install -y libcairo2
+          pip install -e ".[dev,data,mcp]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit tests (offline, no API)
+        run: pytest -m "not integration" -q
+
+      - name: Generate the eval set
+        # Deterministic for a fixed seed, so CI reproduces the same 400 cases rather
+        # than committing ~400 images to the repo.
+        run: |
+          python -m capstone.data.generate \
+            -n 400 --clean-fraction 0.60 --seed 20260923 \
+            --out cases_large.jsonl --cases-dir cases_large
+
+      - name: Eval regression gate - synthetic (full SC-002 constraint)
+        run: python -m capstone.evals.gate --suite synthetic
+
+      - name: Build the real-art gate set
+        # Openly licensed illustrations fetched from npm at pinned versions, rendered from
+        # their vector originals. Same seed and exclusions as the committed manifest.
+        run: |
+          python -m capstone.data.fetch_art
+          python -m capstone.data.real_art -n 450 --seed 20261001 --out real_art_v3 \
+            --exclude real_art.jsonl --exclude real_art_v2.jsonl
+
+      - name: Eval regression gate - real artwork (no worse than recorded)
+        run: python -m capstone.evals.gate --suite real
