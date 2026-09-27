@@ -1,0 +1,12 @@
+# Streamlit Community Cloud installs this (it looks next to the app file first, so the
+# repo's pyproject.toml is not used there). Only what the check needs at runtime; keep
+# the pins in step with pyproject.toml. Run locally:
+#   pip install -r capstone/demo/requirements.txt
+#   streamlit run capstone/demo/streamlit_app.py
+streamlit>=1.40
+pydantic>=2.9
+pillow>=11.0
+numpy>=2.0
+opencv-python-headless>=4.10
+# Capped below 1.3: every sealed score used the 1.2 line's PP-OCRv3 detector (pyproject.toml).
+rapidocr_onnxruntime>=1.2.3,<1.3
