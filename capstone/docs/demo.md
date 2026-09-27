@@ -80,9 +80,15 @@ Deploy (once):
 2. **Create app** → deploy from GitHub. Repository `ashvolt/agents`, branch `main`, main
    file path `capstone/demo/streamlit_app.py`.
 3. **Advanced settings** → Python **3.13**. No secrets. Save, then **Deploy**.
-4. The first build installs `capstone/demo/requirements.txt` and the apt packages in
-   `capstone/demo/packages.txt` (OpenCV's system libraries), a few minutes. Every push to
-   `main` redeploys.
+4. The first build installs `capstone/demo/requirements.txt` and the apt packages in the
+   root `packages.txt` (OpenCV's system libraries), a few minutes. Every push to `main`
+   redeploys.
+
+**`packages.txt` must stay at the repo root.** rapidocr requires the full
+`opencv-python`, which shares the `cv2` directory with the headless build we list;
+whichever installs last owns it. The full build links `libGL.so.1` and `libglib-2.0`. The
+first deploy (2026-09-27) had the file in `capstone/demo/`, where it was not picked up,
+and failed at `import cv2`.
 
 The requirements file sits next to the app so Community Cloud uses it instead of the
 root `pyproject.toml` (the whole dev and data stack). Keep its pins in step with
