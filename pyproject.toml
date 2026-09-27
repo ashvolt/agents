@@ -51,6 +51,9 @@ demo = [
     "fastapi>=0.115",
     "uvicorn>=0.30",
     "python-multipart>=0.0.9",
+    # The hosted page (capstone/demo/streamlit_app.py); Community Cloud installs
+    # capstone/demo/requirements.txt instead.
+    "streamlit>=1.40",
 ]
 
 [tool.setuptools.packages.find]
