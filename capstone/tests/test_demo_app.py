@@ -96,3 +96,37 @@ def test_provider_failure_is_a_502_not_a_crash(monkeypatch: pytest.MonkeyPatch) 
         data=GEN_FORM,
     )
     assert response.status_code == 502
+
+
+def test_cloudflare_is_never_sent_a_seed(monkeypatch: pytest.MonkeyPatch) -> None:
+    # the model rejects the field outright (error 5006, checked live 2026-09-26)
+    import base64
+    import json
+
+    from capstone.demo import generate as ai
+
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "acct")
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "token")
+    sent: dict = {}
+
+    def fake_post(url, body, token):  # noqa: ANN001, ANN202
+        sent.update(body)
+        image = base64.b64encode(_png((64, 64))).decode()
+        return json.dumps({"result": {"image": image}}).encode(), "application/json"
+
+    monkeypatch.setattr(ai, "_post", fake_post)
+    _, name = ai.generate("a fox sticker", seed=7)
+    assert name == "cloudflare"
+    assert "seed" not in sent
+
+
+def test_a_safety_refusal_reads_as_advice_not_a_raw_error() -> None:
+    from capstone.demo import generate as ai
+
+    body = '{"errors":[{"message":"AiError: Input prompt contains NSFW content.","code":8007}]}'
+    message = ai._explain(400, body)
+    assert "safety filter" in message and "rewording" in message
+    assert "AiError" not in message
+    # anything else keeps the provider's own words, for whoever debugs it
+    assert "402" in ai._explain(402, '{"errors":[{"code":1234}]}')
+    assert "not json" in ai._explain(500, "not json")

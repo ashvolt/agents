@@ -42,6 +42,12 @@ Reads named run files from `capstone/evals/runs/` and writes `static/reports.jso
 the results page comes from a run listed in `build_reports.ROUNDS`; the only typed-in
 figures are the cost assumptions, which say where they come from.
 
+Run files are gitignored. Where a round's run files are missing (a fresh checkout), its
+row is carried over unchanged from the committed `reports.json`, and the build prints
+which rows it carried. Omitting `--mistakes-run` keeps the gallery and samples as they
+are. The AI-art rounds (2026-09-25) were added this way; the older rows are
+byte-identical.
+
 Gallery examples: for each customer process, the largest correctly decided file,
 preferring a defective one where the process produces defects. Size is chosen for
 legibility; the verdict is not a criterion, and the counts sit next to each example.
@@ -62,6 +68,11 @@ an upload size limit at the proxy (the app caps at 40 MB), and whether uploads m
 
 ## Not in the demo yet
 
-- AI-generated images (DiffusionDB, a free hosted generator): the environment's network
-  policy blocks Hugging Face, Pollinations and Cloudflare. Allow those hosts to proceed.
+- AI-generated images are in: two sealed DiffusionDB sets on the results page, and the
+  live generator card now runs against Cloudflare Workers AI (FLUX.1-schnell; the
+  environment's CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN). Measured 2026-09-26 in
+  ai-art.md §10. On stage, expect most generated stickers to be sent back for hairline
+  detail, and the provider's safety filter to refuse some harmless prompts (the page
+  says so plainly). FAKE_TRANSPARENCY misses AI-painted checkerboards (ai-art.md §5a),
+  though FLUX did not paint any in 10 of 10 tries.
 - Real customer uploads.

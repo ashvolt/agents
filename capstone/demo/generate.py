@@ -25,6 +25,25 @@ class GenerationError(RuntimeError):
     pass
 
 
+# Cloudflare's error code for a prompt its safety filter refuses. It misfires: on
+# 2026-09-26 "sticker of a pizza slice with the text PIZZA TIME" was refused as NSFW.
+CLOUDFLARE_REFUSED = 8007
+
+
+def _explain(status: int, detail: str) -> str:
+    """A message a customer can act on, not the provider's raw error body."""
+    try:
+        codes = {e.get("code") for e in json.loads(detail).get("errors", [])}
+    except (ValueError, AttributeError):
+        codes = set()
+    if CLOUDFLARE_REFUSED in codes:
+        return (
+            "The image provider's safety filter refused this prompt. It sometimes refuses "
+            "harmless prompts; try rewording it."
+        )
+    return f"{status} from the image provider: {detail}"
+
+
 def provider() -> str | None:
     if os.environ.get("CLOUDFLARE_ACCOUNT_ID") and os.environ.get("CLOUDFLARE_API_TOKEN"):
         return "cloudflare"
@@ -48,8 +67,8 @@ def _post(url: str, body: dict, token: str) -> tuple[bytes, str]:
         with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
             return response.read(), response.headers.get("Content-Type", "")
     except urllib.error.HTTPError as exc:
-        detail = exc.read()[:300].decode(errors="replace")
-        raise GenerationError(f"{exc.code} from the image provider: {detail}") from exc
+        detail = exc.read()[:600].decode(errors="replace")
+        raise GenerationError(_explain(exc.code, detail)) from exc
 
 
 def generate(prompt: str, seed: int | None = None) -> tuple[bytes, str]:
@@ -58,9 +77,9 @@ def generate(prompt: str, seed: int | None = None) -> tuple[bytes, str]:
     if name == "cloudflare":
         account = os.environ["CLOUDFLARE_ACCOUNT_ID"]
         url = f"https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/{CLOUDFLARE_MODEL}"
+        # No seed: this model rejects the field (error 5006, checked live 2026-09-26),
+        # so Cloudflare images are not reproducible from a seed.
         body: dict = {"prompt": prompt, "steps": 4}
-        if seed is not None:
-            body["seed"] = seed
         raw, _ = _post(url, body, os.environ["CLOUDFLARE_API_TOKEN"])
         payload = json.loads(raw)
         image = (payload.get("result") or {}).get("image")

@@ -37,6 +37,12 @@ COMPONENT_MIN_INK_RATIO = 0.002
 # 0.2% of the ink and was skipped as speckle (real-art.md). Length is what makes a line.
 STROKE_MIN_LENGTH_IN = 0.08
 
+# Detail shorter than this at print size is not judged as a stroke at all. 0 = off, and
+# off is what ships: whether sub-minimum *detail* (AI speckle, texture) may print is a
+# spec decision, not a tuning one. The constant exists so candidate rules can be priced
+# with exactly the code that would ship (evals/price_detail_rule.py, ai-art.md section 9).
+STROKE_MIN_DETAIL_IN = 0.0
+
 # Text boxes are excluded from the stroke measurement with this much margin, as a share
 # of the line's height. Without it the antialiased fringe just outside a tight box was
 # measured as a one-pixel stroke: 22 of 26 false THIN_LINES flags on real art.
@@ -416,6 +422,8 @@ def _luminance_min_stroke(
         area = int(sub_mask.sum())
         if area < min_component_px and max(x1 - x0, y1 - y0) < min_length_px:
             continue
+        if dpi and max(x1 - x0, y1 - y0) < STROKE_MIN_DETAIL_IN * dpi:
+            continue
         values = thickness[y0:y1, x0:x1][sub_mask]
         if values.size == 0:
             continue
@@ -423,7 +431,7 @@ def _luminance_min_stroke(
         if median > 0 and (thinnest is None or median < thinnest):
             thinnest = median
 
-    if thinnest is None:
+    if thinnest is None and not STROKE_MIN_DETAIL_IN:
         # Everything was below the component floor; fall back to the global minimum so a
         # file made entirely of hairlines is not silently reported as clean.
         values = thickness[mask]
@@ -464,6 +472,8 @@ def _free_standing_min_stroke(
         for idx in range(1, count):
             x0, y0, w, h, area = (int(v) for v in stats[idx])
             if area < min_component_px and max(w, h) < min_length_px:
+                continue
+            if dpi and max(w, h) < STROKE_MIN_DETAIL_IN * dpi:
                 continue
             ya, yb = max(0, y0 - 1), min(height, y0 + h + 1)
             xa, xb = max(0, x0 - 1), min(width, x0 + w + 1)
@@ -775,8 +785,14 @@ CHECKER_NEUTRAL_SPREAD = 14
 CHECKER_MIN_LUMA = 150
 CHECKER_LEVEL_GAP = (10, 90)  # the two greys differ by this much, in 0-255 luma
 CHECKER_CELL_PX = (4, 64)  # cell sizes searched, on the analysis-sized image
-CHECKER_MIN_AGREEMENT = 0.85
+CHECKER_MIN_AGREEMENT = 0.95
 CHECKER_MIN_COVERAGE = 0.10  # share of the image the pattern must cover
+# The first version accepted 85% agreement over as few as 16 sampled cells, and fired on
+# 16 of 1,100 Stable Diffusion logos on textured grey backdrops, none a checkerboard
+# (ai-art.md section 5). Two painted greys are two separate peaks with a valley between
+# them; paper texture is one broad hump. And a real grid alternates over many cells.
+CHECKER_MIN_CELLS = 64  # sampled cells at a known level: an 8 x 8 grid at least
+CHECKER_MAX_VALLEY = 0.5  # histogram between the two greys, as a share of the lower peak
 CHECKER_ANALYSIS_LONG_SIDE = 768
 
 
@@ -811,6 +827,11 @@ def measure_checkerboard(image: Image.Image) -> tuple[float, float, int] | None:
     gap = abs(first - second)
     if not CHECKER_LEVEL_GAP[0] <= gap <= CHECKER_LEVEL_GAP[1] or hist[second] < 0.2 * hist[first]:
         return None
+    smooth = np.convolve(hist, np.ones(3) / 3, mode="same")
+    lo, hi = sorted((first, second))
+    valley = smooth[lo + 1 : hi].min() if hi - lo > 1 else 0.0
+    if valley > CHECKER_MAX_VALLEY * min(smooth[first], smooth[second]):
+        return None
     tolerance = max(3, gap // 3)
     level = np.full(luma.shape, -1, dtype=np.int8)
     level[neutral & (np.abs(luma - first) <= tolerance)] = 0
@@ -830,7 +851,7 @@ def measure_checkerboard(image: Image.Image) -> tuple[float, float, int] | None:
                 ys, xs = ys[ys < height], xs[xs < width]
                 samples = level[np.ix_(ys, xs)]
                 known = samples >= 0
-                if known.sum() < 16:
+                if known.sum() < CHECKER_MIN_CELLS:
                     continue
                 par = parity[: samples.shape[0], : samples.shape[1]]
                 match = (samples == par) & known

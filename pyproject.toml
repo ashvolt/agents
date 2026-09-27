@@ -22,7 +22,10 @@ dependencies = [
     # Text detection: PaddleOCR's DBNet, run through ONNX Runtime. The model ships inside
     # the wheel, so nothing is downloaded at runtime. Chosen over the component detector
     # on real artwork, where the latter missed most captions (capstone/docs/real-art.md).
-    "rapidocr_onnxruntime>=1.2.3",
+    # Capped below 1.3: 1.3 swaps in the PP-OCRv4 model and later releases drop
+    # `RapidOCR().text_detector`, so a fresh install broke the detector (2026-09-25).
+    # Every sealed score was made with the 1.2 line's PP-OCRv3 model (md5 f3b6ff55...).
+    "rapidocr_onnxruntime>=1.2.3,<1.3",
 ]
 
 [project.optional-dependencies]

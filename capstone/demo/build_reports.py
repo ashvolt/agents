@@ -8,6 +8,10 @@ capstone/demo/samples/. Both outputs are committed, so the demo runs without the
 
 Every figure on the reports page comes from a named run file listed below; nothing is
 typed in by hand except the cost assumptions, which say where they come from.
+
+Run files are gitignored and live where the evals ran. A round whose run files are not
+here is carried over unchanged from the committed reports.json (built from those same
+runs), and the gallery likewise when --mistakes-run is omitted. The build says which.
 """
 
 from __future__ import annotations
@@ -64,6 +68,20 @@ ROUNDS = [
         "20260924T161512Z-cv_decider",
     ),
     (
+        "AI art, round 1",
+        "1,000 Stable Diffusion sticker images (DiffusionDB)",
+        1000,
+        "20260925T073622Z-rules_only",
+        "20260925T075401Z-cv_decider",
+    ),
+    (
+        "AI art, round 2",
+        "1,000 unseen Stable Diffusion images; builder fixes (ai-art.md)",
+        1000,
+        "20260925T111800Z-rules_only",
+        "20260925T113546Z-cv_decider",
+    ),
+    (
         "Synthetic holdout, round 3",
         "600 generated files",
         600,
@@ -109,6 +127,26 @@ def _report(run: str) -> dict:
     report["meets_constraint"] = report["meets_constraint_sc002"]
     report["meets_target"] = report["meets_target_sc001"]
     return report
+
+
+def _previous() -> dict:
+    return json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+
+
+def _round(name: str, note: str, n: int, rules: str, cv: str, previous: dict) -> dict:
+    if (RUNS / f"{rules}.json").exists() and (RUNS / f"{cv}.json").exists():
+        return {
+            "name": name,
+            "note": note,
+            "n": n,
+            "rules_only": _report(rules),
+            "cv_decider": _report(cv),
+        }
+    carried = {r["name"]: r for r in previous.get("rounds", [])}
+    if name not in carried:
+        raise SystemExit(f"{name}: run files {rules} / {cv} not found and not in {OUT.name}")
+    print(f"carried over from {OUT.name} (run files not here): {name}")
+    return carried[name]
 
 
 def _pixels(path: Path) -> int:
@@ -206,16 +244,22 @@ def main() -> None:
     import argparse
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--mistakes-run", required=True, help="cv_decider run file stem")
+    ap.add_argument(
+        "--mistakes-run", default=None, help="cv_decider run file stem; omit to keep the gallery"
+    )
     ap.add_argument("--mistakes-manifest", default="mistakes_v2.jsonl")
     args = ap.parse_args()
 
-    rounds = [
-        {"name": name, "note": note, "n": n, "rules_only": _report(r), "cv_decider": _report(c)}
-        for name, note, n, r, c in ROUNDS
-    ]
-    gallery, samples = mistakes_section(args.mistakes_run, DATA / args.mistakes_manifest)
-    real = rounds[3]["cv_decider"]
+    previous = _previous()
+    rounds = [_round(*row, previous) for row in ROUNDS]
+    if args.mistakes_run:
+        gallery, samples = mistakes_section(args.mistakes_run, DATA / args.mistakes_manifest)
+    else:
+        print(f"gallery carried over from {OUT.name} (no --mistakes-run)")
+        gallery, samples = previous["mistakes"], None
+    by_name = {r["name"]: r for r in rounds}
+    real = by_name["Real art, round 4"]["cv_decider"]
+    ai = by_name["AI art, round 2"]["cv_decider"]
     data = {
         "headline": [
             {
@@ -279,11 +323,22 @@ def main() -> None:
                 "The customer-mistake gallery is a stress test, not a rate estimate: the "
                 "processes are real, the labels are ours."
             ),
+            (
+                f"AI-generated art is safe but under target: {ai['approved_defective']} wrong "
+                f"approvals in {ai['approved']} (bound {ai['false_approve_ci_upper_95']:.1%}), "
+                f"only {ai['auto_approve_rate']:.1%} auto-approved. Most rejections are the "
+                "images' own fine detail and garbled small lettering, which really measure "
+                "under the print minimums. The painted-checkerboard check does not catch "
+                "AI-drawn checkerboards."
+            ),
         ],
     }
     OUT.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    (SAMPLES / "samples.json").write_text(json.dumps(samples, indent=2), encoding="utf-8")
-    print(f"wrote {OUT} and {len(samples)} samples -> {SAMPLES}")
+    if samples is not None:
+        (SAMPLES / "samples.json").write_text(json.dumps(samples, indent=2), encoding="utf-8")
+        print(f"wrote {OUT} and {len(samples)} samples -> {SAMPLES}")
+    else:
+        print(f"wrote {OUT}; samples unchanged")
 
 
 if __name__ == "__main__":

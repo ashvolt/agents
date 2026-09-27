@@ -82,3 +82,28 @@ def test_measurement_reports_cell_size() -> None:
     found = measure_checkerboard(_checker(cell=20))
     assert found is not None
     assert abs(found[2] - 20) <= 2
+
+
+def _grey_backdrop(seed: int) -> Image.Image:
+    """A logo on a textured grey studio backdrop: vignette plus paper-like noise."""
+    import cv2
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
+    yy, xx = np.mgrid[0:512, 0:512]
+    base = 172 - 30 * np.hypot(xx - 256, yy - 256) / 362
+    noise = cv2.GaussianBlur(rng.normal(0, 20, (512, 512)).astype(np.float32), (0, 0), 1) * 2
+    grey = np.clip(base + noise, 0, 255).astype(np.uint8)
+    img = Image.fromarray(np.dstack([grey] * 3))
+    ImageDraw.Draw(img).ellipse((156, 156, 356, 356), fill=(214, 91, 60))
+    return img
+
+
+def test_a_textured_grey_backdrop_is_not_a_checkerboard() -> None:
+    # 16 of 1,100 Stable Diffusion logos on grey backdrops fired the first version
+    # (ai-art.md section 5), none of them a checkerboard: the two "greys" were 10 levels
+    # apart inside one noisy distribution, and with as few as 16 sampled cells some cell
+    # size and phase out of ~1,000 tried agreed with the parity by chance. The first
+    # version fires on 6 of these 20.
+    fired = [seed for seed in range(20) if _codes(_grey_backdrop(seed))]
+    assert fired == []
