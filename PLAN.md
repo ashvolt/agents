@@ -379,6 +379,7 @@ before the first sweep.)*
 | 2026-09-25 | — | checkerboard fix + ai_art_v2 | pre-registered fix validated once on unseen images: false alarms 8 → 0 of 1,000; real AI checkerboards still 0 of 3. Builder fixes +3.4 pts; `ai_art_v2` 57.1% / 0 of 354 (bound 0.8%) |
 | 2026-09-26 | — | **rule loop + policy decision** | spec option priced (detail < 2 mm: at most +2 pts); live FLUX generation working, two provider bugs fixed. Rule loop adopted (`capstone/docs/rule-loop.md`): lettering labels passed controls (20/20) but not the repeat test (9/15), so no rule. Decision: keep blocking; AI art quoted at ~57% |
 | 2026-09-27 | — | docs brought current | architecture.md and limits.md §8 statuses; this log. `main` updated to the full history (PR) |
+| 2026-09-27 | L6 | **MCP server** | `capstone/mcp_server.py`: `check_artwork` (the shipped verdict), `inspect_file`, `analyse_pixels`, `get_product_spec`, `list_products`; read-only, confined to `PREFLIGHT_MCP_ROOT`. 17 tests through a real MCP client; checked over stdio. `capstone/docs/mcp.md` |
 
 ---
 

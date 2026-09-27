@@ -238,7 +238,7 @@ once the sample was large enough to resolve it.
 | Idempotency by `order_id` | built at the queue: an item's id hashes the order id and the file's bytes |
 | Red team / injection tests | built 2026-09-24 (`evals/redteam.py`: 12 attacks, 0 failed, 2 known gaps; limits.md §15) |
 | CI gate | built 2026-09-24 (`.github/workflows/eval-gate.yml`: lint, unit tests, synthetic and real-art gates) |
-| MCP server | **not built** |
+| MCP server | built 2026-09-27 (`capstone/mcp_server.py`: five read-only tools over the shipped pipeline, files confined to a root; mcp.md) |
 
 ## 9. Recommendation
 
