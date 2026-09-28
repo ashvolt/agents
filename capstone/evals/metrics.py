@@ -7,6 +7,7 @@ destroys the ROI model, which is why brief.md S5 does not use it.
 
 from __future__ import annotations
 
+import math
 import statistics
 from collections import Counter
 from dataclasses import dataclass, field
@@ -19,6 +20,42 @@ FALSE_APPROVE_LIMIT = 0.01
 
 # SC-001.
 APPROVE_RATE_TARGET = 0.60
+
+
+def _binom_cdf(k: int, n: int, p: float) -> float:
+    """P(X <= k) for X ~ Binomial(n, p), summed in log space."""
+    if p <= 0.0:
+        return 1.0
+    if p >= 1.0:
+        return 1.0 if k >= n else 0.0
+    log_p, log_q = math.log(p), math.log1p(-p)
+    total = 0.0
+    for i in range(k + 1):
+        log_term = (
+            math.lgamma(n + 1)
+            - math.lgamma(i + 1)
+            - math.lgamma(n - i + 1)
+            + i * log_p
+            + (n - i) * log_q
+        )
+        total += math.exp(log_term)
+    return min(1.0, total)
+
+
+def clopper_pearson_upper(k: int, n: int, alpha: float = 0.05) -> float:
+    """Exact one-sided upper confidence bound on a binomial rate, k events in n."""
+    if n <= 0:
+        return 1.0
+    if k >= n:
+        return 1.0
+    lo, hi = k / n, 1.0
+    for _ in range(100):  # bisection; the CDF falls monotonically in p
+        mid = (lo + hi) / 2
+        if _binom_cdf(k, n, mid) > alpha:
+            lo = mid
+        else:
+            hi = mid
+    return hi
 
 
 @dataclass(frozen=True)
@@ -79,24 +116,23 @@ class SweepReport:
 
     @property
     def false_approve_ci_upper(self) -> float:
-        """95% upper bound on the true false-approve rate.
+        """95% upper bound on the true false-approve rate (exact, one-sided).
 
-        Uses the rule of three when nothing went wrong (0 events in n trials gives an
-        upper bound of about 3/n), and a normal approximation otherwise.
+        Clopper-Pearson: the largest rate at which seeing this few wrong approvals would
+        still happen 5% of the time. With none it is about 3/n (the rule of three).
 
         This exists because the point estimate is misleading at small n. With 45
         approvals, one wrong approval scores 2.2% and zero score 0% — the rate cannot
         land on 1% at all. Reporting "0%" as a pass would be claiming a precision the
         sample does not have.
+
+        Until 2026-09-24 this used a normal approximation when k > 0, which is too
+        optimistic for a handful of events: 2 of 479 read 1.0%, the exact bound is 1.3%.
         """
         n = self.approved
         if n == 0:
             return 1.0
-        k = self.approved_defective
-        if k == 0:
-            return min(1.0, 3.0 / n)
-        p = k / n
-        return min(1.0, p + 1.96 * ((p * (1 - p) / n) ** 0.5))
+        return clopper_pearson_upper(self.approved_defective, n)
 
     @property
     def false_approve_resolution(self) -> float:
@@ -222,8 +258,7 @@ class SweepReport:
         breach = "OK" if self.meets_constraint else "*** BREACH ***"
         mix = f"({self.n_clean} clean / {self.n_defective} defective)"
         verdicts = (
-            f"APPROVE {self.approved} / REQUEST_FIX {self.request_fix}"
-            f" / ESCALATE {self.escalated}"
+            f"APPROVE {self.approved} / REQUEST_FIX {self.request_fix} / ESCALATE {self.escalated}"
         )
         lines = [
             f"--- {self.arm}  [{ok}] ---",
@@ -245,12 +280,10 @@ class SweepReport:
                 f"({self.borderline_detected}/{self.borderline_injected} within 10% of threshold)"
             )
         lines.append(
-            f"  cost/file          ${self.cost_per_file_usd:.4f}"
-            f"   total ${self.total_cost_usd:.2f}"
+            f"  cost/file          ${self.cost_per_file_usd:.4f}   total ${self.total_cost_usd:.2f}"
         )
         lines.append(
-            f"  latency p95        {self.p95_latency_ms} ms"
-            f"   mean {self.mean_latency_ms} ms"
+            f"  latency p95        {self.p95_latency_ms} ms   mean {self.mean_latency_ms} ms"
         )
         if self.billed_input_tokens:
             flag = "  *** zero cache reads ***" if self.cache_suspect else ""

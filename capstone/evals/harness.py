@@ -26,9 +26,11 @@ from pathlib import Path
 
 from capstone.evals.metrics import SweepReport, score
 from capstone.ops.tracing import take_trace
+from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.schemas import (
     EscalationReason,
     GoldLabel,
+    IssueCode,
     OrderMetadata,
     PreflightCase,
     RunResult,
@@ -44,6 +46,35 @@ DEFAULT_MANIFEST = REPO_ROOT / "capstone" / "data" / "cases.jsonl"
 RUNS_DIR = REPO_ROOT / "capstone" / "evals" / "runs"
 
 TriageFn = Callable[[PreflightCase], Verdict]
+
+
+def apply_spec_rules(label: GoldLabel, product_id: str) -> GoldLabel:
+    """The label as the product's rules judge it.
+
+    Generated labels record what was done to the file. Whether that is a defect is the
+    spec's call, decided here in one place so the eval, the gate and decider training all
+    see the same rule:
+
+    - WRONG_COLOR_MODE saves the file as RGB. A product that converts RGB itself
+      (`converted_color_modes`) does not count that as a defect.
+    - UNINTENDED_TRANSPARENCY saves it with alpha. On a product that allows transparency
+      (die-cut, kiss-cut: the cut follows the shape) that is not a defect either. The
+      generator labelled it one on every product; RGB being blocking hid the mismatch
+      until RGB became advisory (2026-09-24).
+    """
+    try:
+        spec = get_spec(product_id)
+    except UnknownProductError:
+        return label
+    not_defects: set[IssueCode] = set()
+    if "RGB" in spec.converted_color_modes:
+        not_defects.add(IssueCode.WRONG_COLOR_MODE)
+    if spec.allows_transparency:
+        not_defects.add(IssueCode.UNINTENDED_TRANSPARENCY)
+    kept = tuple(p for p in label.perturbations if p.code not in not_defects)
+    if len(kept) == len(label.perturbations):
+        return label
+    return label.model_copy(update={"perturbations": kept})
 
 
 def load_cases(
@@ -75,7 +106,7 @@ def load_cases(
                 image_path=REPO_ROOT / row["image_path"],
                 order=OrderMetadata.model_validate(row["order"]),
             )
-            out.append((case, label))
+            out.append((case, apply_spec_rules(label, case.order.product_id)))
     return out
 
 
@@ -240,6 +271,10 @@ def _resolve_arm(name: str, no_tools: bool) -> tuple[str, TriageFn]:
         return "always_approve", baselines.always_approve
     if name == "rules_only":
         return "rules_only", baselines.rules_only
+    if name == "cv_decider":
+        from capstone.src.deciders import make_cv_decider_triage
+
+        return "cv_decider", make_cv_decider_triage()
     if name in ("agent", "agent_fast"):
         from capstone.src.agent import make_triage_fn
 
@@ -255,7 +290,9 @@ def main() -> None:
         "arm",
         nargs="?",
         default="rules_only",
-        choices=["always_escalate", "always_approve", "rules_only", "agent", "agent_fast"],
+        choices=[
+            "always_escalate", "always_approve", "rules_only", "cv_decider", "agent", "agent_fast"
+        ],
     )
     ap.add_argument(
         "--no-tools",

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preflight Results</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">Artwork Preflight <small>unofficial demo</small></div>
+    <nav>
+      <a href="/">Check a file</a>
+      <a href="/reports" class="active">Results</a>
+      <a href="#mistakes">Mistake gallery</a>
+      <a href="#cost">Cost</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero block">
+      <h1>What it was tested on, and what it scored</h1>
+      <p>Every number on this page comes from a run on files the checker had never seen,
+        generated after the code was frozen and scored once. The claims stop where the
+        evidence does; the limits are at the bottom.</p>
+    </section>
+
+    <section class="block">
+      <div class="stats" id="headline"></div>
+    </section>
+
+    <section class="block card">
+      <h2>Sealed evaluations</h2>
+      <p class="subtle" style="margin-top:-6px">Auto-approve rate on clean files / wrong-approval rate.
+        Targets: at least 60% auto-approved, at most 1% wrong approvals. Rules only is the
+        same checks without the computer-vision decider.</p>
+      <div class="scroll"><table id="rounds"></table></div>
+    </section>
+
+    <section class="block" id="mistakes">
+      <h2 style="font-size:20px;margin:0 0 6px">Customer-mistake gallery</h2>
+      <p class="subtle" style="margin:0 0 14px">Clean, print-ready stickers made from real
+        illustration, then put through something customers actually do. Green: approved.
+        Red: customer asked to fix. Amber: sent to a person.</p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section class="block card" id="cost">
+      <h2>Cost</h2>
+      <div id="costs"></div>
+    </section>
+
+    <section class="block card" id="limits">
+      <h2>What this does not show yet</h2>
+      <ul id="limitlist"></ul>
+    </section>
+  </main>
+
+  <script src="/static/reports.js"></script>
+</body>
+</html>

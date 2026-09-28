@@ -128,7 +128,7 @@ def tool_analyse_pixels(*, image_path: Path, order: OrderMetadata, **_: Any) -> 
         with Image.open(image_path) as img:
             img.load()
             pixel_issues, boxes = analyse_pixels(img, spec, dpi)
-            stroke_px = measure_min_stroke_px(img, exclude=boxes)
+            stroke_px = measure_min_stroke_px(img, exclude=boxes, dpi=dpi)
             contrast = measure_contrast(img)
             safe_zone = measure_safe_zone(img, spec, dpi)
     except OSError as exc:
@@ -249,6 +249,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                                     "LOW_CONTRAST",
                                     "UNINTENDED_TRANSPARENCY",
                                     "TEXT_TOO_SMALL",
+                                    "FAKE_TRANSPARENCY",
                                     "CONTENT_IN_SAFE_ZONE",
                                     "LOOKS_WRONG",
                                 ],

@@ -21,7 +21,10 @@ jobs:
           python-version: "3.13"
 
       - name: Install
-        run: pip install -e ".[dev]"
+        # libcairo2 for cairosvg, which renders the real-art set from its SVG originals.
+        run: |
+          sudo apt-get update && sudo apt-get install -y libcairo2
+          pip install -e ".[dev,data]"
 
       - name: Lint
         run: ruff check .
@@ -37,5 +40,16 @@ jobs:
             -n 400 --clean-fraction 0.60 --seed 20260923 \
             --out cases_large.jsonl --cases-dir cases_large
 
-      - name: Eval regression gate
-        run: python -m capstone.evals.gate
+      - name: Eval regression gate - synthetic (full SC-002 constraint)
+        run: python -m capstone.evals.gate --suite synthetic
+
+      - name: Build the real-art gate set
+        # Openly licensed illustrations fetched from npm at pinned versions, rendered from
+        # their vector originals. Same seed and exclusions as the committed manifest.
+        run: |
+          python -m capstone.data.fetch_art
+          python -m capstone.data.real_art -n 450 --seed 20261001 --out real_art_v3 \
+            --exclude real_art.jsonl --exclude real_art_v2.jsonl
+
+      - name: Eval regression gate - real artwork (no worse than recorded)
+        run: python -m capstone.evals.gate --suite real
