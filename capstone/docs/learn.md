@@ -121,11 +121,12 @@ All accept CMYK only. The table is **invented** — a labelled assumption, not r
 All assumed, from [brief.md §3–4](brief.md):
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     A["4,000 files/day"] --> C["3,000 clean<br/>x 40 s = 33 h/day"]
     A --> D["1,000 defective<br/>x 4 min = 67 h/day"]
     C --> T["the target:<br/>$933/day, ~$340K/yr<br/>spent confirming nothing is wrong"]
-    style T fill:#ffc9c9,stroke:#e03131
+    style T fill:#ffc9c9,stroke:#e03131,color:#17202B
 ```
 
 ROI (return on investment) if 70% of clean files are auto-approved: 2,100 files × 40 s
@@ -175,15 +176,16 @@ percentile: 95% of files finish faster than this) ≤ 20 s
 ### 3.4 Human-in-the-loop (HITL) policy
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     F[file + order] --> Q{any BLOCKING<br/>measured defect?}
     Q -- yes --> RF["REQUEST_FIX<br/>customer message with the measurement,<br/>artist approves it in one click"]
     Q -- no --> U{anything uncertain?<br/>advisory finding, check not run,<br/>low confidence, model error,<br/>budget hit, unsupported file,<br/>injection suspected}
     U -- yes --> ES["ESCALATE<br/>with a named reason + all findings"]
     U -- no --> AP[APPROVE]
-    style AP fill:#b2f2bb,stroke:#2f9e44
-    style RF fill:#ffd8a8,stroke:#f08c00
-    style ES fill:#ffc9c9,stroke:#e03131
+    style AP fill:#b2f2bb,stroke:#2f9e44,color:#17202B
+    style RF fill:#ffd8a8,stroke:#f08c00,color:#17202B
+    style ES fill:#ffc9c9,stroke:#e03131,color:#17202B
 ```
 
 Business rules encoded in code (not just docs):
@@ -215,6 +217,7 @@ The whole build took four days (2026-09-20 → 09-23), 23 commits, ~$4.30 of API
 API) spend.
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 timeline
     title Build stages
     2026-09-20 : Plan + repo scaffold + L0 exercise
@@ -272,6 +275,7 @@ timeline
 ### 5.1 System context
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     Cust[Customer] -->|uploads artwork + order| Sys
     subgraph Sys[Preflight triage system]
@@ -285,8 +289,8 @@ flowchart LR
     Artist -->|one-click approve message| Cust
     Sys -->|traces, metrics| Ops[Ops manager dashboard]
     V <-->|Messages API| API[(Anthropic API)]
-    style Press fill:#b2f2bb
-    style Artist fill:#ffd8a8
+    style Press fill:#b2f2bb,color:#17202B
+    style Artist fill:#ffd8a8,color:#17202B
 ```
 
 The HITL queue and dashboard are *design* — not built (see §10).
@@ -294,6 +298,7 @@ The HITL queue and dashboard are *design* — not built (see §10).
 ### 5.2 Components and code map
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph src["capstone/src — the contract + the agent"]
         S[schemas.py<br/>Verdict, Issue, Evidence,<br/>GoldLabel, Trace]
@@ -331,6 +336,7 @@ flowchart TB
 ### 5.3 The request path (as shipped)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     U[image + OrderMetadata] --> T[["TRUST BOUNDARY<br/>customer file is untrusted"]]
     T --> SP{product in<br/>spec table?}
@@ -348,9 +354,9 @@ flowchart TB
     OUT --> AP[APPROVE]
     OUT --> RF[REQUEST_FIX]
     OUT --> ES[ESCALATE]
-    style T fill:#ffc9c9,stroke:#e03131
-    style VP fill:#ffd8a8,stroke:#f08c00
-    style AP fill:#b2f2bb
+    style T fill:#ffc9c9,stroke:#e03131,color:#17202B
+    style VP fill:#ffd8a8,stroke:#f08c00,color:#17202B
+    style AP fill:#b2f2bb,color:#17202B
 ```
 
 ### 5.4 The four "arms" (ways to run the same cases)
@@ -367,6 +373,7 @@ flowchart TB
 ### 5.5 The eval loop (how "improvement" is decided)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     GEN["generate.py<br/>seeded, defects injected at<br/>0.5x 0.9x 1.1x 2.0x"] --> DS[("cases_large.jsonl<br/>400 cases<br/>312 train / 88 holdout")]
     DS --> H[harness.sweep<br/>any Callable case -> Verdict]
@@ -394,6 +401,7 @@ Read each subsection with its file open.
 ### 6.1 Data model — [schemas.py](../src/schemas.py)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 classDiagram
     class PreflightCase {
         case_id
@@ -509,6 +517,7 @@ uses comes from here (FR-009) — nothing is hardcoded in a check.
 ### 6.3 Bucket 1 — metadata — [bucket1_metadata.py](../../capstone/tools/bucket1_metadata.py)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     R[read_metadata - never raises] -->|error| UR[UNREADABLE_FILE<br/>short-circuit: nothing else runs]
     R -->|ok| CM[check_color_mode]
@@ -551,6 +560,7 @@ Notice the ×1.1 low-res file does **not** also trip bleed — that is the decou
 A real algorithm, no ML (machine learning), no dependencies beyond numpy:
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     I[image] --> G[greyscale]
     G --> BG[background = most common grey level]
@@ -611,6 +621,7 @@ reject costs one round-trip, a false approve costs a misprint.
 ### 6.6 `rules_only` — the shipped decision logic — [baselines.py](../evals/baselines.py)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     A[case] --> S{spec found?}
     S -- no --> E0[ESCALATE UNSUPPORTED_INPUT]
@@ -623,9 +634,9 @@ flowchart TD
     BL -- no --> AD{any ADVISORY?}
     AD -- yes --> ES["ESCALATE<br/>JUDGEMENT_WITHOUT_CORROBORATION"]
     AD -- no --> AP[APPROVE conf 0.9]
-    style AP fill:#b2f2bb
-    style RF fill:#ffd8a8
-    style ES fill:#ffc9c9
+    style AP fill:#b2f2bb,color:#17202B
+    style RF fill:#ffd8a8,color:#17202B
+    style ES fill:#ffc9c9,color:#17202B
 ```
 
 That is the entire system of record. Buckets 1 and 2 plus two ADVISORY gates. No model.
@@ -638,6 +649,7 @@ An "agent" is a `while` loop around one stateless HTTP (HyperText Transfer Proto
 — a `POST` request, the HTTP method for sending data, to `/v1/messages`:
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     C[messages list<br/>grows every turn] --> API[Claude]
     API --> SR{stop_reason}
@@ -663,6 +675,7 @@ Because the API is stateless, every turn resends the whole conversation, so inpu
 #### `agent_fast` sequence (the one to draw on a whiteboard)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 sequenceDiagram
     participant H as harness
     participant A as PreflightAgent.triage
@@ -698,6 +711,7 @@ sequenceDiagram
 #### `parse_verdict` — the model can add, never subtract
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     PL[submit_verdict payload] --> V{verdict + confidence parse?}
     V -- no --> SI[ESCALATE SCHEMA_INVALID]
@@ -721,6 +735,7 @@ the holdout — and why both arms have the identical approve rate.
 #### `finalize()` — the single exit
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     IN[requested verdict] --> K{kind}
     K -- APPROVE --> I{issues?}
@@ -736,7 +751,7 @@ flowchart TD
     BK -- yes --> RF[REQUEST_FIX]
     BK -- no --> D5[ESCALATE JUDGEMENT_WITHOUT_CORROBORATION]
     K -- ESCALATE --> ES[ESCALATE with given reason<br/>default LOW_CONFIDENCE]
-    style OK fill:#b2f2bb
+    style OK fill:#b2f2bb,color:#17202B
 ```
 
 The **five conditions for APPROVE**: it was requested · no issues · not degraded · every
@@ -821,6 +836,7 @@ because of a real bug (see war story, §8).
 ### 6.10 The data generator — [generate.py](../data/generate.py)
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     P[plan_cases<br/>seeded random number generator] --> CP["CasePlan<br/>product, order, perturbations,<br/>split decided NOW"]
     CP --> R["render()<br/>defect applied by HOW things are drawn,<br/>not post-processed"]
