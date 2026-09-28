@@ -460,15 +460,23 @@ class PreflightAgent:
         messages = self._initial_messages(case, spec.display_name, measurements_text)
         if messages is None:
             trace.termination = "unreadable_file"
-            issue = Issue(
-                code=IssueCode.UNREADABLE_FILE,
-                severity=Severity.BLOCKING,
-                message="The uploaded file could not be opened.",
-                evidence=Evidence(note=f"could not decode {case.image_path.name}"),
-            )
+            issues = [m for m in measured if m.code is IssueCode.UNREADABLE_FILE] or [
+                Issue(
+                    code=IssueCode.UNREADABLE_FILE,
+                    severity=Severity.BLOCKING,
+                    message="The uploaded file could not be opened.",
+                    evidence=Evidence(note=f"could not decode {case.image_path.name}"),
+                )
+            ]
+            issues += [m for m in measured if m.code is not IssueCode.UNREADABLE_FILE]
             return escalate(
-                EscalationReason.UNSUPPORTED_INPUT, issues=[issue], checks=checks
+                EscalationReason.UNSUPPORTED_INPUT, issues=issues, checks=checks
             ), trace
+
+        # Every exit below that is not a parsed verdict is an escalation, and each one
+        # carries `measured`. The deterministic findings were proven before the model was
+        # asked anything, so an API failure, a blown budget or a refusal must not strip
+        # them: an escalation without its evidence is a slower version of doing it by hand.
 
         tools = self._tools()
         repair_used = 0
@@ -485,7 +493,8 @@ class PreflightAgent:
                     )
                 )
                 return escalate(
-                    EscalationReason.BUDGET_EXHAUSTED, checks=checks, degraded=True
+                    EscalationReason.BUDGET_EXHAUSTED,
+                    issues=measured, checks=checks, degraded=True,
                 ), trace
 
             t0 = time.perf_counter()
@@ -507,7 +516,9 @@ class PreflightAgent:
                     )
                 )
                 # Principle: degrade, do not guess. Deterministic findings still stand.
-                return escalate(EscalationReason.MODEL_ERROR, checks=checks), trace
+                return escalate(
+                    EscalationReason.MODEL_ERROR, issues=measured, checks=checks
+                ), trace
 
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             self._account(response, trace, budget)
@@ -523,10 +534,14 @@ class PreflightAgent:
             stop = response.stop_reason
             if stop == "refusal":
                 trace.termination = "refusal"
-                return escalate(EscalationReason.REFUSAL, checks=checks), trace
+                return escalate(
+                    EscalationReason.REFUSAL, issues=measured, checks=checks
+                ), trace
             if stop == "max_tokens":
                 trace.termination = "truncated"
-                return escalate(EscalationReason.TRUNCATED_RESPONSE, checks=checks), trace
+                return escalate(
+                    EscalationReason.TRUNCATED_RESPONSE, issues=measured, checks=checks
+                ), trace
 
             if stop != "tool_use":
                 # Answered in prose instead of submitting. One repair attempt, then stop.
@@ -544,7 +559,9 @@ class PreflightAgent:
                     ]
                     continue
                 trace.termination = "no_verdict"
-                return escalate(EscalationReason.SCHEMA_INVALID, checks=checks), trace
+                return escalate(
+                    EscalationReason.SCHEMA_INVALID, issues=measured, checks=checks
+                ), trace
 
             # Execute tool calls; a submit_verdict block ends the run.
             tool_results: list[dict[str, Any]] = []
@@ -589,7 +606,9 @@ class PreflightAgent:
 
             if not tool_results:
                 trace.termination = "no_progress"
-                return escalate(EscalationReason.SCHEMA_INVALID, checks=checks), trace
+                return escalate(
+                    EscalationReason.SCHEMA_INVALID, issues=measured, checks=checks
+                ), trace
 
             # All tool results go back in ONE user message. Splitting them teaches the
             # model to stop making parallel calls.
