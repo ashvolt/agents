@@ -102,7 +102,6 @@
     "item": "t065",
     "before": "t065-round1-view.jpg",
     "after": "t065-round1b-view.jpg",
-    "before_letter_px": 13.5,
     "round1_answer": "cant_tell"
   },
   "items": [
@@ -2952,7 +2951,7 @@
         "product": "Custom magnet",
         "min_text_pt": 8.0
       },
-      "confidence_note": "Within half a pixel of the limit: rasterising alone could explain it.",
+      "confidence_note": "Within half a pixel under the limit: rasterising alone could explain it. The rule still blocks, because it measured under.",
       "prompt": "cute tiny skeleton head is a movie camera, centered!!, symmetrical, very minimal, line art sticker by tom whalen ",
       "box_height_px": 22,
       "images": {

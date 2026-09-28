@@ -70,7 +70,9 @@ ANSWER_TEXT = {
 # here so the choice is not made by looking at verdicts.
 PICKS = {"flipped": 6, "agree": 5, "policy": 5, "false_positive": 4, "unresolved": 3, "control": 2}
 
-# Items looked at and left out of the gallery, with the reason. They stay in the table.
+# Items left out of the gallery, with the reason. They stay in the table. t005, t015,
+# t034, t057, t074 and t099 were looked at; t030, t068, t100 and t103 were left out on
+# their prompt text alone, under the same brand rule, without viewing the image.
 # Regions on our own caption are left out by rule (`own_caption`), not listed here.
 BRAND = "prompt names a real brand or product; keeps third-party marks off the demo"
 EXCLUDE: dict[str, str] = {
@@ -261,7 +263,10 @@ def confidence_note(m: dict | None) -> str:
     if m is None:
         return "No text-size finding on this file today."
     if m["gap_px"] < 0.5:
-        return "Within half a pixel of the limit: rasterising alone could explain it."
+        return (
+            "Within half a pixel under the limit: rasterising alone could explain it. The rule "
+            "still blocks, because it measured under."
+        )
     if m["ratio"] >= 0.85:
         return f"Close to the limit: {m['ratio']:.0%} of the minimum, {m['gap_px']:.1f} px short."
     return f"Clearly under: {m['ratio']:.0%} of the minimum, {m['gap_px']:.1f} px short."
@@ -558,13 +563,14 @@ def main() -> None:
         e = max(small_controls, key=lambda x: (x["region"][2] - x["region"][0], x["item"]))
         with Image.open(REPO / manifest[e["case_id"]]["image_path"]) as img:
             img.load()
-            before, shown = round1_view(img, e["region"], f"{e['item']}-round1-view.jpg")
+            # The shown height depends on a tile size the round-1 page did not record, so
+            # it is not reported; rule-loop.md's own figures are quoted on the page instead.
+            before, _shown = round1_view(img, e["region"], f"{e['item']}-round1-view.jpg")
             after = close_view(img, e["region"], f"{e['item']}-round1b-view.jpg")
         fault = {
             "item": e["item"],
             "before": before,
             "after": after,
-            "before_letter_px": shown,
             "round1_answer": e["round1"],
         }
 

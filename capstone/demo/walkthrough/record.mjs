@@ -85,7 +85,7 @@ async function main() {
   await page.waitForSelector(".lcard");
   await caption(page, "On AI art, much blocked lettering is garbled. Could a rule let it through? A person judged each flagged region.", 5500);
   await page.locator("#headline").scrollIntoViewIfNeeded();
-  await caption(page, "Controls were read correctly, but only 9 of 15 repeated judgements matched. The call does not repeat, so no rule was built.", 6000);
+  await caption(page, "Shown readably, all 20 controls were answered right. But only 9 of 15 repeated judgements matched, so no rule was built.", 6000);
   await page.locator("#matrix").scrollIntoViewIfNeeded();
   await caption(page, "It also found a flaw of our own: many regions a person called too small are our caption, measured by ink height, not font size.", 6000);
   await page.locator("#fault").scrollIntoViewIfNeeded();

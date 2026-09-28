@@ -100,9 +100,10 @@ async function main() {
       <h2>Why round 1's answers were not used</h2>
       <p class="subtle" style="margin-top:-6px">The same injected caption, shown the round-1
         way and the round-1b way. In round 1 the close-up was padded by twice the box's
-        width, so a wide caption showed about ${f.before_letter_px} px tall; this one was
-        answered "${answer(f.round1_answer)}". The fault was the page, not the person.
-        Round-1 view reconstructed from the same rule.</p>
+        width, so a wide, thin caption came out only a few pixels tall: 16 of the 20
+        controls were shown under 14 px (rule-loop.md). This one was answered
+        "${answer(f.round1_answer)}". The fault was the page, not the person. The round-1
+        view here is reconstructed from that padding rule, not a saved screenshot.</p>
       <div class="fault">
         <figure><img src="${img(f.before)}" alt="Round-1 view: letters a few pixels tall"><figcaption>Round 1 view</figcaption></figure>
         <figure><img src="${img(f.after)}" alt="Round-1b view: letters readable"><figcaption>Round 1b view</figcaption></figure>

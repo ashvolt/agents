@@ -7,7 +7,9 @@ on GitHub (in VS Code — Visual Studio Code — install the *Markdown Preview M
 Support* extension).
 
 **Covers the project up to 2026-09-26** (last commit reviewed: `f992da2`, the rule-loop
-decision). If later commits exist, check `git log f992da2..HEAD` for what is not in here.
+decision), plus the 2026-09-28 additions made while writing this guide: the degraded-exit
+fix (`7fb01ff`) and the lettering review page (`183f105`, `8cdd383`). For anything later,
+check `git log 8cdd383..HEAD`.
 
 **Abbreviations.** Each one is spelled out the first time it appears, and every one is
 listed in [§14 Abbreviations](#14-abbreviations) so you can look any of them up later.
@@ -212,7 +214,7 @@ flowchart TD
     classDef default fill:#eef3f8,stroke:#5a6573,color:#17202b
     F[file + order] --> Q{"any BLOCKING<br/>measured defect?"}
     Q -- yes --> RF["REQUEST_FIX<br/>customer message cites the measurement,<br/>artist approves it in one click"]
-    Q -- no --> G{"a guard fires?<br/>no text found, past the cut line,<br/>merged into a border band,<br/>within half a pixel of a limit"}
+    Q -- no --> G{"a guard fires?<br/>no text found, past the cut line,<br/>merged into a border band,<br/>just above a limit, within half a pixel"}
     G -- yes --> ES["ESCALATE<br/>named reason + all findings<br/>into the review queue"]
     G -- no --> P{"decider:<br/>p of defect below threshold?"}
     P -- no --> ES
@@ -477,7 +479,7 @@ Five families of eval set, each testing something the previous could not:
 ### 5.6 Where it runs
 
 A Python package run from the CLI (command-line interface), a local FastAPI web demo, and
-GitHub Actions CI (continuous integration): lint → 317 offline tests → regenerate the
+GitHub Actions CI (continuous integration): lint → 336 offline tests → regenerate the
 synthetic set → gate the shipped decider on it → fetch and render the real-art gate set →
 gate again, "no worse than recorded". No API key, no spend.
 
@@ -638,15 +640,17 @@ flowchart LR
     W -- no --> X["discard<br/>a round emoji face is not a word"]
     W -- yes --> TB["TextBox<br/>height_pt = px / dpi x 72"]
     I --> F2["second pass on a 4x<br/>difference-amplified copy"]
-    F2 --> TB
+    F2 --> CC["pale lines found here go<br/>to the contrast check only"]
 ```
 
 - **Detection only.** The recogniser is never called; no text content leaves the
   detector. That keeps the trust boundary closed.
 - **Boxes are tightened** because DBNet pads them (~1.6×); measuring type from a padded
   box would read it as larger than it is — the dangerous direction.
-- **Faint-text second pass**: a caption too pale to detect used to hide behind anything
-  else found.
+- **Faint-text second pass** (`bucket2_pixels.find_faint_text`): a caption too pale to
+  detect used to hide behind anything else found, so it was never measured. The lines this
+  pass finds feed the **contrast** check only (measured on the original pixels); text size
+  and the no-text guard use the first pass.
 - **Pinned `rapidocr_onnxruntime >=1.2.3,<1.3`**: 1.3 swaps the model and later releases
   broke the API. Every sealed score used the 1.2-line PP-OCRv3 model.
 
@@ -682,8 +686,9 @@ Why the real-art changes (each found on real illustration, [real-art.md §3](rea
 
 **Known limit — stroke quantisation.** At 300 DPI, 1 px = 0.24 pt; nominal 0.40–0.60 pt
 strokes all rasterise to 2 px and measure 0.48 pt, so legitimate 0.50–0.60 pt lines are
-false-rejected. Deliberately not loosened. The decider adds a **half-pixel guard** so a
-file measuring within half a pixel of a limit escalates instead of guessing.
+false-rejected. Deliberately not loosened. The decider adds a **half-pixel guard** on the
+other side: a file measuring at or just above a limit, within half a pixel, escalates
+instead of being approved. Below the limit the rule has already blocked it.
 
 **Priced, not adopted:** `STROKE_MIN_DETAIL_IN = 0.0` — treating detail shorter than L as
 "not a stroke". At 0.08 in (2 mm) it buys at most +2 points on AI art, with real sub-2 mm
@@ -745,7 +750,7 @@ flowchart TD
     G2 -- yes --> GE
     G2 -- no --> G3{"band_protrusions?"}
     G3 -- yes --> GE
-    G3 -- no --> G4{"stroke or text within<br/>half a pixel of its limit?"}
+    G3 -- no --> G4{"stroke or text at or just above<br/>its limit, within half a pixel?"}
     G4 -- yes --> GE
     G4 -- no --> P["p = LogisticModel.p_defect<br/>5 margin features"]
     P --> T{"p below threshold 0.068?"}
@@ -763,7 +768,7 @@ flowchart TD
 | No text detected | The detector fails toward finding nothing; empty is ambiguous | synthetic false approves, results.md §4.3 |
 | Element past the cut line (depth > 1.0) | Geometry, not judgement. Left to the model, a refit learned from flawed "clean" labels that crossing was fine | real art |
 | Element merged into a background band | Its depth is not in the pixels | shifted set: 7 of 10 top/bottom intrusions hidden |
-| Stroke or text within half a pixel of its limit | Rasterising rounds; the true value is on either side | case-00289: a defect measuring exactly 1.00×, same as two clean files |
+| Stroke or text measuring at or just above its limit, within half a pixel (below the limit the rule has already blocked it) | Rasterising rounds; the true value is on either side | case-00289: a defect measuring exactly 1.00×, same as two clean files |
 
 A full-pixel guard was tried first and escalated 71 train files; half a pixel caught
 exactly the three undecidable ones.
@@ -810,7 +815,7 @@ Every non-approval lands here with its reasoning. CLI (`stats`, `next`, `resolve
 | **SQLite**, standard library | Two reviewers must never claim the same file; "take the next open item" must be atomic. JSONL cannot do that; a server is overkill |
 | **Idempotent enqueue**: id = hash(order id + file bytes, SHA-256) | The same upload processed twice is one item (FR-014); a new upload for the same order is a new item |
 | **Claims expire after 30 min** | A reviewer who walks away does not strand a file |
-| **Priority by verdict** | Fix requests and escalations ordered for the reviewer |
+| **Escalations first, then fix requests** | An escalation needs judgement; a fix request only needs its drafted message checked (the one-click path) |
 | **`export` writes reviewer decisions as eval labels** | The real-data set the project has never had accumulates as a side effect of doing the job; it feeds the rule loop |
 
 ### 6.9 Retired: the Claude agent — [agent.py](../src/agent.py)
@@ -929,7 +934,7 @@ breaches SC-002 at scale — "gating the thing that does not ship protected noth
 | Suite | Set | Baseline | Rule |
 |---|---|---|---|
 | `synthetic` | cases_large train (312) | [baseline.json](../evals/baseline.json): 84.8% / 0 of 167 | **Absolute**: fail on SC-002 breach, any crash, approve rate down > 2 pp, any per-code recall down > 5 pp |
-| `real` | real_art_v3 (450), rebuilt in CI from pinned npm packages | [baseline_real.json](../evals/baseline_real.json) | **No worse than recorded**: fail if false approves rise > 1 pp or approvals drop. An absolute check that is always red teaches everyone to ignore it |
+| `real` | real_art_v3 (450), rebuilt in CI from pinned npm packages | [baseline_real.json](../evals/baseline_real.json) | **No worse than recorded**: fail if the false-approve rate rises > 1 pp over the baseline, plus the same crash, approve-rate (> 2 pp) and per-code recall (> 5 pp) checks as the synthetic suite. An absolute SC-002 check that is always red teaches everyone to ignore it |
 
 `--update` records a new baseline deliberately; the commit must say why the numbers moved.
 
@@ -1100,10 +1105,10 @@ approvals, exact 95% upper bound:
 | shifted_v6 — 400 synthetic, intrusions on any edge | 82.9% | 0.0% | 1.5% |
 | ai_art_v2 — 1,000 Stable Diffusion images | 57.1% (**under 60%**) | 0 of 354 | 0.8% |
 
-**rules_only on the same kind of sets:** 2.1–6.2% false approves — never shippable alone.
+**rules_only on the same kind of sets:** 2.1–6.2% on synthetic sets, 3.9–10.8% on real art, 1.4–4.2% on AI art — over the 1% limit every time, never shippable alone.
 
 **CI gate today (synthetic train, 312):** 84.8% / 0 of 167 (bound 1.8%), p95 ~1.9 s,
-$0/file. **Tests:** 317 pass offline. **Red team:** 12 attacks, 0 failed, 2 known gaps.
+$0/file. **Tests:** 336 pass offline (2 skip without cairo). **Red team:** 12 attacks, 0 failed, 2 known gaps.
 
 **Against Claude** (old 88-case holdout, the only set both ran on): rules_only 82.0% /
 17.0% escalation; agent_fast 82.0% / 13.6%, $0.0066/file; **cv_decider 88.0% / 13.6%,
@@ -1156,7 +1161,7 @@ Know these before someone else finds them. The full list is [limits.md](limits.m
 
 13. [architecture.md](architecture.md), [walkthrough.md](walkthrough.md) and
     [runbook.md](runbook.md) still describe the agent era: vision pass as an optional
-    experiment, CI gate "not built", "80 tests" (now 317). limits.md §2 and §8 still quote
+    experiment, CI gate "not built", "80 tests" (now 336). limits.md §2 and §8 still quote
     early numbers and "not built" items.
 14. [decider.md](decider.md) quotes threshold **0.176**; the shipped model JSON says
     **0.068** (refit on DBNet-era features, `b055ff9`). Same rule (½ the lowest
@@ -1178,7 +1183,7 @@ All free and offline except where marked.
 python -m venv .venv && .venv/Scripts/activate
 pip install -e ".[dev]"                 # add ,data for the real-art builders, ,demo for the web app
 
-# 1. the safety net - 317 offline tests
+# 1. the safety net - 336 offline tests
 pytest -m "not integration" -q
 
 # 2. the CI gate on the shipped pipeline (synthetic suite)
@@ -1282,7 +1287,7 @@ Answer without notes, then check against the code.
 | **Depth (margin)** | How far an element reaches toward the blade, in safe-zone widths |
 | **Gold label** | The known-correct answer for a case, from the builder's plan |
 | **Guard** | A condition that forces ESCALATE before any decider runs |
-| **Half-pixel guard** | Escalate when a measurement is within half a pixel of its limit |
+| **Half-pixel guard** | Escalate when a measurement is at or just above its limit, within half a pixel (below it, the rule blocks) |
 | **Holdout / sealed set** | Cases built after the code froze, scored exactly once |
 | **Near miss** | Perturbed toward the limit but still inside spec (clean) |
 | **Out-of-fold** | Each case scored by a model trained without it |
