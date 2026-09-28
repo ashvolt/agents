@@ -3,7 +3,11 @@
 A complete study guide to this project: the business problem, the high-level design (HLD),
 the low-level design (LLD) of every component, the stages it was built in, the decisions
 and why they were made, and what makes it unusual. Every diagram is Mermaid and renders
-on GitHub (in VS Code, install the *Markdown Preview Mermaid Support* extension).
+on GitHub (in VS Code — Visual Studio Code — install the *Markdown Preview Mermaid
+Support* extension).
+
+**Abbreviations.** Each one is spelled out the first time it appears, and every one is
+listed in [§14 Abbreviations](#14-abbreviations) so you can look any of them up later.
 
 **How this relates to the other docs.** [walkthrough.md](walkthrough.md) is the
 interview question bank. [results.md](results.md) is the evidence. This file is the
@@ -22,13 +26,14 @@ textbook that sits under both — read it first, then use the walkthrough to dri
 4. [How it was built — the stages](#4-how-it-was-built--the-stages)
 5. [High-level design (HLD)](#5-high-level-design-hld)
 6. [Low-level design (LLD)](#6-low-level-design-lld)
-7. [Technical decisions (ADR log)](#7-technical-decisions-adr-log)
+7. [Technical decisions (ADR — Architecture Decision Record — log)](#7-technical-decisions-adr-log)
 8. [What is special about this project](#8-what-is-special-about-this-project)
 9. [Numbers cheat sheet](#9-numbers-cheat-sheet)
 10. [Known gaps — including ones the other docs miss](#10-known-gaps--including-ones-the-other-docs-miss)
 11. [Demo script](#11-demo-script)
 12. [Self-check](#12-self-check)
 13. [Glossary](#13-glossary)
+14. [Abbreviations](#14-abbreviations)
 
 Suggested pace: sections 1–5 in one sitting (~1.5 h). Section 6 alongside the code, one
 component at a time (~4 h). Sections 7–12 the day before you have to present.
@@ -48,8 +53,9 @@ This project builds a triage system that gives every file one of three verdicts:
 | `REQUEST_FIX` | A measured, citable defect. | Customer, via a message an artist approves in one click |
 | `ESCALATE` | Anything uncertain. | Production artist, with the evidence attached |
 
-The twist: the evaluation harness was built **before** the AI agent, and it showed that
-**9 of the 10 checks are exact measurements that plain Python does better than an LLM**.
+The twist: the evaluation harness was built **before** the AI (artificial intelligence)
+agent, and it showed that **9 of the 10 checks are exact measurements that plain Python
+does better than an LLM (large language model)**.
 The final system is a deterministic pipeline that passes both success criteria on its own
 (82% auto-approve, 0 false approves on a sealed holdout). The Claude vision model is kept
 as an optional, measured experiment worth about 3.4 percentage points fewer escalations.
@@ -80,13 +86,16 @@ You cannot explain the checks without these. The picture that matters:
 
 | Term | Plain meaning | Why it matters |
 |---|---|---|
-| **DPI** (dots per inch) | Pixels per inch at the printed size | Too low → blurry print. `DPI = pixels ÷ inches` |
+| **DPI** (Dots Per Inch) | Pixels per inch at the printed size | Too low → blurry print. `DPI = pixels ÷ inches` |
 | **Bleed** | Artwork extending past the cut line | Blade drift would otherwise expose a white sliver |
 | **Trim** | The ordered size, where the blade cuts | |
 | **Safe zone** | Margin inside the trim for important content | A logo here may get clipped |
-| **CMYK vs RGB** | Ink colours vs screen colours | Printing RGB forces a conversion that shifts colours |
+| **CMYK** (Cyan, Magenta, Yellow, Key = black) | The four process inks a press prints with | The colour mode print products require here |
+| **RGB** (Red, Green, Blue) | The three light colours a screen mixes. **RGBA** adds an Alpha (transparency) channel | Printing RGB forces a conversion to CMYK that shifts colours unpredictably |
 | **Point (pt)** | 1/72 inch — unit for text and line thickness | `pt = pixels ÷ DPI × 72` |
-| **ΔE (delta E)** | Perceptual distance between two colours in CIELAB space | Small ΔE → element invisible against its background |
+| **Pixel (px)** | One dot of the image grid | Everything is measured in px, then converted to inches or pt |
+| **CIELAB** (also L\*a\*b\*) | A colour space from the CIE (*Commission Internationale de l'Éclairage*, the International Commission on Illumination). L\* = lightness, a\* = green↔red, b\* = blue↔yellow. Built so equal distances look equally different to a human eye | Lets "how different do these colours look" be a plain distance |
+| **ΔE (delta E)** | Distance between two colours in CIELAB. ΔE76 is the original CIE 1976 formula, used here: √(ΔL\*² + Δa\*² + Δb\*²). Rule of thumb: ~2 is barely noticeable | Small ΔE → element invisible against its background |
 | **Alpha channel** | Per-pixel transparency | Transparent areas print as bare material on opaque products |
 | **Aspect ratio** | width ÷ height | Wrong ratio → design gets stretched or cropped |
 
@@ -119,8 +128,9 @@ flowchart LR
     style T fill:#ffc9c9,stroke:#e03131
 ```
 
-ROI if 70% of clean files are auto-approved: 2,100 files × 40 s = 23.3 h/day ≈
-**$238K/year** saved, minus model cost.
+ROI (return on investment) if 70% of clean files are auto-approved: 2,100 files × 40 s
+(seconds) = 23.3 h/day (hours per day) ≈ **$238K/year** (K = thousand) saved, minus model
+cost.
 
 ### 3.2 The asymmetry — the rule that drives every design choice
 
@@ -139,6 +149,9 @@ A 1% false-approve rate on 2,100 approvals/day = $378/day, more than half the sa
 
 ### 3.3 The success metric (and why it is not accuracy)
 
+SC-00x ids are **Success Criteria** from the project spec (FR-0xx ids, used later, are
+its **Functional Requirements**):
+
 - **SC-001:** auto-approve ≥ 60% of clean files — the *value*.
 - **SC-002:** false-approve rate ≤ 1% — a hard *constraint*, never traded.
 
@@ -154,11 +167,12 @@ would let a system that approves almost nothing look great.
 Accuracy is absent on purpose: it averages the catastrophic failure together with the
 cheap ones.
 
-Secondary (tracked, not optimised): cost/file ≤ $0.01 (SC-003), p95 latency ≤ 20 s
+Secondary (tracked, not optimised): cost/file ≤ $0.01 (SC-003), p95 latency (95th
+percentile: 95% of files finish faster than this) ≤ 20 s
 (SC-004), every issue carries evidence (SC-005), injection never changes a verdict
 (SC-006), zero crashes (SC-007), deterministic checks bit-identical across runs (SC-008).
 
-### 3.4 Human-in-the-loop policy
+### 3.4 Human-in-the-loop (HITL) policy
 
 ```mermaid
 flowchart TD
@@ -190,14 +204,15 @@ Business rules encoded in code (not just docs):
 
 ### 3.5 Non-goals
 
-Not fixing artwork, not generating proofs, not IP/content screening, not a chatbot, not
+Not fixing artwork, not generating proofs, not IP (intellectual property: trademark, copyright) or content screening, not a chatbot, not
 multi-agent unless evals prove one agent is insufficient.
 
 ---
 
 ## 4. How it was built — the stages
 
-The whole build took four days (2026-09-20 → 09-23), 23 commits, ~$4.30 of API spend.
+The whole build took four days (2026-09-20 → 09-23), 23 commits, ~$4.30 of API (application programming interface — here, the paid Anthropic Claude
+API) spend.
 
 ```mermaid
 timeline
@@ -227,10 +242,10 @@ timeline
 
 | # | Stage | What happened | Key commit(s) | What it taught |
 |---|---|---|---|---|
-| 0 | **Plan** | `PLAN.md`: learn agents by building; L0–L8 ladder; capstone criteria | `7c77630` | Define "production-ready" before coding |
+| 0 | **Plan** | `PLAN.md`: learn agents by building; L0–L8 ladder (Level 0 to Level 8 lessons); capstone criteria | `7c77630` | Define "production-ready" before coding |
 | 1 | **Pick the problem** | Four candidates; preflight won because defects can be *injected*, so labels are correct by construction | `00b813b` | The eval set decides the project |
-| 2 | **Design on paper** | Brief, ROI, failure ranking, HITL policy. Buckets revised 2 → 3. VLM rejected. Circularity trap (inject at straddled thresholds) | `a0ea5e0`, `0666c3f` | Most "judgement" is measurement in disguise |
-| 3 | **Spec-kit** | Constitution (7 principles), spec (FR/SC), research (D-1…D-9), data model, tasks | `89e9857` | Principles become code structure later |
+| 2 | **Design on paper** | Brief, ROI, failure ranking, HITL policy. Buckets revised 2 → 3. Self-hosted VLM (vision-language model) rejected. Circularity trap (inject at straddled thresholds) | `a0ea5e0`, `0666c3f` | Most "judgement" is measurement in disguise |
+| 3 | **Spec-kit** | Constitution (7 principles), spec (FR/SC), research (decisions D-1…D-9), data model, tasks | `89e9857` | Principles become code structure later |
 | 4 | **Data + deterministic checks** | Generator with straddled magnitudes; bucket 1 & 2 checks; text detector | `cbc2233` | |
 | 5 | **Eval harness first** | Harness, metrics, `always_escalate` / `always_approve` / `rules_only` | `3e8a1f7` | A baseline must exist before any "improvement" |
 | 6 | **The agent** | Tool loop, `finalize()` chokepoint, budgets, 9 failure-path tests | `0c547a5` | Safety as structure, not intention |
@@ -238,7 +253,7 @@ timeline
 | 8 | **Measure and fix** | Spend cap; cost reported $0.00 — two independent bugs; stroke false-reject band found | `758d651`, `d991aa2`, `0c74857` | Silent failures look like good news |
 | 9 | **Hill-climb** | Deterministic findings authoritative; safe-zone made deterministic; single-call arm; clean-weighted 400-case set | `c7cc441`, `eb615ab`, `71f0fac`, `3fef21c` | A tool loop can be *worse*; a small eval set can't measure 1% |
 | 10 | **Pass** | Safe-zone threshold 0.03 + no-text gate → SC-002 met on train; holdout scored once | `59336c6`, `2c421c4` | Absence of evidence ≠ evidence of absence |
-| 11 | **Ship discipline** | As-built architecture; CI regression gate proven red; walkthrough | `352d7e5`, `ea83f34`, `9a96ba8` | Quality regressions must break the build |
+| 11 | **Ship discipline** | As-built architecture; CI (continuous integration) regression gate proven red; walkthrough | `352d7e5`, `ea83f34`, `9a96ba8` | Quality regressions must break the build |
 
 ### How the headline numbers moved
 
@@ -295,7 +310,7 @@ flowchart TB
     subgraph evals["capstone/evals — measurement"]
         GEN[data/generate.py<br/>synthetic cases + gold labels]
         H[harness.py<br/>sweep any callable]
-        M[metrics.py<br/>SC-001/002, CI bound, resolution]
+        M[metrics.py<br/>SC-001/002, 95% upper bound, resolution]
         BL[baselines.py<br/>rules_only etc.]
         G[gate.py<br/>CI regression gate]
     end
@@ -365,7 +380,7 @@ flowchart LR
 
 ### 5.6 Where it runs
 
-There is no server. Everything is a Python package run from the CLI; the only automation is
+There is no server. Everything is a Python package run from the CLI (command-line interface); the only automation is
 the GitHub Actions workflow [eval-gate.yml](../../.github/workflows/eval-gate.yml):
 lint → offline tests → regenerate the 400-case set from a fixed seed → `gate.py`. No API
 key in CI, no spend.
@@ -505,7 +520,7 @@ flowchart TD
 
 | Check | Formula | Fires when | Tolerance |
 |---|---|---|---|
-| readable | exists, non-empty, suffix in {png, tif, tiff, jpg, jpeg}, `verify()` + `load()` succeed | any failure | — |
+| readable | exists, non-empty, suffix in {png, tif, tiff, jpg, jpeg} (PNG = Portable Network Graphics, TIFF = Tagged Image File Format, JPEG = Joint Photographic Experts Group), `verify()` + `load()` succeed | any failure | — |
 | colour mode | Pillow mode → family (`RGBA`/`P` → RGB, `L` → GRAY) | family ∉ accepted | — |
 | resolution | `dpi = declared DPI`, else `width_px ÷ (width_in + 2·bleed)` | `dpi < min_dpi × 0.995` | 0.5% (PNG round-trips 150 → 150.0124) |
 | bleed | `bleed = min((w_px/dpi − w_in)/2, (h_px/dpi − h_in)/2)` | `bleed < bleed_in × 0.98` | 2% |
@@ -533,7 +548,7 @@ Notice the ×1.1 low-res file does **not** also trip bleed — that is the decou
 
 ### 6.4 Text detector — [text_detect.py](../../capstone/tools/text_detect.py)
 
-A real algorithm, no ML, no dependencies beyond numpy:
+A real algorithm, no ML (machine learning), no dependencies beyond numpy:
 
 ```mermaid
 flowchart LR
@@ -551,7 +566,8 @@ flowchart LR
 into one component; lines under 3 glyphs are dropped; busy backgrounds merge; rotated or
 curved text isn't grouped. That is why "found nothing" became an escalation (6.5).
 
-`TextDetector` is a `Protocol`, so PaddleOCR/Tesseract/CRAFT can be swapped in later
+`TextDetector` is a `Protocol`, so PaddleOCR (OCR = optical character recognition), Tesseract (an open-source OCR engine)
+or CRAFT (Character Region Awareness For Text detection) can be swapped in later
 (open question OQ-3) without touching the checks.
 
 ### 6.5 Bucket 2 — pixels — [bucket2_pixels.py](../../capstone/tools/bucket2_pixels.py)
@@ -618,7 +634,8 @@ That is the entire system of record. Buckets 1 and 2 plus two ADVISORY gates. No
 
 #### What an agent is (the concept first)
 
-An "agent" is a `while` loop around one stateless HTTP call (`POST /v1/messages`):
+An "agent" is a `while` loop around one stateless HTTP (HyperText Transfer Protocol) call
+— a `POST` request, the HTTP method for sending data, to `/v1/messages`:
 
 ```mermaid
 flowchart LR
@@ -698,7 +715,7 @@ Consequence worth understanding: **the model can never approve a file the pipeli
 flagged.** If the gates raised an ADVISORY issue, it is merged into the model's verdict,
 and `finalize` downgrades any APPROVE carrying issues. The only thing the model *can* do
 to a flagged file is turn an escalation into a `REQUEST_FIX` (e.g. by judging the safe-zone
-intrusion real and BLOCKING). That is exactly the 3.4 pp escalation reduction measured on
+intrusion real and BLOCKING). That is exactly the 3.4 pp (percentage point) escalation reduction measured on
 the holdout — and why both arms have the identical approve rate.
 
 #### `finalize()` — the single exit
@@ -765,7 +782,7 @@ Trust-boundary rules:
 
 Tool payloads return the measurement **and** its threshold, so the model never has to
 remember a spec or do arithmetic. `dispatch()` never raises — a tool exception becomes a
-JSON error payload, keeping the loop alive so it can still reach ESCALATE.
+JSON (JavaScript Object Notation) error payload, keeping the loop alive so it can still reach ESCALATE.
 
 `json.dumps(..., sort_keys=True, separators=(",", ":"))` — sorted keys keep the prefix
 stable; compact separators save ~130 tokens/file.
@@ -788,12 +805,12 @@ default $2.50) checked between cases.
 **Pricing** ([pricing.py](../ops/pricing.py)):
 
 ```
-cost = in·rate_in + out·rate_out + cache_read·rate_in·0.10 + cache_write·rate_in·1.25   (per MTok)
+cost = in·rate_in + out·rate_out + cache_read·rate_in·0.10 + cache_write·rate_in·1.25   (rates are per MTok = million tokens)
        × 0.5 if batch
 ```
 
 Unknown model **raises** instead of returning 0 — a dashboard that says "free" is worse
-than none. `resolve_model` strips the `-YYYYMMDD` snapshot suffix the API returns
+than none. `resolve_model` strips the `-YYYYMMDD` (year, month, day) snapshot suffix the API returns
 (`claude-haiku-4-5-20251001` → `claude-haiku-4-5`). Price against the model that
 *served* the request.
 
@@ -805,7 +822,7 @@ because of a real bug (see war story, §8).
 
 ```mermaid
 flowchart LR
-    P[plan_cases<br/>seeded RNG] --> CP["CasePlan<br/>product, order, perturbations,<br/>split decided NOW"]
+    P[plan_cases<br/>seeded random number generator] --> CP["CasePlan<br/>product, order, perturbations,<br/>split decided NOW"]
     CP --> R["render()<br/>defect applied by HOW things are drawn,<br/>not post-processed"]
     R --> S["save_case()<br/>CMYK TIFF normally,<br/>RGB PNG for colour defect,<br/>RGBA PNG with holes for transparency,<br/>truncated bytes for unreadable"]
     S --> M["manifest row:<br/>case_id, image_path, order,<br/>GoldLabel(perturbations, split)"]
@@ -872,16 +889,21 @@ recall 100% → 90%.
 
 ## 7. Technical decisions (ADR log)
 
+An ADR (Architecture Decision Record) states one decision, the alternatives rejected and
+the evidence. Rows numbered D-n are the decisions recorded in
+[research.md](../../specs/001-artwork-preflight-triage/research.md); rows marked — were
+made later, during measurement.
+
 | # | Decision | Alternatives rejected | Why | Evidence |
 |---|---|---|---|---|
 | D-1 | **Three buckets**: metadata / pixels / judgement | two buckets; all-model; all-code | Stroke, contrast, alpha, text size are measurements. Only safe-zone intent is judgement | research.md D-1; 9/10 codes identical between arms |
-| D-2 | **No self-hosted VLM** | local GPU model | Haiku ≈ $2.3K/yr vs ≈ $7K/yr for one GPU at 4K files/day; crossover ~30K/day. Small VLMs are poorly calibrated | brief §8 |
-| D-3 | **CPU text detector**, not an LLM | VLM for text finding | Detectors are free, deterministic, better at boxes | text_detect.py |
+| D-2 | **No self-hosted VLM** | local model on a GPU (graphics processing unit) | Haiku ≈ $2.3K/yr vs ≈ $7K/yr for one GPU at 4K files/day; crossover ~30K/day. Small VLMs are poorly calibrated | brief §8 |
+| D-3 | **CPU (central processing unit) text detector**, not an LLM | VLM for text finding | Detectors are free, deterministic, better at boxes | text_detect.py |
 | D-4 | **Straddled magnitudes** | single comfortable values | Avoids grading a ruler against itself | caught 4 bugs |
 | D-5 | **Deterministic before vision** | model first | A proven defect needs no judgement; model gets measurements as context | agent.py |
 | D-6 | **`finalize()` chokepoint** | return verdicts wherever decided | Makes "never default-approve" testable | 21 failure-path tests |
 | D-7 | **Byte-stable prompt prefix** for caching | per-case system prompt | Prefix-match caching. *Amended*: prefix is 1,696 tokens < Haiku's 2,048 minimum, so caching is a no-op today; padding would be cargo cult | research.md D-7 |
-| D-8 | **JSONL, no DB** | database | Diffable, greppable, zero setup at this scale | — |
+| D-8 | **JSONL (JSON Lines: one JSON object per line), no DB (database)** | a database | Diffable, greppable, zero setup at this scale | — |
 | D-9 | **Cost target: turn count is the lever** | switch model | $0.0073 at 2 calls vs $0.0146 at 4 | research.md D-9 |
 | — | **Single call replaces tool loop** | keep the loop | Loop was worse *and* 1.75× costlier (table §9) | results.md §4.1 |
 | — | **Measured findings are authoritative** | trust the model to relay them | Model relaying lost recall the tools had (TEXT_TOO_SMALL 2/3 → 1/3) | parse_verdict docstring |
@@ -965,7 +987,7 @@ Know these before someone else finds them.
 **Documented elsewhere** ([limits.md](limits.md)): synthetic data only, so every score is
 an upper bound · generator and checker share assumptions · small holdout · no red-team
 suite (SC-006 unmeasured) · stroke false-reject band · bleed suppresses aspect · cost
-target passes only because images are small · HITL queue, idempotency (FR-014), MCP not
+target passes only because images are small · HITL queue, idempotency (FR-014), MCP (Model Context Protocol) server not
 built.
 
 **Found while writing this guide — not yet in the other docs:**
@@ -992,7 +1014,7 @@ built.
 5. **CI regenerates the dataset "rather than committing images"** (workflow comment), yet
    `capstone/data/cases_large/*.tif` are tracked in git. One of the two should change.
 6. **Runbook says "80 tests"**; the offline suite is 193 passing today.
-7. **Tasks still open:** generator tests (T020), metric unit tests (T031), borderline-focused
+7. **Tasks still open** (T0xx ids are task numbers in `specs/…/tasks.md`): generator tests (T020), metric unit tests (T031), borderline-focused
    bucket tests (T045, T051 marked open though tests exist), HITL (T082), idempotency (T083).
 
 What to build next, in order: **red team** (SC-006 is the only criterion with nothing
@@ -1112,3 +1134,92 @@ Answer without notes, then check against the code.
 | **`stop_reason`** | Why the model stopped: `end_turn`, `tool_use`, `max_tokens`, `refusal` |
 | **Straddle** | Injecting defects at 0.5×, 0.9×, 1.1×, 2.0× the limit |
 | **Trust boundary** | The line past which data (the customer file) is never treated as instruction |
+
+---
+
+## 14. Abbreviations
+
+Every abbreviation in this guide, grouped by where it comes from.
+
+### Print and colour
+
+| Abbreviation | Stands for | Meaning here |
+|---|---|---|
+| **CIE** | *Commission Internationale de l'Éclairage* (International Commission on Illumination) | Standards body behind CIELAB and ΔE |
+| **CIELAB**, L\*a\*b\* | CIE L\*a\*b\* colour space | L\* lightness, a\* green↔red, b\* blue↔yellow; distances match human perception |
+| **CMYK** | Cyan, Magenta, Yellow, Key (black) | The four process inks; the only colour mode the products accept |
+| **DPI** | Dots Per Inch | Image resolution at the printed size |
+| **ΔE** | Delta E (Δ = "difference") | Colour difference in CIELAB; **ΔE76** is the CIE 1976 formula used in the code |
+| **pt** | Point | 1/72 inch; unit for text size and stroke width |
+| **px** | Pixel | One dot of the image |
+| **RGB** | Red, Green, Blue | Screen colour mode; wrong for these print products |
+| **RGBA** | Red, Green, Blue, Alpha | RGB plus a transparency channel |
+| **in** | Inch | 2.54 cm |
+
+### File formats and data
+
+| Abbreviation | Stands for | Meaning here |
+|---|---|---|
+| **JPEG / JPG** | Joint Photographic Experts Group | Accepted upload format (lossy) |
+| **JSON** | JavaScript Object Notation | Tool payloads, run reports, the baseline file |
+| **JSONL** | JSON Lines | One JSON object per line; the dataset manifests `cases.jsonl` |
+| **PNG** | Portable Network Graphics | Upload format; the generator's RGB/RGBA defect files |
+| **TIFF / TIF** | Tagged Image File Format | The generator's normal CMYK output |
+| **YYYYMMDD** | Year, Month, Day | Date suffix on model snapshot ids, e.g. `-20251001` |
+
+### AI and models
+
+| Abbreviation | Stands for | Meaning here |
+|---|---|---|
+| **AI** | Artificial Intelligence | |
+| **CRAFT** | Character Region Awareness For Text detection | A text-detector model; candidate for OQ-3 |
+| **LLM** | Large Language Model | Claude, here |
+| **ML** | Machine Learning | The text detector deliberately uses none |
+| **MTok** | Million tokens | The unit API prices are quoted in |
+| **OCR** | Optical Character Recognition | Reading text from images (PaddleOCR, Tesseract) |
+| **VLM** | Vision-Language Model | A model that takes images and text; the self-hosted option rejected in D-2 |
+
+### Software and infrastructure
+
+| Abbreviation | Stands for | Meaning here |
+|---|---|---|
+| **API** | Application Programming Interface | Mostly the Anthropic Claude Messages API |
+| **CI** | Continuous Integration | GitHub Actions running lint, tests and the eval gate on every push/PR |
+| **CLI** | Command-Line Interface | How everything here is run |
+| **CPU** | Central Processing Unit | Ordinary processor; the text detector runs on it |
+| **DB** | Database | Deliberately not used (D-8) |
+| **GPU** | Graphics Processing Unit | What a self-hosted vision model would need |
+| **HTTP** | HyperText Transfer Protocol | How the API is called |
+| **MCP** | Model Context Protocol | Open protocol for exposing tools to models; planned, not built |
+| **POST** | (HTTP method name, not an acronym) | The request type used for `/v1/messages` |
+| **PR** | Pull Request | A proposed change on GitHub; CI runs on each |
+| **VS Code** | Visual Studio Code | Editor |
+
+### Design documents and project ids
+
+| Abbreviation | Stands for | Where it lives |
+|---|---|---|
+| **ADR** | Architecture Decision Record | §7 of this guide |
+| **D-1 … D-9** | Decision 1 … 9 | [research.md](../../specs/001-artwork-preflight-triage/research.md) |
+| **FR-0xx** | Functional Requirement | [spec.md](../../specs/001-artwork-preflight-triage/spec.md) §4 |
+| **HLD** | High-Level Design | §5 of this guide |
+| **L0 … L8** | Level 0 … Level 8 | Learning levels in [PLAN.md](../../PLAN.md) |
+| **LLD** | Low-Level Design | §6 of this guide |
+| **OQ-n** | Open Question n | spec.md §9 |
+| **SC-00x** | Success Criterion | spec.md §5 |
+| **T0xx** | Task number | [tasks.md](../../specs/001-artwork-preflight-triage/tasks.md) |
+
+### Business and metrics
+
+| Abbreviation | Stands for | Meaning here |
+|---|---|---|
+| **CI** (in statistics) | Confidence Interval | Only in the phrase "95% upper bound"; this guide avoids "CI" for it so it can't be confused with continuous integration |
+| **HITL** | Human-In-The-Loop | People review what the system does not decide alone |
+| **IP** | Intellectual Property | Trademark/copyright screening, out of scope |
+| **K** | Thousand | $340K = $340,000 |
+| **p95** | 95th percentile | 95% of files are faster than this latency |
+| **pp** | Percentage points | 17.0% → 13.6% is a 3.4 pp drop (a 20% relative drop) |
+| **ROI** | Return On Investment | Savings minus cost, §3.1 |
+| **h, min, s, ms** | hours, minutes, seconds, milliseconds | |
+| **/yr** | per year | |
+| **e.g. / vs** | *exempli gratia* ("for example") / versus | |
