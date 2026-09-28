@@ -59,6 +59,7 @@ Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill i
 | [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
 | [limits.md](capstone/docs/limits.md) | Ten things this system cannot do, most found by measuring |
 | [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
+| [learn.md](capstone/docs/learn.md) | Study guide from zero: business logic, HLD, LLD, build stages, decisions, diagrams |
 | [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
 | [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
 
