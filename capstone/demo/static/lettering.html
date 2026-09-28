@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lettering Review</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">Artwork Preflight <small>unofficial demo</small></div>
+    <nav>
+      <a href="/">Check a file</a>
+      <a href="/reports">Results</a>
+      <a href="/lettering" class="active">Lettering review</a>
+      <a href="/reports#cost">Cost</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero block">
+      <h1>Is this AI lettering real text? A person and the system, side by side</h1>
+      <p>On AI-generated stickers the checker blocks many files for text that measures under
+        the print minimum. Much of that lettering is Stable Diffusion's garbled writing. We
+        asked a person to judge each flagged region, twice for some, to see whether a rule
+        could let "garbled" lettering through. <b>It could not: the judgement did not repeat,
+        so no rule was built and the system keeps blocking.</b> These labels tested a rule;
+        the system did not learn from them.</p>
+    </section>
+
+    <section class="block">
+      <div class="stats" id="headline"></div>
+    </section>
+
+    <section class="block card">
+      <h2>How the two sides compare</h2>
+      <p class="subtle" style="margin-top:-6px">The system blocked every one of these files
+        for text too small. Each file falls into one of these groups by what the person
+        answered.</p>
+      <div class="scroll"><table id="matrix"></table></div>
+      <p class="subtle" id="captionnote"></p>
+      <p class="subtle"><b>System confidence</b> here is a measurement, not a probability: how
+        far the text is under the minimum, as a share of it and in pixels at print
+        resolution. <b>Person confidence</b> is consistency: whether controls were answered
+        right and repeats answered the same.</p>
+    </section>
+
+    <section class="block card" id="fault"></section>
+
+    <section class="block" id="gallery-section">
+      <h2 style="font-size:20px;margin:0 0 6px">Examples</h2>
+      <p class="subtle" style="margin:0 0 12px">Picked by a fixed rule: a set number per
+        group, the most legible first. The red box is the region the person judged.</p>
+      <div class="filters" id="filters" role="group" aria-label="Filter examples"></div>
+      <div class="lgallery" id="gallery"></div>
+    </section>
+
+    <section class="block card">
+      <h2>Every judged region</h2>
+      <p class="subtle" style="margin-top:-6px" id="tablenote"></p>
+      <div class="scroll"><table id="all"></table></div>
+    </section>
+  </main>
+
+  <script src="/static/lettering.js"></script>
+</body>
+</html>

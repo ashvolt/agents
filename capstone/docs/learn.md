@@ -968,6 +968,10 @@ and problem regions drawn on it. Nothing is stored.
   generated; 3 approved, 4 escalated (no text), 12 sent back (mostly hairline detail).
 - `walkthrough/record.mjs` — Playwright drives the page and records a captioned video, so
   the video cannot drift from the product.
+- `/lettering` — the rule-loop lettering rounds as a page: each judged region, the
+  person's answer(s), and what the shipped pipeline does with the same file today
+  (`build_lettering.py`). It also surfaced that 21 of 35 "agree" regions are our own
+  caption, measuring small because of the cap-height limit (§10 item 7).
 
 ### 6.16 Parked and process: scene narration, rule loop
 

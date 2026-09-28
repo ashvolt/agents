@@ -52,6 +52,32 @@ Gallery examples: for each customer process, the largest correctly decided file,
 preferring a defective one where the process produces defects. Size is chosen for
 legibility; the verdict is not a criterion, and the counts sit next to each example.
 
+## Lettering review page (`/lettering`)
+
+The rule-loop lettering rounds (rule-loop.md §5) as a page: for each region a person
+judged, the whole sticker with the region boxed, a readable close-up, the person's
+answer(s), and what the shipped pipeline does with the same file today.
+
+- **System confidence is a measurement**: the text height as a share of the minimum, and
+  the gap in pixels at print resolution. The fixed 0.95 on rule verdicts is never shown;
+  it was never calibrated.
+- **Person confidence is consistency**: controls right (17/20 in round 1, where captions
+  were shown too small; 20/20 in round 1b) and repeats answered the same (9/15).
+- **Groups**: agree (real text, too small), policy question (garbled lettering), system
+  false positive (not text), unresolved (can't tell), flipped (a repeat that changed),
+  control.
+- The gallery picks a fixed number per group, most legible first; every region is in
+  the table below it. The page says plainly that no rule was built from these labels.
+
+```bash
+python -m capstone.demo.build_lettering --rebuild   # fetches ~150 DiffusionDB images
+```
+
+`--rebuild` recreates only the labelled ai_art_v1 cases from their sealed seeds and stops
+unless each matches its sealed manifest row; every image must also match the size
+recorded with its label. Outputs `static/lettering.json` and `samples/lettering/`, both
+committed. The four round-1b controls from ai_art_v2 are counted, not shown.
+
 ## What the numbers are (round 4, scored once at 090477c, code frozen at 98ecc30)
 
 | Sealed set | rules_only | shipped (CV decider) | exact 95% bound |

@@ -237,6 +237,21 @@ def sample_file(name: str) -> FileResponse:
     return FileResponse(path)
 
 
+@app.get("/lettering-images/{name}")
+def lettering_image(name: str) -> FileResponse:
+    """Images for the lettering-review page (build_lettering.py). Same guard as samples."""
+    folder = SAMPLES / "lettering"
+    path = (folder / name).resolve()
+    if path.parent != folder or not path.exists():
+        raise HTTPException(status_code=404)
+    return FileResponse(path)
+
+
+@app.get("/lettering")
+def lettering() -> FileResponse:
+    return FileResponse(STATIC / "lettering.html")
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC / "index.html")
