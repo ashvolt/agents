@@ -1063,19 +1063,27 @@ Answer without notes, then check against the code.
 <details>
 <summary>Answers (short)</summary>
 
-1. §5.3. 2. It answers "can I trust an APPROVE"; per-defective lets a do-nothing system
-look good. 3. requested APPROVE, no issues, not degraded, all checks ran, confidence ≥ 0.70.
-4. Only `LOW_RESOLUTION`: physical size 307/136.4 = 2.251 in → bleed 0.126 in ≥ 0.1225.
-5. Stroke drawn at `min ÷ 0.9` = 1.11× the minimum — inside spec, a near miss, clean.
-6. Threshold is fitted to synthetic art: good enough to ask a human, not to tell a customer.
-7. Measured ADVISORY issues are merged into its verdict and `finalize` downgrades any
-APPROVE with issues; it can only turn escalations into fix requests. 8. Tools are
-microsecond Python — choosing bought nothing, turns cost quadratic tokens and the model
-second-guessed measurements; keep a loop when tools are slow/expensive/side-effecting or
-the next step depends on earlier results. 9. We saw no errors in 41, but the true rate
-could be up to ~7%; more data needed to claim 1%. 10. Expected: prefix 1,696 < 2,048 min;
-real-sized prompts/images push it over naturally. 11. dated snapshot model id not priced;
-two `TRACE_SINK`s from `__main__` vs package import. 12. Red team (SC-006).
+1. See the diagram in §5.3.
+2. It answers "can I trust an APPROVE". Dividing by defective files lets a system that
+   approves almost nothing look good.
+3. APPROVE was requested, no issues, not degraded, every check ran, confidence ≥ 0.70.
+4. Only `LOW_RESOLUTION`. Physical size 307 ÷ 136.4 = 2.251 in, so bleed is 0.126 in,
+   above the 0.1225 floor.
+5. Stroke drawn at `min ÷ 0.9` = 1.11× the minimum. Inside spec: a near miss, and clean.
+6. The threshold is fitted to synthetic art. Good enough to ask a human, not to tell a
+   customer their file is wrong.
+7. Measured ADVISORY issues are merged into its verdict, and `finalize` downgrades any
+   APPROVE that carries issues. It can only turn escalations into fix requests.
+8. The tools are microsecond Python, so choosing bought nothing, extra turns cost
+   quadratic tokens, and the model second-guessed measurements. Keep a loop when tools are
+   slow, expensive or side-effecting, or when the next step depends on earlier results.
+9. No errors were seen in 41 approvals, but the true rate could be up to ~7%. More data is
+   needed to claim 1%.
+10. Expected. The prefix is 1,696 tokens, under the 2,048 minimum. Real-sized prompts and
+    images push it over naturally.
+11. The dated snapshot model id was not in the price table, and running the harness as
+    `__main__` created a second `TRACE_SINK`.
+12. The red team, because SC-006 has no measurement behind it.
 
 </details>
 
