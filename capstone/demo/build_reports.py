@@ -104,6 +104,10 @@ MISTAKE_TEXT = {
         "Sent over a chat app",
         "Long side capped at 1600 px, recompressed, metadata stripped.",
     ),
+    "web_export": (
+        "Exported for the web",
+        "Full pixel dimensions with a 72 DPI tag. The header is wrong, not the artwork.",
+    ),
     "jpeg_resaves": (
         "Re-saved as JPEG",
         "Opened and saved as JPEG a few times. Should still pass.",

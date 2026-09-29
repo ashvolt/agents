@@ -41,6 +41,13 @@ from capstone.src.schemas import GoldLabel, IssueCode, Perturbation
 SCREEN_PPI = 96.0  # CSS pixels per inch: what a browser screenshot resolves to at 100%
 MESSAGING_LONG_SIDE = 1600  # common messaging-app resize for photos sent "as photo"
 
+# "Save for Web" and most browser-based design tools record a screen-resolution tag
+# regardless of how many pixels they write. 72 is the near-universal value.
+WEB_EXPORT_DPI = 72.0
+# Long-side caps these tools offer. None - full size - is the usual default, and the case
+# where the pixels are ample and only the header is wrong.
+WEB_EXPORT_LONG_SIDE = (None, None, 2048, 1200)
+
 Result = tuple[Image.Image, str, dict, tuple[Perturbation, ...]]
 
 
@@ -80,6 +87,36 @@ def messaging_app(img: Image.Image, plan: CasePlan, dpi: float, rng: random.Rand
     w_in, _ = _canvas_in(plan)
     perts = _resolution(plan, sent.width / w_in) if scale < 1.0 else ()
     return sent, "jpg", {"quality": 70}, perts
+
+
+def web_export(img: Image.Image, plan: CasePlan, dpi: float, rng: random.Random) -> Result:
+    """Exported from a web-oriented tool: a 72 DPI tag whatever the pixel dimensions.
+
+    Every other process here either keeps the correct DPI or strips the metadata entirely,
+    so until this one no set could produce a file whose resolution tag is *wrong* rather
+    than *missing* - and a tag claiming a print size far larger than the order is the most
+    common real upload defect after stripped metadata.
+
+    The label follows this module's rule: a process that changes nothing a spec measures is
+    clean. At full size the pixels are untouched and still resolve well above the minimum at
+    the ordered size, so the only wrong thing in the file is a number in its header. A
+    checker that rejects it is rejecting good art, which is exactly the failure this set
+    exists to catch.
+
+    The caps are real though, so the label is derived from the pixels that survive rather
+    than asserted: a cap that bites hard enough is a genuine `LOW_RESOLUTION` defect.
+    """
+    out = img.convert("RGB")
+    cap = rng.choice(WEB_EXPORT_LONG_SIDE)
+    if cap is not None and max(out.size) > cap:
+        scale = cap / max(out.size)
+        out = out.resize(
+            (max(8, round(out.width * scale)), max(8, round(out.height * scale))), Image.LANCZOS
+        )
+    w_in, _ = _canvas_in(plan)
+    effective = out.width / w_in  # what it really resolves to at the ordered size
+    perts = () if effective >= plan.spec.min_dpi else _resolution(plan, effective)
+    return out, "png", {"dpi": (WEB_EXPORT_DPI, WEB_EXPORT_DPI)}, perts
 
 
 def jpeg_resaves(img: Image.Image, plan: CasePlan, dpi: float, rng: random.Random) -> Result:
@@ -136,6 +173,7 @@ PROCESSES: dict[str, Callable[..., Result]] = {
     "print_ready": print_ready,
     "screenshot": screenshot,
     "messaging_app": messaging_app,
+    "web_export": web_export,
     "jpeg_resaves": jpeg_resaves,
     "via_gif": via_gif,
     "gif_upload": gif_upload,
