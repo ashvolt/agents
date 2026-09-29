@@ -37,9 +37,10 @@ from typing import Protocol
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field
 
-from capstone.evals.baselines import _customer_message
+from capstone.src.customer_text import customer_letter
 from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.schemas import (
+    CustomerAdvice,
     EscalationReason,
     Evidence,
     Issue,
@@ -86,6 +87,9 @@ def guard_issue(features: ArtworkFeatures) -> Issue | None:
     if found is None:
         return None
     code, reason = found
+    # No `advice`: a guard is a routing decision, not a request. There is nothing the
+    # customer could do about our detector's blind spot, and `customer_letter` leaves a
+    # finding with no advice out rather than inventing an action for it.
     return Issue(
         code=code,
         severity=Severity.ADVISORY,
@@ -242,6 +246,14 @@ def measure(case: PreflightCase) -> tuple[Verdict | None, list[Issue], ArtworkFe
                 severity=Severity.BLOCKING,
                 message="The artwork could not be fully decoded for pixel analysis.",
                 evidence=Evidence(note=f"{type(exc).__name__}: {exc}"),
+                advice=CustomerAdvice(
+                    headline="Your file opened, but we could not read all of it.",
+                    action=(
+                        "Please upload it again. If this copy came through a chat app or "
+                        "was saved from a preview in your browser, send the original "
+                        "export instead - those copies are often cut short."
+                    ),
+                ),
             )
         ]
 
@@ -252,7 +264,7 @@ def measure(case: PreflightCase) -> tuple[Verdict | None, list[Issue], ArtworkFe
                 verdict=VerdictType.REQUEST_FIX,
                 confidence=0.95,
                 issues=issues,
-                customer_message=_customer_message(blocking, case),
+                customer_message=customer_letter(blocking, order_id=case.order.order_id),
                 checks_completed=checks,
             ),
             issues,
@@ -313,6 +325,9 @@ def decide_explained(
         )
 
     # Escalations carry the reasoning a reviewer needs, not just a number (PLAN.md S6.5).
+    # No `advice`, for the same reason as the guard above: this finding exists to put the
+    # file in front of a person who can judge whether the intrusion is deliberate. Asking
+    # the customer about it would be asking them to answer a question we have not settled.
     evidence = Issue(
         code=IssueCode.CONTENT_IN_SAFE_ZONE,
         severity=Severity.ADVISORY,

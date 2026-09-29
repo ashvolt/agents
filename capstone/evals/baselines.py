@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from PIL import Image
 
 from capstone.ops.tracing import attach_trace
+from capstone.src.customer_text import customer_letter
 from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.schemas import (
     EscalationReason,
@@ -52,30 +53,6 @@ def always_approve(case: PreflightCase) -> Verdict:
     testing is a constraint nobody has verified.
     """
     return Verdict(verdict=VerdictType.APPROVE, confidence=1.0, checks_completed=["none"])
-
-
-def _customer_message(issues: list[Issue], case: PreflightCase) -> str:
-    """Plain-language fix request citing the measurement for each blocking issue.
-
-    FR-008: concrete evidence, never vague advice. Telling a customer to "improve the
-    resolution" without saying what it is and what it needs to be is the second-ranked
-    failure mode in brief.md S6.
-    """
-    lines = [
-        f"We reviewed the artwork for order {case.order.order_id} and found "
-        f"{len(issues)} item{'s' if len(issues) != 1 else ''} to fix before we print:",
-        "",
-    ]
-    for issue in issues:
-        lines.append(f"- {issue.message}")
-        detail = issue.evidence.describe()
-        if detail:
-            lines.append(f"  ({detail})")
-    lines += [
-        "",
-        "Reply with an updated file and we'll re-check it right away.",
-    ]
-    return "\n".join(lines)
 
 
 def rules_only(case: PreflightCase) -> Verdict:
@@ -146,7 +123,7 @@ def rules_only(case: PreflightCase) -> Verdict:
             verdict=VerdictType.REQUEST_FIX,
             confidence=0.95,
             issues=issues,
-            customer_message=_customer_message(blocking, case),
+            customer_message=customer_letter(blocking, order_id=case.order.order_id),
             checks_completed=checks,
         )
 

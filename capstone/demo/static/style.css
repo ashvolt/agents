@@ -193,6 +193,27 @@ ul.issues .sev { font-size: 11px; color: var(--ink-2); margin-left: 6px; }
 ul.issues p { margin: 4px 0 0; font-size: 14px; }
 ul.issues .ev { font: 12px var(--mono); color: var(--ink-2); margin-top: 4px; }
 
+/* The customer's half of a finding, visibly a different voice from the line above it. */
+ul.issues .advice {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+ul.issues .advice .who {
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+ul.issues .advice p { margin: 0 0 6px; font-size: 13px; }
+ul.issues .advice div + div { margin-top: 4px; }
+ul.issues .advice .avoid { color: var(--fix); }
+
 .message {
   white-space: pre-wrap;
   background: var(--surface-2);

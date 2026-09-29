@@ -65,6 +65,17 @@ def _show(result: dict) -> None:
             st.markdown(
                 f"- `{issue['code']}` {issue['severity'].lower()}: {issue['message']}{detail}"
             )
+            # The customer register, where the finding has one. Indented under the
+            # reviewer's line so the two are visibly different things.
+            advice = issue.get("advice")
+            if advice:
+                lines = [
+                    f"  - *What the customer is told:* {advice['headline']}",
+                    f"    **What to do:** {advice['action']}",
+                ]
+                if advice.get("avoid"):
+                    lines.append(f"    **Please avoid:** {advice['avoid']}")
+                st.markdown("\n".join(lines))
         if result["customer_message"]:
             st.markdown("**Message to the customer**")
             st.info(result["customer_message"])

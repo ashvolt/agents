@@ -16,9 +16,17 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image
+from pydantic import ValidationError
 
 from capstone.src.product_specs import UnknownProductError, get_spec
-from capstone.src.schemas import Evidence, Issue, IssueCode, OrderMetadata, Severity
+from capstone.src.schemas import (
+    CustomerAdvice,
+    Evidence,
+    Issue,
+    IssueCode,
+    OrderMetadata,
+    Severity,
+)
 from capstone.tools.bucket1_metadata import effective_dpi, inspect_file, measure_bleed_in
 from capstone.tools.bucket2_pixels import (
     analyse_pixels,
@@ -30,6 +38,27 @@ from capstone.tools.bucket2_pixels import (
 PT_PER_INCH = 72.0
 
 
+def _advice_payload(advice: CustomerAdvice | None) -> dict[str, Any] | None:
+    if advice is None:
+        return None
+    return {"headline": advice.headline, "action": advice.action, "avoid": advice.avoid}
+
+
+def _advice_from_payload(raw: Any) -> CustomerAdvice | None:
+    """Rebuild advice, or None. Never raises.
+
+    A malformed advice block must not cost us the finding it hangs off. These issues were
+    *proven* by a measurement before the model saw anything; dropping one because its
+    customer wording failed to validate would trade a real defect for a cosmetic field.
+    """
+    if not isinstance(raw, dict):
+        return None
+    try:
+        return CustomerAdvice.model_validate(raw)
+    except ValidationError:
+        return None
+
+
 def _issues_payload(issues: list[Issue]) -> list[dict[str, Any]]:
     return [
         {
@@ -37,6 +66,7 @@ def _issues_payload(issues: list[Issue]) -> list[dict[str, Any]]:
             "severity": str(i.severity),
             "bucket": i.bucket,
             "message": i.message,
+            "advice": _advice_payload(i.advice),
             "evidence": {
                 "measured": i.evidence.measured,
                 "required": i.evidence.required,
@@ -376,6 +406,7 @@ def issues_from_payload(payload: dict[str, Any]) -> list[Issue]:
                         region=tuple(region) if region else None,
                         note=ev.get("note"),
                     ),
+                    advice=_advice_from_payload(raw.get("advice")),
                 )
             )
         except (KeyError, ValueError, TypeError):

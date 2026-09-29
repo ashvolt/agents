@@ -93,6 +93,10 @@ def _issue(issue: Issue) -> dict[str, Any]:
         "code": issue.code.value,
         "severity": issue.severity.value,
         "message": issue.message,
+        # Two registers, deliberately. `message` is written for a production artist;
+        # `advice` is what the customer is told, and null means there is nothing for them
+        # to do (the finding exists to route the file to a person).
+        "advice": issue.advice.model_dump(mode="json") if issue.advice else None,
         "measured": e.measured,
         "required": e.required,
         "unit": e.unit,

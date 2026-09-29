@@ -41,6 +41,7 @@ def _issue_json(issue: Issue) -> dict[str, object]:
         "code": issue.code.value,
         "severity": issue.severity.value,
         "message": issue.message,
+        "advice": issue.advice.model_dump(mode="json") if issue.advice else None,
         "evidence": issue.evidence.model_dump(mode="json", exclude_none=True),
     }
 
