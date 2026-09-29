@@ -16,7 +16,14 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from capstone.src.schemas import Evidence, Issue, IssueCode, ProductSpec, Severity
+from capstone.src.schemas import (
+    CustomerAdvice,
+    Evidence,
+    Issue,
+    IssueCode,
+    ProductSpec,
+    Severity,
+)
 from capstone.tools.text_detect import TextBox, _label_runs, detect_text, ink_mask
 
 PT_PER_INCH = 72.0
@@ -125,6 +132,22 @@ def check_transparency(image: Image.Image, spec: ProductSpec) -> list[Issue]:
                 required=round(TRANSPARENCY_REPORT_RATIO * 100, 2),
                 unit="% transparent",
                 region=region,
+            ),
+            advice=CustomerAdvice(
+                headline=(
+                    "The see-through parts of your design will print as the blank "
+                    "material, not as white."
+                ),
+                action=(
+                    "If those areas are meant to be white or a colour, fill them in and "
+                    "export again. If the design is meant to be cut to its own outline "
+                    "instead of a rectangle, reply and tell us before we print - that is a "
+                    "different product from the one ordered."
+                ),
+                avoid=(
+                    "flattening the file onto a white background unless you want a visible "
+                    "white rectangle around the design"
+                ),
             ),
         )
     ]
@@ -327,6 +350,22 @@ def check_contrast(
                 f"Some elements sit only deltaE {delta_e:.1f} from the background; "
                 f"{spec.display_name} needs at least {spec.min_contrast_delta_e:g}. "
                 "They will be hard to see on the printed piece."
+            ),
+            advice=CustomerAdvice(
+                headline=(
+                    "Some parts of your design will be hard to make out on the printed "
+                    "piece."
+                ),
+                action=(
+                    "Make those elements clearly lighter or darker than whatever sits "
+                    "behind them - it is the faintest parts of the design against their "
+                    "own background that we measured."
+                ),
+                avoid=(
+                    "only turning up the saturation - ink reproduces a difference in "
+                    "lightness far better than a difference in colour, so a brighter "
+                    "version of the same tone will still disappear"
+                ),
             ),
             evidence=Evidence(
                 measured=round(delta_e, 2),
@@ -571,6 +610,22 @@ def check_stroke_width(
                 "disappear on press."
             ),
             evidence=Evidence(measured=round(min_pt, 3), required=spec.min_stroke_pt, unit="pt"),
+            advice=CustomerAdvice(
+                headline=(
+                    "The finest lines in your design will break up or vanish in places "
+                    "when printed."
+                ),
+                action=(
+                    f"Thicken them to at least {spec.min_stroke_pt:g} pt at the printed "
+                    "size. In a drawing program this is the stroke or outline weight; if "
+                    "you resize the design afterwards, turn on the option to scale strokes "
+                    "along with it."
+                ),
+                avoid=(
+                    "re-saving or enlarging this file - how thick a line prints depends on "
+                    "the design, not the file size, so neither one changes it"
+                ),
+            ),
         )
     ]
 
@@ -608,6 +663,18 @@ def check_text_size(boxes: list[TextBox], spec: ProductSpec, dpi: float) -> list
                 required=spec.min_text_pt,
                 unit="pt",
                 region=smallest.region,
+            ),
+            advice=CustomerAdvice(
+                headline="The smallest writing will be difficult or impossible to read.",
+                action=(
+                    f"Increase the smallest line of type to at least {spec.min_text_pt:g} pt "
+                    "at the printed size, or take it out of the design."
+                ),
+                avoid=(
+                    "judging it by how it looks on your screen - a screen shows far finer "
+                    "detail than ink on this material, so type that is comfortable there "
+                    "can fill in solid when printed"
+                ),
             ),
         )
     ]
@@ -723,6 +790,10 @@ def check_safe_zone(image: Image.Image, spec: ProductSpec, dpi: float) -> list[I
         return []
 
     coverage = measurement["edge_ink_coverage"]
+    # No `advice`: this routes the file to a person, and the message says so ("a human
+    # should confirm"). Until someone has confirmed it, there is no fix to request - and
+    # asking a customer to move artwork that was deliberately placed is the second-ranked
+    # failure in brief.md S6.
     return [
         Issue(
             code=IssueCode.CONTENT_IN_SAFE_ZONE,
@@ -759,6 +830,8 @@ def check_text_detection_inconclusive(boxes: list[TextBox], spec: ProductSpec) -
     """
     if boxes:
         return []
+    # No `advice`: our detector's blind spot is not the customer's problem to fix, and we
+    # have not established there is any text at all. A reviewer looks instead.
     return [
         Issue(
             code=IssueCode.TEXT_TOO_SMALL,
@@ -878,6 +951,21 @@ def check_fake_transparency(image: Image.Image) -> list[Issue]:
                 "The background is a grey-and-white checkerboard drawn into the image, not "
                 "real transparency. It will print as a grid of grey squares. Export with a "
                 "transparent or solid background instead."
+            ),
+            advice=CustomerAdvice(
+                headline=(
+                    "Your design would print with a grey and white chequerboard behind it."
+                ),
+                action=(
+                    "Those squares are how design programs draw an empty background on "
+                    "screen, and this file has them baked in as real pixels. Export again "
+                    "from the original design - as a PNG with a transparent background, or "
+                    "over a solid colour if you would rather choose one."
+                ),
+                avoid=(
+                    "erasing the squares by hand - export again from the file you designed "
+                    "it in instead, or the edges of your artwork will be damaged"
+                ),
             ),
             evidence=Evidence(
                 measured=round(coverage * 100, 1),

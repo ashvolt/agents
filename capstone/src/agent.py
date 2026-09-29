@@ -31,6 +31,7 @@ from pydantic import ValidationError
 from capstone.ops.budgets import Budget, BudgetExhausted
 from capstone.ops.pricing import UnknownModelError, estimate_cost
 from capstone.ops.tracing import attach_trace
+from capstone.src.customer_text import customer_letter
 from capstone.src.product_specs import UnknownProductError, get_spec
 from capstone.src.prompts import (
     NO_TOOLS_SUFFIX,
@@ -294,16 +295,13 @@ def parse_verdict(
 
 
 def _fallback_customer_message(issues: list[Issue]) -> str:
-    """Compose a fix request when the model overrode APPROVE but wrote no message."""
-    blocking = [i for i in issues if i.severity is Severity.BLOCKING]
-    lines = ["We found the following before printing your artwork:", ""]
-    for issue in blocking:
-        lines.append(f"- {issue.message}")
-        detail = issue.evidence.describe()
-        if detail:
-            lines.append(f"  ({detail})")
-    lines += ["", "Send an updated file and we'll re-check it right away."]
-    return "\n".join(lines)
+    """Compose a fix request when the model overrode APPROVE but wrote no message.
+
+    Same renderer as the deterministic arm. The two wordings used to differ, so which
+    letter a customer got depended on which arm ran - and because the tool-measured
+    findings that reach here carry `advice`, this path now gets the customer register too.
+    """
+    return customer_letter(issues)
 
 
 # --------------------------------------------------------------------------------------

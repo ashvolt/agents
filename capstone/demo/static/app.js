@@ -67,6 +67,18 @@ async function runUpload() {
   render(body);
 }
 
+// The customer's half of a finding. Absent by design on findings that only route the
+// file to a person - there is nothing to tell a customer about our detector's blind spot.
+function adviceBlock(a) {
+  if (!a) return "";
+  const avoid = a.avoid
+    ? `<div class="avoid"><b>Please avoid:</b> ${escapeHtml(a.avoid)}</div>`
+    : "";
+  return `<div class="advice"><div class="who">what the customer is told</div>
+    <p>${escapeHtml(a.headline)}</p>
+    <div><b>What to do:</b> ${escapeHtml(a.action)}</div>${avoid}</div>`;
+}
+
 function evidenceLine(ev) {
   const parts = [];
   if (ev.measured !== undefined) parts.push(`measured ${ev.measured}${ev.unit ? " " + ev.unit : ""}`);
@@ -111,7 +123,7 @@ function render(r) {
         .map(
           (i) => `<li class="${i.severity}"><code>${i.code}</code><span class="sev">${
             i.severity === "BLOCKING" ? "must fix" : "note"
-          }</span><p>${escapeHtml(i.message)}</p><div class="ev">${escapeHtml(evidenceLine(i.evidence))}</div></li>`
+          }</span><p>${escapeHtml(i.message)}</p><div class="ev">${escapeHtml(evidenceLine(i.evidence))}</div>${adviceBlock(i.advice)}</li>`
         )
         .join("")}</ul>`
     : `<p class="subtle">Nothing to report.</p>`;

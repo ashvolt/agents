@@ -198,6 +198,36 @@ class Evidence(BaseModel):
         return self.note or ""
 
 
+class CustomerAdvice(BaseModel):
+    """The same finding in the register a customer can act on.
+
+    `Issue.message` is written for the production artist: exact, technical, and rounded
+    for a person who already knows what DPI is. Sending that same string to a customer
+    was the design flaw this class fixes - one field cannot be tuned for two readers, so
+    it ended up tuned for neither (`Evidence.describe` even says it serves both).
+
+    Three slots, because a customer needs three things and a single sentence only ever
+    carried the first:
+
+    - `headline` - what will happen to their print, in their terms, not ours.
+    - `action` - what to do, in a unit they can act on. Pixels, inches, or points at the
+      printed size. Never a ratio: DPI is pixels over inches, so it means nothing without
+      the print size and cannot be reused on the next order, where the threshold differs.
+    - `avoid` - the plausible wrong fix. This is the slot that did not exist before, and
+      the reason the class is worth its weight. "Needs at least 150 DPI" reads as a target,
+      and the obvious way to hit a target is to type it into a box - which resamples the
+      file, passes `check_resolution` on the next upload, and prints exactly as soft. A
+      message that teaches a customer to launder a defect past the gate produces the
+      first-ranked failure in brief.md S6, not the second.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    headline: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    avoid: str | None = None
+
+
 class Issue(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -205,6 +235,12 @@ class Issue(BaseModel):
     severity: Severity
     message: str = Field(min_length=1)
     evidence: Evidence
+    # None means there is nothing for the customer to do: a finding that exists only to
+    # route the file to a person (a guard, an inconclusive detector) has no customer
+    # register, and `customer_text.customer_letter` leaves it out rather than inventing
+    # an action. Model-authored findings also arrive without advice - the model writes
+    # one string, and the letter falls back to it.
+    advice: CustomerAdvice | None = None
 
     @property
     def bucket(self) -> int:
@@ -450,6 +486,7 @@ class RunResult(BaseModel):
 
 __all__ = [
     "BUCKET_OF",
+    "CustomerAdvice",
     "DETERMINISTIC_CODES",
     "JUDGEMENT_CODES",
     "EscalationReason",
