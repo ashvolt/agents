@@ -151,7 +151,10 @@ def test_a_symlink_out_of_the_root_is_refused(
 ) -> None:
     root = tmp_path / "root"
     root.mkdir()
-    (root / "link.png").symlink_to(SAMPLES / "print_ready.tif")  # a real image, outside root
+    try:
+        (root / "link.png").symlink_to(SAMPLES / "print_ready.tif")  # a real image, outside root
+    except OSError as exc:  # Windows without Developer Mode: WinError 1314
+        pytest.skip(f"cannot create a symlink here ({exc.__class__.__name__}); runs in CI")
     monkeypatch.setenv("PREFLIGHT_MCP_ROOT", str(root))
     got = _call(
         "check_artwork",

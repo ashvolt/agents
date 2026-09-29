@@ -63,6 +63,17 @@ def test_sample_paths_cannot_escape_the_samples_folder() -> None:
     assert client.get("/samples/..%2Fapp.py").status_code == 404
 
 
+def test_lettering_image_paths_cannot_escape_their_folder() -> None:
+    assert client.get("/lettering-images/..%2F..%2Fapp.py").status_code == 404
+    assert client.get("/lettering-images/no-such-file.jpg").status_code == 404
+
+
+def test_lettering_page_is_served() -> None:
+    page = client.get("/lettering")
+    assert page.status_code == 200
+    assert "lettering.js" in page.text
+
+
 GEN_FORM = {"prompt": "a sticker", "product_id": "die-cut-sticker", "width_in": 3, "height_in": 3}
 
 

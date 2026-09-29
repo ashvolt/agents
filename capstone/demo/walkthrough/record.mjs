@@ -79,6 +79,26 @@ async function main() {
   await caption(page, "The mistakes customers actually make, and how each one was handled.", 5500);
   await page.locator("#cost").scrollIntoViewIfNeeded();
   await caption(page, "Cost: $0 a file, against a measured $0.0066 to $0.0117 for a vision model.", 5000);
+
+  // Lettering review: a person and the system on the same files.
+  await page.goto(BASE + "/lettering");
+  await page.waitForSelector(".lcard");
+  await caption(page, "On AI art, much blocked lettering is garbled. Could a rule let it through? A person judged each flagged region.", 5500);
+  await page.locator("#headline").scrollIntoViewIfNeeded();
+  await caption(page, "Shown readably, all 20 controls were answered right. But only 9 of 15 repeated judgements matched, so no rule was built.", 6000);
+  await page.locator("#matrix").scrollIntoViewIfNeeded();
+  await caption(page, "It also found a flaw of our own: many regions a person called too small are our caption, measured by ink height, not font size.", 6000);
+  await page.locator("#fault").scrollIntoViewIfNeeded();
+  await caption(page, "Round 1 was thrown out: the page showed captions too small to read. The fault was the display, not the person.", 5500);
+  await page.getByRole("button", { name: /^Flipped/ }).click();
+  await page.locator("#gallery").scrollIntoViewIfNeeded();
+  await caption(page, "The same region, shown twice: two different answers. The system's measurement is the same both times.", 5500);
+  await page.getByRole("button", { name: /^System false positive/ }).click();
+  await page.locator("#gallery").scrollIntoViewIfNeeded();
+  await caption(page, "And where the system is wrong: the detector boxed part of the artwork as text. The person said so.", 5500);
+
+  await page.goto(BASE + "/reports");
+  await page.waitForSelector("#rounds tr");
   await page.locator("#limits").scrollIntoViewIfNeeded();
   await caption(page, "And what it does not show yet: the next step is real customer uploads.", 5000);
   await caption(page, "", 800);

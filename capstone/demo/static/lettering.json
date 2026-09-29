@@ -1,0 +1,6462 @@
+{
+  "summary": {
+    "round1_items": 113,
+    "round1_controls_right": 17,
+    "round1_controls": 20,
+    "round1b_items": 60,
+    "round1b_controls_right": 20,
+    "round1b_controls": 20,
+    "repeats": 15,
+    "repeats_same": 9,
+    "repeats_changed": 6,
+    "repeats_crossed_print_line": 3,
+    "main_answers": {
+      "not_text": 31,
+      "real_small": 33,
+      "cant_tell": 11,
+      "garbled": 18
+    }
+  },
+  "categories": {
+    "agree": {
+      "title": "Agree",
+      "text": "Person: real text, too small. System: blocked. Both say send it back.",
+      "count": 35,
+      "own_caption": 21
+    },
+    "policy": {
+      "title": "Policy question",
+      "text": "Person: garbled or decorative. System: blocked. Whether AI lettering must be readable is a product decision, not a measurement.",
+      "count": 13,
+      "own_caption": 0
+    },
+    "false_positive": {
+      "title": "System false positive",
+      "text": "Person: not text. The detector boxed part of the artwork as a line of text.",
+      "count": 30,
+      "own_caption": 1
+    },
+    "unresolved": {
+      "title": "Unresolved",
+      "text": "Person could not tell from the picture.",
+      "count": 9,
+      "own_caption": 0
+    },
+    "flipped": {
+      "title": "Flipped",
+      "text": "Shown twice, unannounced. The person gave different answers.",
+      "count": 6,
+      "own_caption": 1
+    },
+    "control": {
+      "title": "Control",
+      "text": "A caption we injected below the minimum. The right answer is known: real text, too small.",
+      "count": 36,
+      "own_caption": 36
+    }
+  },
+  "answer_text": {
+    "real_small": "Real text, too small",
+    "garbled": "Garbled or decorative lettering",
+    "not_text": "Not text",
+    "cant_tell": "Can't tell"
+  },
+  "system_changed": [],
+  "excluded": {
+    "t005": "photorealistic people in uniform; prompt names a real brand or product; keeps third-party marks off the demo",
+    "t015": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t034": "imitates a real game logo; prompt names a real brand or product; keeps third-party marks off the demo",
+    "t057": "imitates a real sports-team logo; prompt names a real brand or product; keeps third-party marks off the demo",
+    "t074": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t099": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t030": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t068": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t100": "prompt names a real brand or product; keeps third-party marks off the demo",
+    "t103": "prompt names a real brand or product; keeps third-party marks off the demo"
+  },
+  "gallery": [
+    "t045",
+    "t044",
+    "t097",
+    "t055",
+    "t092",
+    "t018",
+    "t025",
+    "t004",
+    "t088",
+    "t020",
+    "t063",
+    "t028",
+    "t066",
+    "t087",
+    "t059",
+    "t058",
+    "t098",
+    "t085",
+    "t038",
+    "t076",
+    "c22",
+    "t029"
+  ],
+  "fault": {
+    "item": "t065",
+    "before": "t065-round1-view.jpg",
+    "after": "t065-round1b-view.jpg",
+    "round1_answer": "cant_tell"
+  },
+  "items": [
+    {
+      "item": "t001",
+      "case_id": "case-00108",
+      "region": [
+        585,
+        289,
+        600,
+        297
+      ],
+      "canvas": [
+        938,
+        938
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 5.0,
+          "ratio": 0.384,
+          "gap_px": 12.83,
+          "region": [
+            585,
+            289,
+            600,
+            297
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 12.8 px short.",
+      "prompt": "princess mononoke, cute sticker decal design, highly detailed, high quality, splatter painting ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t002",
+      "case_id": "case-00782",
+      "region": [
+        134,
+        274,
+        205,
+        282
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            134,
+            274,
+            205,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "the logo of an ai company that focuses on human use cases ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t003",
+      "case_id": "case-00491",
+      "region": [
+        319,
+        191,
+        327,
+        196
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 2.4,
+          "required_pt": 6.0,
+          "ratio": 0.4,
+          "gap_px": 7.5,
+          "region": [
+            319,
+            191,
+            327,
+            196
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 40% of the minimum, 7.5 px short.",
+      "prompt": "auto repair logo by Paul Rand, Ivan Chermayeff, Tom Geismar, add text: AUTO REPAIR, crescent wrench, gear, vector graphic, digital art, limi",
+      "box_height_px": 5
+    },
+    {
+      "item": "t004",
+      "case_id": "case-00582",
+      "region": [
+        191,
+        474,
+        631,
+        490
+      ],
+      "canvas": [
+        825,
+        1125
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 21,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 9.0,
+          "region": [
+            191,
+            474,
+            631,
+            490
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 9.0 px short.",
+      "prompt": "the four cardinal points logo ",
+      "box_height_px": 16,
+      "images": {
+        "whole": "t004-whole.jpg",
+        "close": "t004-close.jpg"
+      }
+    },
+    {
+      "item": "t005",
+      "case_id": "case-00546",
+      "region": [
+        393,
+        155,
+        413,
+        164
+      ],
+      "canvas": [
+        675,
+        375
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "ASPECT_MISMATCH",
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.32,
+          "required_pt": 6.0,
+          "ratio": 0.72,
+          "gap_px": 3.5,
+          "region": [
+            393,
+            155,
+            413,
+            164
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 72% of the minimum, 3.5 px short.",
+      "prompt": "a photo of a floating white t - shirt with an ethereum logo being held by two police officers in full riot gear in the city, photorealism, c",
+      "box_height_px": 9
+    },
+    {
+      "item": "t006",
+      "case_id": "case-00422",
+      "region": [
+        345,
+        422,
+        442,
+        432
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 33.1,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            345,
+            422,
+            442,
+            432
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "jerry garcia sticker ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t007",
+      "case_id": "case-00349",
+      "region": [
+        87,
+        118,
+        99,
+        127
+      ],
+      "canvas": [
+        180,
+        180
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 9.0,
+          "required_pt": 24.0,
+          "ratio": 0.375,
+          "gap_px": 15.0,
+          "region": [
+            87,
+            118,
+            99,
+            127
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 15.0 px short.",
+      "prompt": "die cut sticker of anime chibi kawaii cute two pineapples on beach vacation ",
+      "box_height_px": 9
+    },
+    {
+      "item": "t008",
+      "case_id": "case-00416",
+      "region": [
+        354,
+        431,
+        436,
+        441
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 39.6,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            354,
+            431,
+            436,
+            441
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "studio photo still of one politician denis coderre, tvasports logo, tv host, radio microphone!!!!, baseball commentary, montreal expos!!!! b",
+      "box_height_px": 10
+    },
+    {
+      "item": "t009",
+      "case_id": "case-00156",
+      "region": [
+        380,
+        294,
+        415,
+        300
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            380,
+            294,
+            415,
+            300
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "minimalist logo icon for doctor ivo robotnik, victo ngai, kilian eng, lois van baarle, behance, beeple, artstation ",
+      "box_height_px": 6
+    },
+    {
+      "item": "t010",
+      "case_id": "case-00575",
+      "region": [
+        343,
+        364,
+        506,
+        382
+      ],
+      "canvas": [
+        850,
+        450
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 35.8,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 6.48,
+          "required_pt": 8.0,
+          "ratio": 0.81,
+          "gap_px": 4.22,
+          "region": [
+            343,
+            364,
+            506,
+            382
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 81% of the minimum, 4.2 px short.",
+      "prompt": "cartoony, kid app, app icon logo design, cute kawaii Greg Manchess portrait painting of a rabbit bunny animal character, head shot, splashsc",
+      "box_height_px": 18
+    },
+    {
+      "item": "t011",
+      "case_id": "case-00521",
+      "region": [
+        127,
+        281,
+        210,
+        291
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 39.3,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            127,
+            281,
+            210,
+            291
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": " Intimaa logo, social album cover, synthwave",
+      "box_height_px": 10
+    },
+    {
+      "item": "t012",
+      "case_id": "case-00475",
+      "region": [
+        362,
+        482,
+        393,
+        491
+      ],
+      "canvas": [
+        611,
+        833
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 2.92,
+          "required_pt": 8.0,
+          "ratio": 0.365,
+          "gap_px": 15.68,
+          "region": [
+            362,
+            482,
+            393,
+            491
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 222.2,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 15.7 px short.",
+      "prompt": "shirt art, logo graphic design, anime style, realistic lighting, futuristic solid colors, made by ilya kuvshinov, sold on sukebannyc, front ",
+      "box_height_px": 9
+    },
+    {
+      "item": "t013",
+      "case_id": "case-00288",
+      "region": [
+        294,
+        279,
+        309,
+        286
+      ],
+      "canvas": [
+        788,
+        1088
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.68,
+          "required_pt": 5.0,
+          "ratio": 0.336,
+          "gap_px": 13.83,
+          "region": [
+            294,
+            279,
+            309,
+            286
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 34% of the minimum, 13.8 px short.",
+      "prompt": "sticker art of a realistic gremlin head with a steampunk astronaut helmet with multicolored glowing gears and tubes and cables, crisp, tripp",
+      "box_height_px": 7
+    },
+    {
+      "item": "t014",
+      "case_id": "case-00673",
+      "region": [
+        254,
+        574,
+        385,
+        587
+      ],
+      "canvas": [
+        638,
+        638
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.12,
+          "required_pt": 5.0,
+          "ratio": 0.624,
+          "gap_px": 7.83,
+          "region": [
+            254,
+            574,
+            385,
+            587
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 7.8 px short.",
+      "prompt": "sticker art of a realistic cute alien head with a steampunk space helmet with multicolored glowing gears and a headset and cables, crisp, tr",
+      "box_height_px": 13
+    },
+    {
+      "item": "t015",
+      "case_id": "case-00173",
+      "region": [
+        535,
+        273,
+        564,
+        287
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.36,
+          "required_pt": 5.0,
+          "ratio": 0.672,
+          "gap_px": 6.83,
+          "region": [
+            535,
+            273,
+            564,
+            287
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 67% of the minimum, 6.8 px short.",
+      "prompt": "gta 6 set on paris at night neon ultra cool and realistic poster, hdri lighting, realistic, cool poster, neon, retro ultra detailed, consist",
+      "box_height_px": 14
+    },
+    {
+      "item": "t016",
+      "case_id": "case-00472",
+      "region": [
+        142,
+        259,
+        174,
+        263
+      ],
+      "canvas": [
+        488,
+        488
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "garbled",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 24.7,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            142,
+            259,
+            174,
+            263
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "hamburger logo ideas ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t017",
+      "case_id": "case-00250",
+      "region": [
+        97,
+        447,
+        113,
+        459
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.32,
+          "required_pt": 8.0,
+          "ratio": 0.54,
+          "gap_px": 10.22,
+          "region": [
+            97,
+            447,
+            113,
+            459
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 54% of the minimum, 10.2 px short.",
+      "prompt": "mage pointy hat and fireball vector art, logo, minimalistic, black and white, clear edges, no watermarks ",
+      "box_height_px": 12
+    },
+    {
+      "item": "t018",
+      "case_id": "case-00175",
+      "region": [
+        244,
+        293,
+        309,
+        310
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 6.12,
+          "required_pt": 8.0,
+          "ratio": 0.765,
+          "gap_px": 5.22,
+          "region": [
+            244,
+            293,
+            309,
+            310
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 76% of the minimum, 5.2 px short.",
+      "prompt": "A logo depicting a boar, red, minimalistic, white background, corporate",
+      "box_height_px": 17,
+      "images": {
+        "whole": "t018-whole.jpg",
+        "close": "t018-close.jpg"
+      }
+    },
+    {
+      "item": "t019",
+      "case_id": "case-00062",
+      "region": [
+        229,
+        189,
+        257,
+        201
+      ],
+      "canvas": [
+        488,
+        488
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.76,
+          "required_pt": 6.0,
+          "ratio": 0.96,
+          "gap_px": 0.5,
+          "region": [
+            229,
+            189,
+            257,
+            201
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 96% of the minimum, 0.5 px short.",
+      "prompt": "aye-aye head, rustic IPA microbrewery logo",
+      "box_height_px": 12
+    },
+    {
+      "item": "t020",
+      "case_id": "case-00119",
+      "region": [
+        193,
+        94,
+        216,
+        106
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 12.0,
+          "required_pt": 24.0,
+          "ratio": 0.5,
+          "gap_px": 12.0,
+          "region": [
+            193,
+            94,
+            216,
+            106
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 50% of the minimum, 12.0 px short.",
+      "prompt": "vanu logo ",
+      "box_height_px": 12,
+      "images": {
+        "whole": "t020-whole.jpg",
+        "close": "t020-close.jpg"
+      }
+    },
+    {
+      "item": "t021",
+      "case_id": "case-00112",
+      "region": [
+        388,
+        203,
+        402,
+        208
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.4,
+          "required_pt": 6.0,
+          "ratio": 0.4,
+          "gap_px": 7.5,
+          "region": [
+            388,
+            203,
+            402,
+            208
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 40% of the minimum, 7.5 px short.",
+      "prompt": "a simplistic icon of a webcam, minimalistic icon, vector, app icon, oversimplified logo ",
+      "box_height_px": 5
+    },
+    {
+      "item": "t022",
+      "case_id": "case-00375",
+      "region": [
+        301,
+        218,
+        354,
+        228
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.6,
+          "required_pt": 8.0,
+          "ratio": 0.45,
+          "gap_px": 12.22,
+          "region": [
+            301,
+            218,
+            354,
+            228
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 45% of the minimum, 12.2 px short.",
+      "prompt": "logo for a movie popcorn company",
+      "box_height_px": 10
+    },
+    {
+      "item": "t023",
+      "case_id": "case-00441",
+      "region": [
+        129,
+        281,
+        211,
+        291
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 39.6,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            129,
+            281,
+            211,
+            291
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "portrait of a hindu god ganesha art by hydro 7 4, victo ngai sticker, colorful, illustration, highly detailed, simple, smooth and clean vect",
+      "box_height_px": 10
+    },
+    {
+      "item": "t024",
+      "case_id": "case-00120",
+      "region": [
+        282,
+        333,
+        375,
+        348
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 52.1,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.4,
+          "required_pt": 8.0,
+          "ratio": 0.675,
+          "gap_px": 7.22,
+          "region": [
+            282,
+            333,
+            375,
+            348
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 68% of the minimum, 7.2 px short.",
+      "prompt": "rustic letters VB beautiful digital vector logo logopond",
+      "box_height_px": 15
+    },
+    {
+      "item": "t025",
+      "case_id": "case-00844",
+      "region": [
+        119,
+        73,
+        146,
+        90
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 17.0,
+          "required_pt": 24.0,
+          "ratio": 0.708,
+          "gap_px": 7.0,
+          "region": [
+            119,
+            73,
+            146,
+            90
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 71% of the minimum, 7.0 px short.",
+      "prompt": "a photo of a retro minimalist clean fire flame warning caution punk patch ",
+      "box_height_px": 17,
+      "images": {
+        "whole": "t025-whole.jpg",
+        "close": "t025-close.jpg"
+      }
+    },
+    {
+      "item": "t026",
+      "case_id": "case-00927",
+      "region": [
+        193,
+        507,
+        225,
+        511
+      ],
+      "canvas": [
+        417,
+        567
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            193,
+            507,
+            225,
+            511
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "logo of a minimalistic reaper by loish and rhads ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t027",
+      "case_id": "case-00971",
+      "region": [
+        308,
+        302,
+        369,
+        310
+      ],
+      "canvas": [
+        675,
+        375
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "ASPECT_MISMATCH",
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            308,
+            302,
+            369,
+            310
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "cute adorable dachshund astronaut sticker ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t028",
+      "case_id": "case-00552",
+      "region": [
+        191,
+        110,
+        245,
+        119
+      ],
+      "canvas": [
+        492,
+        492
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.32,
+          "required_pt": 6.0,
+          "ratio": 0.72,
+          "gap_px": 3.5,
+          "region": [
+            191,
+            110,
+            245,
+            119
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 72% of the minimum, 3.5 px short.",
+      "prompt": "auto repair logo, crescent wrench, gear, vector graphic, digital art, monochrome, symmetry, modern",
+      "box_height_px": 9,
+      "images": {
+        "whole": "t028-whole.jpg",
+        "close": "t028-close.jpg"
+      }
+    },
+    {
+      "item": "t029",
+      "case_id": "case-00749",
+      "region": [
+        56,
+        165,
+        204,
+        180
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 15.0,
+          "required_pt": 24.0,
+          "ratio": 0.625,
+          "gap_px": 9.0,
+          "region": [
+            56,
+            165,
+            204,
+            180
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 9.0 px short.",
+      "prompt": "marble statue of Pugil store logo",
+      "box_height_px": 15,
+      "images": {
+        "whole": "t029-whole.jpg",
+        "close": "t029-close.jpg"
+      }
+    },
+    {
+      "item": "t030",
+      "case_id": "case-00300",
+      "region": [
+        212,
+        194,
+        242,
+        202
+      ],
+      "canvas": [
+        458,
+        450
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            212,
+            194,
+            242,
+            202
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "Logo of a YC company, digital art",
+      "box_height_px": 8
+    },
+    {
+      "item": "t031",
+      "case_id": "case-00601",
+      "region": [
+        289,
+        284,
+        350,
+        292
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            289,
+            284,
+            350,
+            292
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "behance hd, 3 d head of green hedgehog, cgsociety, symmetrical logo, a pixar character, rendered by renderman, cgsociety, pop surrealism ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t032",
+      "case_id": "case-00352",
+      "region": [
+        371,
+        69,
+        382,
+        75
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 37.5,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            371,
+            69,
+            382,
+            75
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "windows 2 0 0 3 logo ",
+      "box_height_px": 6
+    },
+    {
+      "item": "t033",
+      "case_id": "case-00917",
+      "region": [
+        151,
+        277,
+        183,
+        281
+      ],
+      "canvas": [
+        334,
+        334
+      ],
+      "kind": "control",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "MISSING_BLEED",
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            151,
+            277,
+            183,
+            281
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "chef platypus, logo style ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t034",
+      "case_id": "case-00524",
+      "region": [
+        83,
+        101,
+        120,
+        112
+      ],
+      "canvas": [
+        226,
+        288
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 11.0,
+          "required_pt": 24.0,
+          "ratio": 0.458,
+          "gap_px": 13.0,
+          "region": [
+            83,
+            101,
+            120,
+            112
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 46% of the minimum, 13.0 px short.",
+      "prompt": "the call of duty logo in a cyberpunk style ",
+      "box_height_px": 11
+    },
+    {
+      "item": "t035",
+      "case_id": "case-00818",
+      "region": [
+        564,
+        574,
+        674,
+        587
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.12,
+          "required_pt": 5.0,
+          "ratio": 0.624,
+          "gap_px": 7.83,
+          "region": [
+            564,
+            574,
+            674,
+            587
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 7.8 px short.",
+      "prompt": "a brand logo of henry cavill, stylized logo, flat, flat icon, logo concept art, brand identity, simple background ",
+      "box_height_px": 13
+    },
+    {
+      "item": "t036",
+      "case_id": "case-00342",
+      "region": [
+        281,
+        152,
+        357,
+        163
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 47.1,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 2.0,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.28,
+          "required_pt": 6.0,
+          "ratio": 0.88,
+          "gap_px": 1.5,
+          "region": [
+            281,
+            152,
+            357,
+            163
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 88% of the minimum, 1.5 px short.",
+      "prompt": "logo for a buisness of home painter ",
+      "box_height_px": 11
+    },
+    {
+      "item": "t037",
+      "case_id": "case-00421",
+      "region": [
+        276,
+        281,
+        361,
+        291
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 37.8,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            276,
+            281,
+            361,
+            291
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": " detailed scan of a A4 sized document, tax form, questionaire, tables with alternating row colours, high definition, signature on the bottom",
+      "box_height_px": 10
+    },
+    {
+      "item": "t038",
+      "case_id": "case-00526",
+      "region": [
+        86,
+        308,
+        115,
+        314
+      ],
+      "canvas": [
+        417,
+        567
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            86,
+            308,
+            115,
+            314
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "owl logo \u0153il painting 8 k ",
+      "box_height_px": 6,
+      "images": {
+        "whole": "t038-whole.jpg",
+        "close": "t038-close.jpg"
+      }
+    },
+    {
+      "item": "t039",
+      "case_id": "case-00331",
+      "region": [
+        174,
+        505,
+        237,
+        515
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 51.9,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            174,
+            505,
+            237,
+            515
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "an original and creatively clever abstract logo design for iox pros, a digital transformation consulting, and iot r & d firm ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t040",
+      "case_id": "case-00223",
+      "region": [
+        601,
+        287,
+        640,
+        303
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 5.0,
+          "ratio": 0.768,
+          "gap_px": 4.83,
+          "region": [
+            601,
+            287,
+            640,
+            303
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 77% of the minimum, 4.8 px short.",
+      "prompt": "a shifty fat high fantasy elf mall cop with a sheriff's badge, Oil Painting, hyperrealistic, Detailed Digital Art, RPG portrait, 3/4 bust, d",
+      "box_height_px": 16
+    },
+    {
+      "item": "t041",
+      "case_id": "case-00465",
+      "region": [
+        193,
+        664,
+        359,
+        682
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 35,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 6.48,
+          "required_pt": 8.0,
+          "ratio": 0.81,
+          "gap_px": 4.22,
+          "region": [
+            193,
+            664,
+            359,
+            682
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 81% of the minimum, 4.2 px short.",
+      "prompt": "illustration, k - art, chibi characters, with border, cat ears, pastel vibrant, kawaii, human, stiker, icon, cartoon, art by butcher billy, ",
+      "box_height_px": 18
+    },
+    {
+      "item": "t042",
+      "case_id": "case-00332",
+      "region": [
+        276,
+        272,
+        361,
+        282
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 37.8,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "LOW_CONTRAST",
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            276,
+            272,
+            361,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "minimalist logo icon for a bloodborne character, victo ngai, kilian eng, lois van baarle, behance, beeple, artstation ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t043",
+      "case_id": "case-00001",
+      "region": [
+        259,
+        104,
+        299,
+        109
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": "garbled",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 30.9,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.4,
+          "required_pt": 6.0,
+          "ratio": 0.4,
+          "gap_px": 7.5,
+          "region": [
+            259,
+            104,
+            299,
+            109
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 40% of the minimum, 7.5 px short.",
+      "prompt": "Sahara comics logo for a publishing Company, minimalist, desert color scheme ",
+      "box_height_px": 5
+    },
+    {
+      "item": "t044",
+      "case_id": "case-00233",
+      "region": [
+        386,
+        607,
+        400,
+        614
+      ],
+      "canvas": [
+        788,
+        1088
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 43.2,
+      "answer": "garbled",
+      "category": "flipped",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.68,
+          "required_pt": 5.0,
+          "ratio": 0.336,
+          "gap_px": 13.83,
+          "region": [
+            386,
+            607,
+            400,
+            614
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 34% of the minimum, 13.8 px short.",
+      "prompt": "retro corporate logo vector asset pack",
+      "box_height_px": 7,
+      "images": {
+        "whole": "t044-whole.jpg",
+        "close": "t044-close.jpg"
+      }
+    },
+    {
+      "item": "t045",
+      "case_id": "case-00040",
+      "region": [
+        293,
+        303,
+        361,
+        324
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "real_small",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 60,
+      "answer": "garbled",
+      "category": "flipped",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 7.56,
+          "required_pt": 8.0,
+          "ratio": 0.945,
+          "gap_px": 1.22,
+          "region": [
+            293,
+            303,
+            361,
+            324
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Close to the limit: 94% of the minimum, 1.2 px short.",
+      "prompt": "! dream a football, logo by a new fresh sport brand, dynamic cinematic natural lighting, abstract concept art, brand design, dynamic, ",
+      "box_height_px": 21,
+      "images": {
+        "whole": "t045-whole.jpg",
+        "close": "t045-close.jpg"
+      }
+    },
+    {
+      "item": "t046",
+      "case_id": "case-00677",
+      "region": [
+        296,
+        274,
+        344,
+        282
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            296,
+            274,
+            344,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "nocoldiz logo ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t047",
+      "case_id": "case-00722",
+      "region": [
+        188,
+        504,
+        226,
+        508
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "control",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            188,
+            504,
+            226,
+            508
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "hyperdetailed photorealism hot sauce bottle with a demon on the logo",
+      "box_height_px": 4
+    },
+    {
+      "item": "t048",
+      "case_id": "case-00274",
+      "region": [
+        116,
+        111,
+        134,
+        115
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.0,
+          "required_pt": 24.0,
+          "ratio": 0.167,
+          "gap_px": 20.0,
+          "region": [
+            116,
+            111,
+            134,
+            115
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 17% of the minimum, 20.0 px short.",
+      "prompt": "award-winning logo for research lab",
+      "box_height_px": 4
+    },
+    {
+      "item": "t049",
+      "case_id": "case-00324",
+      "region": [
+        370,
+        221,
+        421,
+        236
+      ],
+      "canvas": [
+        792,
+        504
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 7.5,
+          "required_pt": 24.0,
+          "ratio": 0.312,
+          "gap_px": 33.0,
+          "region": [
+            370,
+            221,
+            421,
+            236
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 144.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 31% of the minimum, 33.0 px short.",
+      "prompt": "a company logo symbol for a restaurant with pop colors, digital art illustrator svg logo design ",
+      "box_height_px": 15
+    },
+    {
+      "item": "t050",
+      "case_id": "case-00635",
+      "region": [
+        168,
+        369,
+        282,
+        383
+      ],
+      "canvas": [
+        450,
+        450
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            168,
+            369,
+            282,
+            383
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "beautiful anime painting of female corrin from fire emblem, by makoto shinkai, kimi no na wa, artstation, atmospheric, high detail ",
+      "box_height_px": 14
+    },
+    {
+      "item": "t051",
+      "case_id": "case-00451",
+      "region": [
+        338,
+        431,
+        451,
+        441
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 28.6,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            338,
+            431,
+            451,
+            441
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "photoshop vector design logo concept of a cougar ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t052",
+      "case_id": "case-00762",
+      "region": [
+        284,
+        274,
+        357,
+        282
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            284,
+            274,
+            357,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "a vectorial logo of a side of a shetland sheepdog, trending on dribbble, monochrome ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t053",
+      "case_id": "case-00964",
+      "region": [
+        55,
+        201,
+        202,
+        216
+      ],
+      "canvas": [
+        216,
+        288
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 15.0,
+          "required_pt": 24.0,
+          "ratio": 0.625,
+          "gap_px": 9.0,
+          "region": [
+            55,
+            201,
+            202,
+            216
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 9.0 px short.",
+      "prompt": "black metal logo for the band called Viktor Orban, creepy atmosphere, dark, portrait, realistic, very realistic, illustration by Gustave Dor",
+      "box_height_px": 15
+    },
+    {
+      "item": "t054",
+      "case_id": "case-00301",
+      "region": [
+        137,
+        281,
+        200,
+        291
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 51.9,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            137,
+            281,
+            200,
+            291
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "Logo of Arpard, Armenian guns manufacturer",
+      "box_height_px": 10
+    },
+    {
+      "item": "t055",
+      "case_id": "case-00234",
+      "region": [
+        175,
+        92,
+        222,
+        114
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 22.0,
+          "required_pt": 24.0,
+          "ratio": 0.917,
+          "gap_px": 2.0,
+          "region": [
+            175,
+            92,
+            222,
+            114
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Close to the limit: 92% of the minimum, 2.0 px short.",
+      "prompt": "3 d watercolor nature logo on white background ",
+      "box_height_px": 22,
+      "images": {
+        "whole": "t055-whole.jpg",
+        "close": "t055-close.jpg"
+      }
+    },
+    {
+      "item": "t056",
+      "case_id": "case-00941",
+      "region": [
+        133,
+        287,
+        205,
+        295
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            133,
+            287,
+            205,
+            295
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "minimalist logo icon of a human head made of water, white background, futuristic, glowing, hyper realistic, ray tracing, realistic water spl",
+      "box_height_px": 8
+    },
+    {
+      "item": "t057",
+      "case_id": "case-00350",
+      "region": [
+        147,
+        340,
+        169,
+        348
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "real_small",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 49.4,
+      "answer": "not_text",
+      "category": "flipped",
+      "own_caption": false,
+      "caption_font_ratio": 2.0,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            147,
+            340,
+            169,
+            348
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "celtisc logo redesign, fighting irish, nba logo redesign ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t058",
+      "case_id": "case-00295",
+      "region": [
+        242,
+        232,
+        336,
+        254
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 7.92,
+          "required_pt": 8.0,
+          "ratio": 0.99,
+          "gap_px": 0.22,
+          "region": [
+            242,
+            232,
+            336,
+            254
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Within half a pixel under the limit: rasterising alone could explain it. The rule still blocks, because it measured under.",
+      "prompt": "cute tiny skeleton head is a movie camera, centered!!, symmetrical, very minimal, line art sticker by tom whalen ",
+      "box_height_px": 22,
+      "images": {
+        "whole": "t058-whole.jpg",
+        "close": "t058-close.jpg"
+      }
+    },
+    {
+      "item": "t059",
+      "case_id": "case-00461",
+      "region": [
+        305,
+        315,
+        370,
+        338
+      ],
+      "canvas": [
+        675,
+        675
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.52,
+          "required_pt": 6.0,
+          "ratio": 0.92,
+          "gap_px": 2.0,
+          "region": [
+            305,
+            315,
+            370,
+            338
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 92% of the minimum, 2.0 px short.",
+      "prompt": " Cool hipster gorilla with sunglasses, sticker, anthropomorphic, colorful, fantasy, artstation, illustration, highly detailed, simple, smoot",
+      "box_height_px": 23,
+      "images": {
+        "whole": "t059-whole.jpg",
+        "close": "t059-close.jpg"
+      }
+    },
+    {
+      "item": "t060",
+      "case_id": "case-00026",
+      "region": [
+        189,
+        245,
+        205,
+        257
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.76,
+          "required_pt": 6.0,
+          "ratio": 0.96,
+          "gap_px": 0.5,
+          "region": [
+            189,
+            245,
+            205,
+            257
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 96% of the minimum, 0.5 px short.",
+      "prompt": "spiked heart in a garden of rose thorns. simple leather cutout art in black, red, and burgundy on a white background. minimalist logo art, v",
+      "box_height_px": 12
+    },
+    {
+      "item": "t061",
+      "case_id": "case-00728",
+      "region": [
+        554,
+        574,
+        685,
+        587
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.12,
+          "required_pt": 5.0,
+          "ratio": 0.624,
+          "gap_px": 7.83,
+          "region": [
+            554,
+            574,
+            685,
+            587
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 7.8 px short.",
+      "prompt": "fifa world cup 2 0 2 6 in canada, mexico and usa, logo concept, hyperdetailed, artstation, cgsociety, 8 k ",
+      "box_height_px": 13
+    },
+    {
+      "item": "t062",
+      "case_id": "case-00885",
+      "region": [
+        242,
+        665,
+        303,
+        673
+      ],
+      "canvas": [
+        544,
+        725
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "MISSING_BLEED",
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            242,
+            665,
+            303,
+            673
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "Sticker illustration Of A Capybara Superhero, 4K",
+      "box_height_px": 8
+    },
+    {
+      "item": "t063",
+      "case_id": "case-00043",
+      "region": [
+        592,
+        388,
+        644,
+        399
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.64,
+          "required_pt": 5.0,
+          "ratio": 0.528,
+          "gap_px": 9.83,
+          "region": [
+            592,
+            388,
+            644,
+            399
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 53% of the minimum, 9.8 px short.",
+      "prompt": "Arcane Tarot, Fantasy, 2d Digital Art, steampunk, symmetrical centered, high quality 3D render, concept art, 4K, UHD, High quality mechanica",
+      "box_height_px": 11,
+      "images": {
+        "whole": "t063-whole.jpg",
+        "close": "t063-close.jpg"
+      }
+    },
+    {
+      "item": "t064",
+      "case_id": "case-00362",
+      "region": [
+        263,
+        272,
+        376,
+        282
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 28.6,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            263,
+            272,
+            376,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "simple minimalistic logo for a homer simpson ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t065",
+      "case_id": "case-00952",
+      "region": [
+        226,
+        430,
+        264,
+        434
+      ],
+      "canvas": [
+        488,
+        488
+      ],
+      "kind": "control",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            226,
+            430,
+            264,
+            434
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "cute miss mascot ptyranidur ptyranidur tyrunt super hero sticker art, cronobreaker, beeple game icon ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t066",
+      "case_id": "case-00576",
+      "region": [
+        322,
+        124,
+        336,
+        132
+      ],
+      "canvas": [
+        642,
+        342
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "garbled",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 49.4,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            322,
+            124,
+            336,
+            132
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "logo of someone entering a home, logo style ",
+      "box_height_px": 8,
+      "images": {
+        "whole": "t066-whole.jpg",
+        "close": "t066-close.jpg"
+      }
+    },
+    {
+      "item": "t067",
+      "case_id": "case-00448",
+      "region": [
+        682,
+        870,
+        858,
+        886
+      ],
+      "canvas": [
+        1538,
+        938
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 29.5,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 5.0,
+          "ratio": 0.768,
+          "gap_px": 4.83,
+          "region": [
+            682,
+            870,
+            858,
+            886
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 77% of the minimum, 4.8 px short.",
+      "prompt": "cute plant in a pot sticker ",
+      "box_height_px": 16
+    },
+    {
+      "item": "t068",
+      "case_id": "case-00327",
+      "region": [
+        923,
+        466,
+        946,
+        473
+      ],
+      "canvas": [
+        1575,
+        975
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.68,
+          "required_pt": 6.0,
+          "ratio": 0.28,
+          "gap_px": 18.0,
+          "region": [
+            923,
+            466,
+            946,
+            473
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 28% of the minimum, 18.0 px short.",
+      "prompt": "jurassic park logo ",
+      "box_height_px": 7
+    },
+    {
+      "item": "t069",
+      "case_id": "case-00199",
+      "region": [
+        153,
+        81,
+        175,
+        97
+      ],
+      "canvas": [
+        324,
+        180
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 16.0,
+          "required_pt": 24.0,
+          "ratio": 0.667,
+          "gap_px": 8.0,
+          "region": [
+            153,
+            81,
+            175,
+            97
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 67% of the minimum, 8.0 px short.",
+      "prompt": "beautiful spooky digital matte painting of pumpkin patch illustration black and blue flowers and asters with fireflies enchanted dark backgr",
+      "box_height_px": 16
+    },
+    {
+      "item": "t070",
+      "case_id": "case-00599",
+      "region": [
+        112,
+        64,
+        152,
+        75
+      ],
+      "canvas": [
+        263,
+        252
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 11.0,
+          "required_pt": 24.0,
+          "ratio": 0.458,
+          "gap_px": 13.0,
+          "region": [
+            112,
+            64,
+            152,
+            75
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 46% of the minimum, 13.0 px short.",
+      "prompt": "a poster artwork of a oil rig, toxic, chemicals contamination art by jack kirby, dan mumford, detailed and accurate, a cleaner app logo, 3 5",
+      "box_height_px": 11
+    },
+    {
+      "item": "t071",
+      "case_id": "case-00477",
+      "region": [
+        216,
+        185,
+        229,
+        195
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 60,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            216,
+            185,
+            229,
+            195
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "sphinx cat, symmetrical, digital art, high quality, illustration, museum, oil painting, sticker, ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t072",
+      "case_id": "case-00969",
+      "region": [
+        74,
+        219,
+        142,
+        228
+      ],
+      "canvas": [
+        216,
+        288
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 9.0,
+          "required_pt": 24.0,
+          "ratio": 0.375,
+          "gap_px": 15.0,
+          "region": [
+            74,
+            219,
+            142,
+            228
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 15.0 px short.",
+      "prompt": "high fantasy elf mall cop with a sheriff's badge that is fat, shifty, 1500s Oil Portrait, Carvagio, hyper realistic, 8k UHD scan",
+      "box_height_px": 9
+    },
+    {
+      "item": "t073",
+      "case_id": "case-00314",
+      "region": [
+        87,
+        88,
+        241,
+        107
+      ],
+      "canvas": [
+        324,
+        180
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 39.9,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 19.0,
+          "required_pt": 24.0,
+          "ratio": 0.792,
+          "gap_px": 5.0,
+          "region": [
+            87,
+            88,
+            241,
+            107
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 79% of the minimum, 5.0 px short.",
+      "prompt": "a vintage advertisement for a candy called savory patch kids depicting a horse licking one of the kids while looking at the camera ",
+      "box_height_px": 19
+    },
+    {
+      "item": "t074",
+      "case_id": "case-00268",
+      "region": [
+        281,
+        264,
+        303,
+        279
+      ],
+      "canvas": [
+        938,
+        938
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 60,
+      "answer": "garbled",
+      "category": "flipped",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.6,
+          "required_pt": 5.0,
+          "ratio": 0.72,
+          "gap_px": 5.83,
+          "region": [
+            281,
+            264,
+            303,
+            279
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 72% of the minimum, 5.8 px short.",
+      "prompt": "the coke logo personified as a cute sprite themed cartoon girl in the style of the youtuber lavender towne, margaret keane style, large cree",
+      "box_height_px": 15
+    },
+    {
+      "item": "t075",
+      "case_id": "case-00553",
+      "region": [
+        496,
+        115,
+        530,
+        123
+      ],
+      "canvas": [
+        1238,
+        638
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 5.0,
+          "ratio": 0.384,
+          "gap_px": 12.83,
+          "region": [
+            496,
+            115,
+            530,
+            123
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 12.8 px short.",
+      "prompt": "windows 1 0 logo ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t076",
+      "case_id": "case-00212",
+      "region": [
+        334,
+        134,
+        343,
+        140
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            334,
+            134,
+            343,
+            140
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "logo, visual identity, espaco 8 5 ",
+      "box_height_px": 6,
+      "images": {
+        "whole": "t076-whole.jpg",
+        "close": "t076-close.jpg"
+      }
+    },
+    {
+      "item": "t077",
+      "case_id": "case-00016",
+      "region": [
+        294,
+        256,
+        311,
+        260
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            294,
+            256,
+            311,
+            260
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "minimalist sticker logo for a neural network, vector art",
+      "box_height_px": 4
+    },
+    {
+      "item": "t078",
+      "case_id": "case-00187",
+      "region": [
+        313,
+        118,
+        319,
+        122
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            313,
+            118,
+            319,
+            122
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "cute miss mascot maganon maganon magmortar food sticker art, cronobreaker, beeple game icon ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t079",
+      "case_id": "case-00495",
+      "region": [
+        727,
+        88,
+        759,
+        97
+      ],
+      "canvas": [
+        1167,
+        722
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.92,
+          "required_pt": 8.0,
+          "ratio": 0.365,
+          "gap_px": 15.68,
+          "region": [
+            727,
+            88,
+            759,
+            97
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 222.2,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 15.7 px short.",
+      "prompt": "minimalistic logo of brain on black jar, advert, symmetric, awesome, beautiful, ",
+      "box_height_px": 9
+    },
+    {
+      "item": "t080",
+      "case_id": "case-00041",
+      "region": [
+        313,
+        96,
+        331,
+        103
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.36,
+          "required_pt": 6.0,
+          "ratio": 0.56,
+          "gap_px": 5.5,
+          "region": [
+            313,
+            96,
+            331,
+            103
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 56% of the minimum, 5.5 px short.",
+      "prompt": "a coffee brand logo concepts",
+      "box_height_px": 7
+    },
+    {
+      "item": "t081",
+      "case_id": "case-00152",
+      "region": [
+        132,
+        91,
+        156,
+        95
+      ],
+      "canvas": [
+        338,
+        338
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            132,
+            91,
+            156,
+            95
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "language learning logo, high contrast, big, simple, intricate, elegant, highly detailed, artstation, concept art, smooth, sharp focus ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t082",
+      "case_id": "case-00130",
+      "region": [
+        426,
+        215,
+        440,
+        224
+      ],
+      "canvas": [
+        850,
+        450
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 55.6,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.24,
+          "required_pt": 8.0,
+          "ratio": 0.405,
+          "gap_px": 13.22,
+          "region": [
+            426,
+            215,
+            440,
+            224
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 40% of the minimum, 13.2 px short.",
+      "prompt": "roulette, logo ",
+      "box_height_px": 9
+    },
+    {
+      "item": "t083",
+      "case_id": "case-00128",
+      "region": [
+        734,
+        371,
+        791,
+        385
+      ],
+      "canvas": [
+        1538,
+        938
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.36,
+          "required_pt": 5.0,
+          "ratio": 0.672,
+          "gap_px": 6.83,
+          "region": [
+            734,
+            371,
+            791,
+            385
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 67% of the minimum, 6.8 px short.",
+      "prompt": "The words Stable Diffusion written as a logo for an AI Art Generation Tool. 8k. Vector Art",
+      "box_height_px": 14
+    },
+    {
+      "item": "t084",
+      "case_id": "case-00196",
+      "region": [
+        365,
+        201,
+        398,
+        208
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.36,
+          "required_pt": 6.0,
+          "ratio": 0.56,
+          "gap_px": 5.5,
+          "region": [
+            365,
+            201,
+            398,
+            208
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 56% of the minimum, 5.5 px short.",
+      "prompt": "\ud83d\udd28 proletarian girly hammer tool icon designed by lisa frank, vector graphics forum badge, svg, transparent background, cute, metal, enamel, ",
+      "box_height_px": 7
+    },
+    {
+      "item": "t085",
+      "case_id": "case-00179",
+      "region": [
+        163,
+        63,
+        234,
+        77
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 14.0,
+          "required_pt": 24.0,
+          "ratio": 0.583,
+          "gap_px": 10.0,
+          "region": [
+            163,
+            63,
+            234,
+            77
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 58% of the minimum, 10.0 px short.",
+      "prompt": "a detailed badge border collie embroidered patch, photorealistic, realistic, award winning photo, close up, closeup - view, cinematic lighti",
+      "box_height_px": 14,
+      "images": {
+        "whole": "t085-whole.jpg",
+        "close": "t085-close.jpg"
+      }
+    },
+    {
+      "item": "t086",
+      "case_id": "case-00372",
+      "region": [
+        288,
+        181,
+        353,
+        189
+      ],
+      "canvas": [
+        638,
+        338
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 39.5,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            288,
+            181,
+            353,
+            189
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "logo for yoga service with text elena gladkaya behance blue ",
+      "box_height_px": 8
+    },
+    {
+      "item": "t087",
+      "case_id": "case-00425",
+      "region": [
+        786,
+        160,
+        954,
+        186
+      ],
+      "canvas": [
+        1700,
+        900
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 50.1,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 4.68,
+          "required_pt": 8.0,
+          "ratio": 0.585,
+          "gap_px": 18.44,
+          "region": [
+            786,
+            160,
+            954,
+            186
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 400.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 58% of the minimum, 18.4 px short.",
+      "prompt": "a modern tribal logo representing protection",
+      "box_height_px": 26,
+      "images": {
+        "whole": "t087-whole.jpg",
+        "close": "t087-close.jpg"
+      }
+    },
+    {
+      "item": "t088",
+      "case_id": "case-00408",
+      "region": [
+        516,
+        355,
+        548,
+        374
+      ],
+      "canvas": [
+        792,
+        1088
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "garbled",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 60,
+      "answer": "garbled",
+      "category": "policy",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.56,
+          "required_pt": 5.0,
+          "ratio": 0.912,
+          "gap_px": 1.83,
+          "region": [
+            516,
+            355,
+            548,
+            374
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Close to the limit: 91% of the minimum, 1.8 px short.",
+      "prompt": "logo for a technology development company called WizardPig",
+      "box_height_px": 19,
+      "images": {
+        "whole": "t088-whole.jpg",
+        "close": "t088-close.jpg"
+      }
+    },
+    {
+      "item": "t089",
+      "case_id": "case-00281",
+      "region": [
+        389,
+        84,
+        405,
+        94
+      ],
+      "canvas": [
+        788,
+        488
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 4.8,
+          "required_pt": 6.0,
+          "ratio": 0.8,
+          "gap_px": 2.5,
+          "region": [
+            389,
+            84,
+            405,
+            94
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 80% of the minimum, 2.5 px short.",
+      "prompt": "a medieval logo ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t090",
+      "case_id": "case-00501",
+      "region": [
+        290,
+        328,
+        338,
+        332
+      ],
+      "canvas": [
+        416,
+        562
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "cant_tell",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 24.7,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 6.0,
+          "ratio": 0.32,
+          "gap_px": 8.5,
+          "region": [
+            290,
+            328,
+            338,
+            332
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 32% of the minimum, 8.5 px short.",
+      "prompt": "nhl logo detailed vector vikings ",
+      "box_height_px": 4
+    },
+    {
+      "item": "t091",
+      "case_id": "case-00721",
+      "region": [
+        91,
+        84,
+        115,
+        95
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.28,
+          "required_pt": 6.0,
+          "ratio": 0.88,
+          "gap_px": 1.5,
+          "region": [
+            91,
+            84,
+            115,
+            95
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 88% of the minimum, 1.5 px short.",
+      "prompt": "language learning logo, high contrast, big, simple, modern, beautiful, stunning ",
+      "box_height_px": 11
+    },
+    {
+      "item": "t092",
+      "case_id": "case-00080",
+      "region": [
+        509,
+        297,
+        549,
+        316
+      ],
+      "canvas": [
+        1050,
+        650
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 6.84,
+          "required_pt": 8.0,
+          "ratio": 0.855,
+          "gap_px": 3.22,
+          "region": [
+            509,
+            297,
+            549,
+            316
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Close to the limit: 86% of the minimum, 3.2 px short.",
+      "prompt": "ai build logo by rob janoss ",
+      "box_height_px": 19,
+      "images": {
+        "whole": "t092-whole.jpg",
+        "close": "t092-close.jpg"
+      }
+    },
+    {
+      "item": "t093",
+      "case_id": "case-00438",
+      "region": [
+        309,
+        329,
+        353,
+        337
+      ],
+      "canvas": [
+        638,
+        638
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 49.4,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 5.0,
+          "ratio": 0.384,
+          "gap_px": 12.83,
+          "region": [
+            309,
+            329,
+            353,
+            337
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 12.8 px short.",
+      "prompt": "a portrait of lich king fantasy, dungeons and dragons, an ultrafine detailed painting, chibi, detailed painting, boris valejo. octopath trav",
+      "box_height_px": 8
+    },
+    {
+      "item": "t094",
+      "case_id": "case-00014",
+      "region": [
+        107,
+        134,
+        155,
+        144
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 10.0,
+          "required_pt": 24.0,
+          "ratio": 0.417,
+          "gap_px": 14.0,
+          "region": [
+            107,
+            134,
+            155,
+            144
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 42% of the minimum, 14.0 px short.",
+      "prompt": "a vintage classic batman logo from 1 9 0 9 ",
+      "box_height_px": 10
+    },
+    {
+      "item": "t095",
+      "case_id": "case-00766",
+      "region": [
+        198,
+        107,
+        212,
+        113
+      ],
+      "canvas": [
+        488,
+        488
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            198,
+            107,
+            212,
+            113
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "a movie poster youtube logo variations ",
+      "box_height_px": 6
+    },
+    {
+      "item": "t096",
+      "case_id": "case-00840",
+      "region": [
+        380,
+        369,
+        471,
+        383
+      ],
+      "canvas": [
+        850,
+        450
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            380,
+            369,
+            471,
+            383
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "a svg logo of a classic sculpture made of planets and stars, iridescent and holographic colors ",
+      "box_height_px": 14
+    },
+    {
+      "item": "t097",
+      "case_id": "case-00306",
+      "region": [
+        133,
+        200,
+        152,
+        206
+      ],
+      "canvas": [
+        412,
+        562
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": "garbled",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 37.5,
+      "answer": "cant_tell",
+      "category": "flipped",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 6.0,
+          "ratio": 0.48,
+          "gap_px": 6.5,
+          "region": [
+            133,
+            200,
+            152,
+            206
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 48% of the minimum, 6.5 px short.",
+      "prompt": "beer logo, digital art, trending on ArtStation",
+      "box_height_px": 6,
+      "images": {
+        "whole": "t097-whole.jpg",
+        "close": "t097-close.jpg"
+      }
+    },
+    {
+      "item": "t098",
+      "case_id": "case-00595",
+      "region": [
+        458,
+        195,
+        503,
+        214
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 6.84,
+          "required_pt": 8.0,
+          "ratio": 0.855,
+          "gap_px": 3.22,
+          "region": [
+            458,
+            195,
+            503,
+            214
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Close to the limit: 86% of the minimum, 3.2 px short.",
+      "prompt": "brewery logo design",
+      "box_height_px": 19,
+      "images": {
+        "whole": "t098-whole.jpg",
+        "close": "t098-close.jpg"
+      }
+    },
+    {
+      "item": "t099",
+      "case_id": "case-00070",
+      "region": [
+        173,
+        374,
+        231,
+        395
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 7.56,
+          "required_pt": 8.0,
+          "ratio": 0.945,
+          "gap_px": 1.22,
+          "region": [
+            173,
+            374,
+            231,
+            395
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Close to the limit: 94% of the minimum, 1.2 px short.",
+      "prompt": "logo of adasky ",
+      "box_height_px": 21
+    },
+    {
+      "item": "t100",
+      "case_id": "case-00124",
+      "region": [
+        102,
+        124,
+        148,
+        142
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 18.0,
+          "required_pt": 24.0,
+          "ratio": 0.75,
+          "gap_px": 6.0,
+          "region": [
+            102,
+            124,
+            148,
+            142
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 75% of the minimum, 6.0 px short.",
+      "prompt": "cute miss mascot ymphect ymphect pupitar super hero sticker art, cronobreaker, beeple game icon ",
+      "box_height_px": 18
+    },
+    {
+      "item": "t101",
+      "case_id": "case-00949",
+      "region": [
+        164,
+        183,
+        232,
+        192
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "control",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 9.0,
+          "required_pt": 24.0,
+          "ratio": 0.375,
+          "gap_px": 15.0,
+          "region": [
+            164,
+            183,
+            232,
+            192
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 15.0 px short.",
+      "prompt": "\u201cJeffrey\u201d text, JEFFREY \u201c(((Jeffrey)))))\u201d text logo, simple white background Victo Ngai, Kilian Eng",
+      "box_height_px": 9
+    },
+    {
+      "item": "t102",
+      "case_id": "case-00470",
+      "region": [
+        40,
+        184,
+        69,
+        195
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 60,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.96,
+          "required_pt": 8.0,
+          "ratio": 0.495,
+          "gap_px": 11.22,
+          "region": [
+            40,
+            184,
+            69,
+            195
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 50% of the minimum, 11.2 px short.",
+      "prompt": "cute miss mascot hoothoot hoothoot hoothoot food sticker art, cronobreaker, beeple game icon ",
+      "box_height_px": 11
+    },
+    {
+      "item": "t103",
+      "case_id": "case-00360",
+      "region": [
+        443,
+        564,
+        606,
+        582
+      ],
+      "canvas": [
+        1050,
+        650
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 35.8,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 6.48,
+          "required_pt": 8.0,
+          "ratio": 0.81,
+          "gap_px": 4.22,
+          "region": [
+            443,
+            564,
+            606,
+            582
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 81% of the minimum, 4.2 px short.",
+      "prompt": "logo for a community about minecraft ",
+      "box_height_px": 18
+    },
+    {
+      "item": "t104",
+      "case_id": "case-00338",
+      "region": [
+        200,
+        201,
+        216,
+        213
+      ],
+      "canvas": [
+        638,
+        638
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 5.0,
+          "ratio": 0.576,
+          "gap_px": 8.83,
+          "region": [
+            200,
+            201,
+            216,
+            213
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 58% of the minimum, 8.8 px short.",
+      "prompt": "vector logo of a swiss cottage with hearts on it, dating app icon",
+      "box_height_px": 12
+    },
+    {
+      "item": "t105",
+      "case_id": "case-00406",
+      "region": [
+        232,
+        247,
+        325,
+        260
+      ],
+      "canvas": [
+        542,
+        542
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 45.1,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.62,
+          "required_pt": 6.0,
+          "ratio": 0.937,
+          "gap_px": 0.88,
+          "region": [
+            232,
+            247,
+            325,
+            260
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 166.7,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Close to the limit: 94% of the minimum, 0.9 px short.",
+      "prompt": "a cute logo for a prompt randomizer app ",
+      "box_height_px": 13
+    },
+    {
+      "item": "t106",
+      "case_id": "case-00170",
+      "region": [
+        302,
+        215,
+        347,
+        224
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 56.2,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.24,
+          "required_pt": 8.0,
+          "ratio": 0.405,
+          "gap_px": 13.22,
+          "region": [
+            302,
+            215,
+            347,
+            224
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 40% of the minimum, 13.2 px short.",
+      "prompt": "professional logo detailed vector cheetah ",
+      "box_height_px": 9
+    },
+    {
+      "item": "t107",
+      "case_id": "case-00074",
+      "region": [
+        164,
+        127,
+        232,
+        139
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "main",
+      "round1": "garbled",
+      "round1b": "real_small",
+      "round1b_kind": "repeat",
+      "round1b_shown_px": 57.3,
+      "answer": "garbled",
+      "category": "flipped",
+      "own_caption": true,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 12.0,
+          "required_pt": 24.0,
+          "ratio": 0.5,
+          "gap_px": 12.0,
+          "region": [
+            164,
+            127,
+            232,
+            139
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 50% of the minimum, 12.0 px short.",
+      "prompt": "megacorporation logo by shaun tan, style of john kenn mortensen ",
+      "box_height_px": 12
+    },
+    {
+      "item": "t108",
+      "case_id": "case-00579",
+      "region": [
+        125,
+        111,
+        155,
+        116
+      ],
+      "canvas": [
+        258,
+        252
+      ],
+      "kind": "main",
+      "round1": "cant_tell",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "cant_tell",
+      "category": "unresolved",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.0,
+          "required_pt": 24.0,
+          "ratio": 0.208,
+          "gap_px": 19.0,
+          "region": [
+            125,
+            111,
+            155,
+            116
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 21% of the minimum, 19.0 px short.",
+      "prompt": "logo for yoga service with text elena gladkaya behance ",
+      "box_height_px": 5
+    },
+    {
+      "item": "t109",
+      "case_id": "case-00584",
+      "region": [
+        134,
+        168,
+        143,
+        175
+      ],
+      "canvas": [
+        252,
+        252
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": true,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 7.0,
+          "required_pt": 24.0,
+          "ratio": 0.292,
+          "gap_px": 17.0,
+          "region": [
+            134,
+            168,
+            143,
+            175
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 29% of the minimum, 17.0 px short.",
+      "prompt": "roulette logo ",
+      "box_height_px": 7
+    },
+    {
+      "item": "t110",
+      "case_id": "case-00529",
+      "region": [
+        57,
+        197,
+        211,
+        215
+      ],
+      "canvas": [
+        216,
+        288
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 18.0,
+          "required_pt": 24.0,
+          "ratio": 0.75,
+          "gap_px": 6.0,
+          "region": [
+            57,
+            197,
+            211,
+            215
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 75% of the minimum, 6.0 px short.",
+      "prompt": "a portrait of girl magician, silver witch hat, silver explosion, silver magic, fantasy, dungeons and dragons, an ultrafine detailed painting",
+      "box_height_px": 18
+    },
+    {
+      "item": "t111",
+      "case_id": "case-00318",
+      "region": [
+        420,
+        870,
+        520,
+        886
+      ],
+      "canvas": [
+        938,
+        938
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": "real_small",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 51.7,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 5.0,
+          "ratio": 0.768,
+          "gap_px": 4.83,
+          "region": [
+            420,
+            870,
+            520,
+            886
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 77% of the minimum, 4.8 px short.",
+      "prompt": "E3 2012 Aiden Pearce face Watch Dogs reveal gameplay 4k, ultraquality, Ubisoft logo on the left, concept art",
+      "box_height_px": 16
+    },
+    {
+      "item": "t112",
+      "case_id": "case-00329",
+      "region": [
+        57,
+        86,
+        276,
+        107
+      ],
+      "canvas": [
+        324,
+        180
+      ],
+      "kind": "main",
+      "round1": "real_small",
+      "round1b": null,
+      "round1b_kind": null,
+      "round1b_shown_px": null,
+      "answer": "real_small",
+      "category": "agree",
+      "own_caption": true,
+      "caption_font_ratio": 1.111,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 21.0,
+          "required_pt": 24.0,
+          "ratio": 0.875,
+          "gap_px": 3.0,
+          "region": [
+            57,
+            86,
+            276,
+            107
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Close to the limit: 88% of the minimum, 3.0 px short.",
+      "prompt": "An 8k photorealistic multicolored psychedelic emblem of a third eye, digital art",
+      "box_height_px": 21
+    },
+    {
+      "item": "t113",
+      "case_id": "case-00323",
+      "region": [
+        751,
+        410,
+        784,
+        415
+      ],
+      "canvas": [
+        1538,
+        938
+      ],
+      "kind": "main",
+      "round1": "not_text",
+      "round1b": "not_text",
+      "round1b_kind": "reshown",
+      "round1b_shown_px": 31.2,
+      "answer": "not_text",
+      "category": "false_positive",
+      "own_caption": false,
+      "caption_font_ratio": 1.8,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 1.2,
+          "required_pt": 5.0,
+          "ratio": 0.24,
+          "gap_px": 15.83,
+          "region": [
+            751,
+            410,
+            784,
+            415
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 24% of the minimum, 15.8 px short.",
+      "prompt": "cute miss mascot lewsor lewsor elgyem food sticker art, cronobreaker, beeple game icon ",
+      "box_height_px": 5
+    },
+    {
+      "item": "c01",
+      "case_id": "case-00640",
+      "region": [
+        489,
+        577,
+        561,
+        585
+      ],
+      "canvas": [
+        1050,
+        650
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 35.7,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            489,
+            577,
+            561,
+            585
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "honk honk am goose sticker ",
+      "box_height_px": 8
+    },
+    {
+      "item": "c02",
+      "case_id": "case-00995",
+      "region": [
+        447,
+        569,
+        604,
+        583
+      ],
+      "canvas": [
+        1050,
+        650
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 28.7,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            447,
+            569,
+            604,
+            583
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "cartoon paper coffee cup die cut sticker with a white border, gray background, flat vector graphic ",
+      "box_height_px": 14
+    },
+    {
+      "item": "c03",
+      "case_id": "case-00752",
+      "region": [
+        215,
+        424,
+        274,
+        432
+      ],
+      "canvas": [
+        488,
+        488
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 43.6,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            215,
+            424,
+            274,
+            432
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "logo for a chicken restaurant ",
+      "box_height_px": 8
+    },
+    {
+      "item": "c10",
+      "case_id": "case-00805",
+      "region": [
+        252,
+        677,
+        299,
+        685
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 50,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            252,
+            677,
+            299,
+            685
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "2 d symmetrical logo, design, vector art, digital art, portrait, 4 k, 8 k, sharp focus, smooth, illustration, room, concept art ",
+      "box_height_px": 8
+    },
+    {
+      "item": "c14",
+      "case_id": "case-00968",
+      "region": [
+        287,
+        581,
+        355,
+        589
+      ],
+      "canvas": [
+        641,
+        638
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 38.2,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 1.92,
+          "required_pt": 5.0,
+          "ratio": 0.384,
+          "gap_px": 12.83,
+          "region": [
+            287,
+            581,
+            355,
+            589
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 12.8 px short.",
+      "prompt": "A robotic fox as a logo.",
+      "box_height_px": 8
+    },
+    {
+      "item": "c22",
+      "case_id": "case-00870",
+      "region": [
+        439,
+        1337,
+        709,
+        1366
+      ],
+      "canvas": [
+        1144,
+        1500
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 34.6,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "ASPECT_MISMATCH",
+          "LOW_CONTRAST",
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.22,
+          "required_pt": 8.0,
+          "ratio": 0.652,
+          "gap_px": 15.44,
+          "region": [
+            439,
+            1337,
+            709,
+            1366
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 400.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 65% of the minimum, 15.4 px short.",
+      "prompt": "highly detail wolf street gang logo, 8 k uhd, black and white color, by banksy, fintan magee ",
+      "box_height_px": 29,
+      "images": {
+        "whole": "c22-whole.jpg",
+        "close": "c22-close.jpg"
+      }
+    },
+    {
+      "item": "c23",
+      "case_id": "case-00936",
+      "region": [
+        124,
+        274,
+        204,
+        282
+      ],
+      "canvas": [
+        326,
+        319
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 32.3,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "MISSING_BLEED",
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 3.84,
+          "required_pt": 6.0,
+          "ratio": 0.64,
+          "gap_px": 4.5,
+          "region": [
+            124,
+            274,
+            204,
+            282
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 150.0,
+        "product": "Die-cut sticker",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 64% of the minimum, 4.5 px short.",
+      "prompt": "minimal ai vector logo, stamp ",
+      "box_height_px": 8
+    },
+    {
+      "item": "c30",
+      "case_id": "case-00745",
+      "region": [
+        245,
+        677,
+        306,
+        685
+      ],
+      "canvas": [
+        550,
+        750
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 42.5,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.88,
+          "required_pt": 8.0,
+          "ratio": 0.36,
+          "gap_px": 14.22,
+          "region": [
+            245,
+            677,
+            306,
+            685
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 14.2 px short.",
+      "prompt": "treatid company logo ",
+      "box_height_px": 8
+    },
+    {
+      "item": "c31",
+      "case_id": "case-00730",
+      "region": [
+        358,
+        369,
+        494,
+        383
+      ],
+      "canvas": [
+        850,
+        450
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 33.4,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            358,
+            369,
+            494,
+            383
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "official art of a symmetrical crowd of Pok\u00e9mon, by Ken Sugimori and Junichi Masuda, whitespace, Bulbapedia, Pok\u00e9mon logo, eevee jolteon flar",
+      "box_height_px": 14
+    },
+    {
+      "item": "c32",
+      "case_id": "case-00785",
+      "region": [
+        268,
+        569,
+        382,
+        583
+      ],
+      "canvas": [
+        650,
+        650
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 39.7,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            268,
+            569,
+            382,
+            583
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "kawaii bluotdeamor\u03b8\u03b1\u03bd\u03b1\u00f8d burning angel deamuer\u03b8\u03b1\u03bd\u03b1th on fire, kawaii sticker illustration ",
+      "box_height_px": 14
+    },
+    {
+      "item": "c33",
+      "case_id": "case-00775",
+      "region": [
+        468,
+        569,
+        582,
+        583
+      ],
+      "canvas": [
+        1050,
+        650
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 39.7,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            468,
+            569,
+            582,
+            583
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "csgo team sticker, katowice 2 0 1 4 competition sticker, holo sticker, inspect in inventory image, highly detailed digital art, neon colors,",
+      "box_height_px": 14
+    },
+    {
+      "item": "c36",
+      "case_id": "case-00649",
+      "region": [
+        157,
+        174,
+        240,
+        183
+      ],
+      "canvas": [
+        396,
+        252
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 35.3,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 9.0,
+          "required_pt": 24.0,
+          "ratio": 0.375,
+          "gap_px": 15.0,
+          "region": [
+            157,
+            174,
+            240,
+            183
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 15.0 px short.",
+      "prompt": "!!! to do!!! black and white round sticker ",
+      "box_height_px": 9
+    },
+    {
+      "item": "c45",
+      "case_id": "case-00903",
+      "region": [
+        700,
+        880,
+        848,
+        893
+      ],
+      "canvas": [
+        1546,
+        938
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 28.4,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 3.12,
+          "required_pt": 5.0,
+          "ratio": 0.624,
+          "gap_px": 7.83,
+          "region": [
+            700,
+            880,
+            848,
+            893
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Roll label",
+        "min_text_pt": 5.0
+      },
+      "confidence_note": "Clearly under: 62% of the minimum, 7.8 px short.",
+      "prompt": "construction company logo, logo sheet, singular, discreet, small digital logo sprite sheet, few items, syd mead, norman rockwell, junichi hi",
+      "box_height_px": 13
+    },
+    {
+      "item": "c47",
+      "case_id": "case-00940",
+      "region": [
+        172,
+        369,
+        285,
+        383
+      ],
+      "canvas": [
+        454,
+        450
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 40,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.909,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 5.04,
+          "required_pt": 8.0,
+          "ratio": 0.63,
+          "gap_px": 8.22,
+          "region": [
+            172,
+            369,
+            285,
+            383
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 200.0,
+        "product": "Custom magnet",
+        "min_text_pt": 8.0
+      },
+      "confidence_note": "Clearly under: 63% of the minimum, 8.2 px short.",
+      "prompt": "faceless anime girl sticker",
+      "box_height_px": 14
+    },
+    {
+      "item": "c50",
+      "case_id": "case-00867",
+      "region": [
+        312,
+        557,
+        363,
+        566
+      ],
+      "canvas": [
+        675,
+        675
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 56.2,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL"
+        ],
+        "text": {
+          "measured_pt": 2.16,
+          "required_pt": 6.0,
+          "ratio": 0.36,
+          "gap_px": 16.0,
+          "region": [
+            312,
+            557,
+            363,
+            566
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 300.0,
+        "product": "Kiss-cut sticker sheet",
+        "min_text_pt": 6.0
+      },
+      "confidence_note": "Clearly under: 36% of the minimum, 16.0 px short.",
+      "prompt": "artgerm scooby doo shaggy emblem ",
+      "box_height_px": 9
+    },
+    {
+      "item": "c54",
+      "case_id": "case-00979",
+      "region": [
+        153,
+        185,
+        247,
+        194
+      ],
+      "canvas": [
+        400,
+        256
+      ],
+      "kind": "control",
+      "set": "ai_art_v1",
+      "round1": null,
+      "round1b": "real_small",
+      "round1b_kind": "control",
+      "round1b_shown_px": 31,
+      "answer": "real_small",
+      "category": "control",
+      "own_caption": true,
+      "caption_font_ratio": 0.5,
+      "system": {
+        "verdict": "REQUEST_FIX",
+        "blocking": [
+          "TEXT_TOO_SMALL",
+          "THIN_LINES"
+        ],
+        "text": {
+          "measured_pt": 9.0,
+          "required_pt": 24.0,
+          "ratio": 0.375,
+          "gap_px": 15.0,
+          "region": [
+            153,
+            185,
+            247,
+            194
+          ],
+          "same_box_as_label": true
+        },
+        "dpi": 72.0,
+        "product": "Vinyl banner",
+        "min_text_pt": 24.0
+      },
+      "confidence_note": "Clearly under: 38% of the minimum, 15.0 px short.",
+      "prompt": "company logo, cosmic sofa",
+      "box_height_px": 9
+    }
+  ],
+  "note": "Four round-1b controls came from ai_art_v2 and are counted in the summary but not shown. Images are rebuilt from the recorded seeds; each was checked against the size recorded with its label."
+}

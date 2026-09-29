@@ -235,6 +235,53 @@ def test_tool_that_raises_does_not_crash_the_loop(case: PreflightCase, monkeypat
 
 
 # --------------------------------------------------------------------------------------
+# Degraded exits keep the evidence the deterministic checks already proved
+# --------------------------------------------------------------------------------------
+
+
+def fast_agent_with(responses: list) -> PreflightAgent:
+    return PreflightAgent(
+        client=ScriptedClient(responses), model="claude-haiku-4-5", precomputed=True
+    )
+
+
+def _api_error():  # noqa: ANN202
+    import anthropic
+
+    return anthropic.APIConnectionError(request=SimpleNamespace())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("responses", "reason"),
+    [
+        (lambda: [_api_error()], EscalationReason.MODEL_ERROR),
+        (lambda: [fake_response(stop_reason="refusal")], EscalationReason.REFUSAL),
+        (lambda: [fake_response(stop_reason="max_tokens")], EscalationReason.TRUNCATED_RESPONSE),
+    ],
+    ids=["model_error", "refusal", "truncated"],
+)
+def test_degraded_exit_keeps_measured_findings(case: PreflightCase, responses, reason) -> None:
+    # The fixture is an RGB file for a CMYK-only product, so precompute proves
+    # WRONG_COLOR_MODE before the model is called. A failure after that point must still
+    # hand the human that finding - escalating with an empty issue list throws it away.
+    agent = fast_agent_with(responses())
+    verdict, _ = agent.triage(case)
+    assert verdict.verdict is VerdictType.ESCALATE
+    assert verdict.escalation_reason is reason
+    assert IssueCode.WRONG_COLOR_MODE in {i.code for i in verdict.issues}
+
+
+def test_budget_exhaustion_keeps_findings_gathered_by_the_loop(
+    case: PreflightCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("capstone.src.agent.Budget", lambda: Budget(max_steps=1))
+    agent = agent_with([fake_response(content=[tool_use_block("inspect_file", {})])])
+    verdict, _ = agent.triage(case)
+    assert verdict.escalation_reason is EscalationReason.BUDGET_EXHAUSTED
+    assert IssueCode.WRONG_COLOR_MODE in {i.code for i in verdict.issues}
+
+
+# --------------------------------------------------------------------------------------
 # finalize(): APPROVE is reachable from exactly one guarded branch
 # --------------------------------------------------------------------------------------
 
