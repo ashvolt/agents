@@ -6,10 +6,10 @@ and why they were made, and what makes it unusual. Every diagram is Mermaid and 
 on GitHub (in VS Code — Visual Studio Code — install the *Markdown Preview Mermaid
 Support* extension).
 
-**Covers the project up to 2026-09-26** (last commit reviewed: `f992da2`, the rule-loop
-decision), plus the 2026-09-28 additions made while writing this guide: the degraded-exit
-fix (`7fb01ff`) and the lettering review page (`183f105`, `8cdd383`). For anything later,
-check `git log 8cdd383..HEAD`.
+**Covers the project up to 2026-09-28**: everything on `main` through PR #5 (the MCP
+server and the Streamlit page, 2026-09-27), plus the additions made while writing this
+guide — the degraded-exit fix (`7fb01ff`) and the lettering review page (`183f105`,
+`8cdd383`). For anything later, check `git log 1de77ab..HEAD`.
 
 **Abbreviations.** Each one is spelled out the first time it appears, and every one is
 listed in [§14 Abbreviations](#14-abbreviations) so you can look any of them up later.
@@ -280,6 +280,9 @@ timeline
           : Fake-checkerboard check fixed
     09-26 : Live FLUX generation in demo
           : Rule loop - no rule, keep strict
+    09-27 : MCP server - checker as tools
+          : Streamlit page for free hosting
+          : Doc statuses brought current
 ```
 
 ### Part A — the agent era
@@ -311,6 +314,7 @@ timeline
 | 17 | **AI-generated art** | 1,000 Stable Diffusion sticker images (DiffusionDB): 54.3% / 0 of 339. Fake-checkerboard check fixed (false alarms 8 → 0) but misses real AI checkerboards. Second set 57.1% / 0 of 354 | `18d0756`, `3399714`, `1777f80`, `e86e637` | Safe is not the same as useful |
 | 18 | **Price the spec option** | "Detail under 2 mm is not a stroke" buys at most +2 points; not adopted | `b7027fd`, `cdf29fe` | Price a rule before arguing about it |
 | 19 | **Live generation + rule loop** | FLUX images through the demo. A model proposes rules, a person labels, a sealed set judges. Round 1: labels did not repeat (9 of 15) → no rule; keep blocking | `43d761e`, `4716092`, `6248da3`, `f992da2` | A judgement that flips on a second look cannot become a rule |
+| 20 | **MCP server + hosting** | Five read-only tools over the shipped pipeline for any MCP (Model Context Protocol) client, files confined to one root. A Streamlit page for free hosting, sharing the FastAPI demo's check function. architecture.md and limits.md §8 statuses brought current | `9b08dbe`, `5d11443`, `89e118c`, `bc399d6` | Expose the same code that ships, not a second copy |
 
 ### How the headline numbers moved
 
@@ -391,7 +395,9 @@ flowchart TB
     subgraph ops["capstone/ops"]
         RQ["review_queue.py - SQLite"]
     end
-    DEMO["demo/app.py - FastAPI web app"]
+    DEMO["demo/app.py - FastAPI web app<br/>demo/streamlit_app.py - hosted page<br/>both via demo/pipeline.py"]
+    MCPS["mcp_server.py<br/>5 read-only MCP tools"]
+    MCPS --> DEC
     DEC --> B1 & B2 & FE
     B2 --> TD
     FE --> TD
@@ -478,8 +484,9 @@ Five families of eval set, each testing something the previous could not:
 
 ### 5.6 Where it runs
 
-A Python package run from the CLI (command-line interface), a local FastAPI web demo, and
-GitHub Actions CI (continuous integration): lint → 336 offline tests → regenerate the
+A Python package run from the CLI (command-line interface), a local FastAPI web demo, a
+Streamlit page for free hosting, an MCP server over stdio (§6.17), and GitHub Actions CI
+(continuous integration): lint → 361 offline tests → regenerate the
 synthetic set → gate the shipped decider on it → fetch and render the real-art gate set →
 gate again, "no worse than recorded". No API key, no spend.
 
@@ -1015,6 +1022,36 @@ the labelling page showed captions ~7 px tall. Round 1b fixed the display: contr
 20/20, but only **9 of 15** repeated answers matched. "Is this AI lettering real text?"
 does not repeat even for the owner, so no rule was built. Decision: keep blocking.
 
+### 6.17 MCP server and hosted page — [mcp_server.py](../mcp_server.py), [mcp.md](mcp.md)
+
+**MCP server** (PLAN.md day 8, level L6). The checker's own tools for any MCP (Model
+Context Protocol) client, so an assistant checks a file with the code that ships instead
+of judging print readiness by eye:
+
+| Tool | Returns |
+|---|---|
+| `list_products` | product ids with minimum DPI, bleed, transparency |
+| `get_product_spec(product_id)` | every requirement for one product |
+| `check_artwork(path, product_id, width_in, height_in, quantity=1)` | the shipped CV decider's verdict, issues with measurements, customer message |
+| `inspect_file(...)` | bucket-1 measurements |
+| `analyse_pixels(...)` | bucket-2 measurements |
+
+- **All five are marked read-only**; the retired agent's `submit_verdict` is not exposed.
+- **Files are read only under one root** (`PREFLIGHT_MCP_ROOT`). A path, including a
+  symlink, that resolves outside it returns `outside_root` instead of being read.
+- **No model call**: the server wraps the same pipeline as everything else, so an MCP
+  client gets exactly the verdict the demo and the CI gate see.
+- Tested through a real MCP client, in-process and over stdio (`test_mcp_server.py`).
+- Run: `pip install -e ".[mcp]"`, then
+  `PREFLIGHT_MCP_ROOT=/path/to/artwork python -m capstone.mcp_server`.
+
+**Hosted page** — `demo/streamlit_app.py`, for free hosting on Streamlit Community Cloud.
+It calls the same `demo/pipeline.check_file` as the FastAPI demo, so both give the same
+verdict for the same file (`test_streamlit_app.py` checks every sample). It offers the
+samples and an upload but **no AI generator**, so the hosted page never holds a provider
+key. The results and lettering-review pages are FastAPI only. Deployment steps are in
+[demo.md](demo.md).
+
 ---
 
 ## 7. Technical decisions (ADR log)
@@ -1050,6 +1087,8 @@ the rest were made during measurement.
 | — | **Park proof-fixing and narration** | ship it | Breaks non-goals; fixes can hide defects | scene-narration.md |
 | — | **Keep blocking AI detail and lettering** | detail < 2 mm is not a stroke; approve "garbled" lettering | +2 points at most; lettering judgement doesn't repeat | ai-art.md §9, rule-loop.md |
 | — | **Pin `rapidocr_onnxruntime <1.3`** | latest | 1.3+ changes the model and API; sealed scores used 1.2 | pyproject.toml |
+| — | **MCP server: read-only, one root, the shipped pipeline** | expose the agent's tools; allow any path | An assistant should get the same verdict CI gates, and a tool that reads files must not reach outside its root | mcp.md |
+| — | **One check function for both demos** (`demo/pipeline.py`) | separate Streamlit logic | Two copies drift; one function means one verdict | pipeline.py |
 
 ---
 
@@ -1108,7 +1147,7 @@ approvals, exact 95% upper bound:
 **rules_only on the same kind of sets:** 2.1–6.2% on synthetic sets, 3.9–10.8% on real art, 1.4–4.2% on AI art — over the 1% limit every time, never shippable alone.
 
 **CI gate today (synthetic train, 312):** 84.8% / 0 of 167 (bound 1.8%), p95 ~1.9 s,
-$0/file. **Tests:** 336 pass offline (2 skip without cairo). **Red team:** 12 attacks, 0 failed, 2 known gaps.
+$0/file. **Tests:** 361 pass offline (on Windows, 3 skip: two need cairo, one needs symlinks). **Red team:** 12 attacks, 0 failed, 2 known gaps.
 
 **Against Claude** (old 88-case holdout, the only set both ran on): rules_only 82.0% /
 17.0% escalation; agent_fast 82.0% / 13.6%, $0.0066/file; **cv_decider 88.0% / 13.6%,
@@ -1159,10 +1198,12 @@ Know these before someone else finds them. The full list is [limits.md](limits.m
 
 **Doc drift (found writing this guide, not yet fixed)**
 
-13. [architecture.md](architecture.md), [walkthrough.md](walkthrough.md) and
-    [runbook.md](runbook.md) still describe the agent era: vision pass as an optional
-    experiment, CI gate "not built", "80 tests" (now 336). limits.md §2 and §8 still quote
-    early numbers and "not built" items.
+13. [architecture.md](architecture.md): its §8 status table was brought current on
+    2026-09-27, but its §2 diagram and §9 recommendation still describe the vision pass as
+    an optional experiment. [walkthrough.md](walkthrough.md) is written for the agent era.
+    [runbook.md](runbook.md) still says "80 tests" (now 361). limits.md §2 still quotes the
+    first 159-case numbers; §8 carries a 2026-09-27 update note above the original list,
+    kept on purpose as the record.
 14. [decider.md](decider.md) quotes threshold **0.176**; the shipped model JSON says
     **0.068** (refit on DBNet-era features, `b055ff9`). Same rule (½ the lowest
     out-of-fold defect score), different data.
@@ -1183,7 +1224,7 @@ All free and offline except where marked.
 python -m venv .venv && .venv/Scripts/activate
 pip install -e ".[dev]"                 # add ,data for the real-art builders, ,demo for the web app
 
-# 1. the safety net - 336 offline tests
+# 1. the safety net - 361 offline tests
 pytest -m "not integration" -q
 
 # 2. the CI gate on the shipped pipeline (synthetic suite)
@@ -1203,7 +1244,13 @@ uvicorn capstone.demo.app:app --port 8000          # open http://localhost:8000 
 
 # 6. the review queue
 python -m capstone.ops.review_queue stats
+
+# 7. the hosted page and the MCP server (need the demo / mcp extras)
+streamlit run capstone/demo/streamlit_app.py
+PREFLIGHT_MCP_ROOT=capstone/demo/samples python -m capstone.mcp_server
 ```
+
+If port 8000 is taken, pass another (`--port 8001`); nothing depends on 8000.
 
 Talking points: step 4 is the "pass that was luck" story in one screen. Step 3 shows the
 two gaps before anyone asks. Step 5's results page carries every sealed round, including
@@ -1364,7 +1411,7 @@ Every abbreviation in this guide, grouped by where it comes from.
 | **CPU / GPU** | Central / Graphics Processing Unit | Detector runs on CPU; a self-hosted VLM would need a GPU |
 | **DB** | Database | SQLite for the review queue only |
 | **HTTP** | HyperText Transfer Protocol | How the API and the demo are called |
-| **MCP** | Model Context Protocol | Open protocol for exposing tools to models; not built |
+| **MCP** | Model Context Protocol | Open protocol for exposing tools to models; built 2026-09-27 (§6.17) |
 | **npm** | Node Package Manager | Where the real-art libraries are fetched from |
 | **POST** | (HTTP method name) | Request type for sending data |
 | **PR** | Pull Request | A proposed change on GitHub; CI runs on each |
