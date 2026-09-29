@@ -104,6 +104,21 @@ Branches 1 and 3 carry the anti-resample warning; branch 2 carries its own varia
   flagged `LOW_RESOLUTION` although rescaling it would print perfectly. That may be a false
   reject. Changing it moves eval numbers, so it belongs in the rule loop (rule-loop.md),
   not in a text change. The advice is written truthfully for the current behaviour.
+
+  **And it must not be papered over in the letter.** The first draft of branch 2 ended
+  "reply and we will rescale it for you". That crosses §11's first non-goal — *"Not fixing
+  the artwork. Detect and explain."* — by committing an artist to work the pipeline does
+  not do, in text they may approve without reading closely. It was the worse mistake of
+  the two below, because a possible false reject phrased as good service is a rule bug
+  nobody will ever come back to fix. Branch 2 now explains and asks for the file, and the
+  rule question stays a rule question.
+
+- **No template may promise work on our side.** Two did: the rescale offer above, and an
+  offer to move an order to a different product when transparency looked deliberate — the
+  second crossing *"not pricing, scheduling, nesting, or anything downstream of
+  approval"*. Both removed. Present-tense statements of what the pipeline already does are
+  fine and stay ("we convert it to CMYK for printing"; the letter's "we'll re-check it
+  right away"). `test_no_template_promises_work_on_our_side` holds the line.
 - **No template may promise the annotated preview.** Two drafts referred to "the preview
   alongside this message". brief.md §11 says the customer-facing output is one generated
   message; nothing guarantees the image travels with it, and a dangling pointer is worse
@@ -130,9 +145,17 @@ not scored by any metric in `evals/metrics.py`. 369 offline tests pass unchanged
 - **`test_advice_survives_the_tool_payload_round_trip`** — the agent arm rebuilds issues
   from JSON, so advice that is not serialised is advice that arm loses in silence.
 
-Both guards were mutation-checked: removing the advice from `check_resolution`, and
-rephrasing its action as "needs to be at least 150 DPI", each fail the suite. A guard that
-has never been seen to fail is decoration.
+A fourth, added after review: **`test_no_template_promises_work_on_our_side`** — see §4.
+It caught a live false positive on its first run (`MISSING_BLEED` warning that "we would
+trim off the edges", which is a consequence of the customer's wrong fix, not an offer), so
+the rule was narrowed to forward commitments and the sentence reworded to let the blade do
+the trimming.
+
+Every guard was mutation-checked; a guard that has never been seen to fail is decoration.
+That is not ceremony — it found a real hole. Re-introducing the rescale promise into
+branch 2 **passed**, because `CUSTOMER_FACING_ADVICE` only exercised branch 1, so the
+guards had never seen branches 2 or 3 at all. All three branches are now listed, and the
+same mutation fails as it should.
 
 One more, because it caught a real bug in this change:
 `test_every_parametrized_group_actually_holds_a_finding`. The unreadable-file case was

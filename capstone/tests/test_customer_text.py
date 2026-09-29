@@ -170,8 +170,17 @@ def test_letter_without_an_order_id_does_not_say_order_none() -> None:
 # --------------------------------------------------------------------------------------
 
 
+# Every shipped customer-facing template, and every branch of one. The resolution advice
+# branches three ways, and only branch 1 was listed here at first - so the guards below
+# never saw branches 2 and 3, and a promise living in branch 2 went unnoticed until a
+# mutation check found the hole rather than the test finding the bug.
 CUSTOMER_FACING_ADVICE = [
+    # branch 1: no DPI tag, pixels are the honest unit
     check_resolution(meta(declared_dpi=None, width_px=724, height_px=448), SPEC, ORDER),
+    # branch 2: a DPI tag, pixels already sufficient
+    check_resolution(meta(declared_dpi=72.0, width_px=3000, height_px=1857), SPEC, ORDER),
+    # branch 3: a DPI tag, pixels genuinely short
+    check_resolution(meta(declared_dpi=90.0, width_px=450, height_px=279), SPEC, ORDER),
     check_bleed(meta(width_px=750, height_px=450), SPEC, ORDER),
     check_aspect(meta(width_px=1200, height_px=488), SPEC, ORDER),
     check_color_mode(meta(mode="L"), SPEC),
@@ -226,6 +235,54 @@ def test_no_template_advice_states_a_bare_dpi_target(issues: list[Issue]) -> Non
         assert not states_a_bare_dpi_target(issue.advice.action), (
             f"{issue.code}: the action names DPI as a target: {issue.advice.action}"
         )
+
+
+# Forward commitments only. A consequence clause ("the cut would trim the edges") is the
+# opposite of an offer and must not match, so "we would" is deliberately not on this list.
+PROMISE_PHRASES = ("we will ", "we'll ", "we can ")
+
+
+@pytest.mark.parametrize(
+    "issues", CUSTOMER_FACING_ADVICE, ids=lambda i: str(i[0].code) if i else "empty"
+)
+def test_no_template_promises_work_on_our_side(issues: list[Issue]) -> None:
+    """No customer-facing template may commit the shop to doing something.
+
+    brief.md S11: "Not fixing the artwork. Detect and explain." and "Not pricing,
+    scheduling, nesting, or anything downstream of approval." A drafted message that says
+    "reply and we will rescale it for you" commits an artist to work the pipeline does not
+    do, in text they may approve without reading closely.
+
+    The first draft of this module shipped exactly that, plus an offer to move an order to
+    a different product. The rescale offer was the worse of the two: it made a finding that
+    may be a false reject (see docs/customer-message.md S4) read as good service, which is
+    how a rule bug stays invisible.
+
+    Present-tense statements of what the pipeline already does are fine and not matched
+    here - "we convert it to CMYK for printing" is established behaviour. So is the
+    letter's closing line, "we'll re-check it right away", because re-checking an upload is
+    what the pipeline is. What is forbidden is a forward promise of new work.
+    """
+    for issue in issues:
+        if issue.advice is None:
+            continue
+        for slot, text in (("action", issue.advice.action), ("avoid", issue.advice.avoid)):
+            lowered = (text or "").lower()
+            for phrase in PROMISE_PHRASES:
+                assert phrase not in lowered, (
+                    f"{issue.code}.{slot} promises work on our side "
+                    f"({phrase.strip()!r}): {text}"
+                )
+
+
+def test_the_promise_rule_catches_the_wording_it_is_meant_to_catch() -> None:
+    # Both of these shipped in the first draft of this module.
+    for promised in (
+        "reply and we will rescale it for you",
+        "a different product and we'll move the order over",
+    ):
+        assert any(p in promised for p in PROMISE_PHRASES), promised
+    assert not any(p in "export it again for a 5x3 in print" for p in PROMISE_PHRASES)
 
 
 @pytest.mark.parametrize(

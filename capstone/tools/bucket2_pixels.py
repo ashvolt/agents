@@ -141,8 +141,8 @@ def check_transparency(image: Image.Image, spec: ProductSpec) -> list[Issue]:
                 action=(
                     "If those areas are meant to be white or a colour, fill them in and "
                     "export again. If the design is meant to be cut to its own outline "
-                    "instead of a rectangle, reply and tell us - that is a different "
-                    "product and we will move the order over."
+                    "instead of a rectangle, reply and tell us before we print - that is a "
+                    "different product from the one ordered."
                 ),
                 avoid=(
                     "flattening the file onto a white background unless you want a visible "

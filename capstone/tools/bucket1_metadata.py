@@ -353,8 +353,8 @@ def _resolution_advice(
             action=(
                 f"The image has plenty of detail ({meta.width_px}x{meta.height_px} pixels), "
                 f"but the file says to print it at {physical_w:.1f}x{physical_h:.1f} in "
-                f"rather than {size}. Export it again for {ordered} print, or reply and we "
-                "will rescale it for you - the artwork itself is fine."
+                f"rather than {size}. Export it again for {ordered} print - the artwork "
+                "itself does not need to change, only the size the file is saved for."
             ),
             avoid=(
                 "re-saving it at a bigger pixel size - the detail is already there, it is "
@@ -451,7 +451,7 @@ def check_bleed(meta: FileMetadata, spec: ProductSpec, order: OrderMetadata) -> 
                 ),
                 avoid=(
                     "scaling the whole design up to fill the larger size - that pushes your "
-                    "artwork past the cut line, and we would trim off the edges of it"
+                    "artwork out past the cut line, so the edges of it get trimmed off"
                 ),
             ),
         )
