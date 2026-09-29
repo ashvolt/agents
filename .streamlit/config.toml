@@ -1,0 +1,6 @@
+# Streamlit settings for the hosted demo (capstone/demo/streamlit_app.py).
+[server]
+maxUploadSize = 40  # MB, the same cap as the FastAPI demo and the MCP server
+
+[browser]
+gatherUsageStats = false

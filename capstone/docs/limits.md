@@ -163,6 +163,13 @@ stops the number being read as more precise than it is.
 
 ## 8. Not yet measured at all
 
+**Updated 2026-09-27.** Written 2026-09-22; several items have since been done, and the
+list below is kept as it was. Done: the agent completed its sweeps and the holdout was
+scored once (results.md); the vision agent was then removed in favour of the CV decider,
+whose threshold is fitted (decider.md); the red team exists (`evals/redteam.py`, §15); the
+CI gate and the HITL queue are built. The MCP server followed on 2026-09-27 (mcp.md). Still open: runbook
+alerting (design only, runbook.md §5) and prompt caching (still below the model's minimum).
+
 Honest status, not a roadmap:
 
 - **The agent has never completed a sweep.** The API key in the working `.env` is

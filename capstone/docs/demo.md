@@ -85,12 +85,44 @@ committed. The four round-1b controls from ai_art_v2 are counted, not shown.
 | real_art_v5: 1,000 unseen real illustrations | 73.9% / 3.9% | **78.7% / 0.0%** (0 of 500) | **0.6%** |
 | mistakes_v2: 480 real-art stickers through customer processes | 18.8% / 0.0% | **87.0% / 0.0%** (0 of 240) | 1.2% |
 
-## Hosting later
+## Hosted: Streamlit Community Cloud (free)
 
-The app is a single FastAPI process with no state and no secrets. Anything that runs a
-Python container works (Hugging Face Spaces, Render, Fly.io). Two things to settle first:
-an upload size limit at the proxy (the app caps at 40 MB), and whether uploads may be kept
-(today they are not; keeping them would need consent wording on the page).
+`capstone/demo/streamlit_app.py` is the same check as a Streamlit page, for free hosting.
+It calls the same function as the FastAPI app (`pipeline.check_file`), so a file gets the
+same verdict on both; `tests/test_streamlit_app.py` checks every sample through
+Streamlit's own test runner. It has the samples and an upload, and no AI generator: the
+hosted page holds no key. Uploads are capped at 40 MB (`.streamlit/config.toml`) and
+live in a temporary directory for the length of the check.
+
+Why this host: Hugging Face Spaces showed as paid on the owner's account, and Render's
+free 512 MB is too close to the measured peak. Measured 2026-09-27 on Python 3.13 with only
+`capstone/demo/requirements.txt` installed: 709 MB of packages, **506 MB peak memory**
+over all 9 samples in one process, 1-5 s a check on this machine.
+
+Deploy (once):
+
+1. Sign in at share.streamlit.io with the GitHub account that can see this repo, and
+   allow access to it.
+2. **Create app** → deploy from GitHub. Repository `ashvolt/agents`, branch `main`, main
+   file path `capstone/demo/streamlit_app.py`.
+3. **Advanced settings** → Python **3.13**. No secrets. Save, then **Deploy**.
+4. The first build installs `capstone/demo/requirements.txt` and the apt packages in the
+   root `packages.txt` (OpenCV's system libraries), a few minutes. Every push to `main`
+   redeploys.
+
+**`packages.txt` must stay at the repo root.** rapidocr requires the full
+`opencv-python`, which shares the `cv2` directory with the headless build we list;
+whichever installs last owns it. The full build links `libGL.so.1` and `libglib-2.0`. The
+first deploy (2026-09-27) had the file in `capstone/demo/`, where it was not picked up,
+and failed at `import cv2`.
+
+The requirements file sits next to the app so Community Cloud uses it instead of the
+root `pyproject.toml` (the whole dev and data stack). Keep its pins in step with
+`pyproject.toml`, especially `rapidocr_onnxruntime<1.3`. An app with no visitors for a
+while sleeps; the first visit after that wakes it, which takes about a minute.
+
+The FastAPI app still runs locally (above) and still suits any Python container host.
+Before keeping uploads anywhere, the page would need consent wording.
 
 ## Not in the demo yet
 
