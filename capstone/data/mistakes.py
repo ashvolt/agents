@@ -37,6 +37,7 @@ from PIL import Image
 from capstone.data.generate import BINARY_MAGNITUDE, CasePlan, plan_cases
 from capstone.data.real_art import ROOT, STYLES, _art_files, render_real
 from capstone.src.schemas import GoldLabel, IssueCode, Perturbation
+from capstone.tools.bucket1_metadata import DPI_EPSILON_RATIO
 
 SCREEN_PPI = 96.0  # CSS pixels per inch: what a browser screenshot resolves to at 100%
 MESSAGING_LONG_SIDE = 1600  # common messaging-app resize for photos sent "as photo"
@@ -115,7 +116,16 @@ def web_export(img: Image.Image, plan: CasePlan, dpi: float, rng: random.Random)
         )
     w_in, _ = _canvas_in(plan)
     effective = out.width / w_in  # what it really resolves to at the ordered size
-    perts = () if effective >= plan.spec.min_dpi else _resolution(plan, effective)
+    # Same tolerance the rule uses. check_resolution passes anything within
+    # DPI_EPSILON_RATIO of the minimum because rasterising rounds to whole pixels, so a
+    # label without that slack calls a file defective that the rule would rightly pass:
+    # a render landing 0.1% under becomes a defect on paper and a correct decision in
+    # fact. A label must be scored against the rule's own threshold, not a stricter one.
+    perts = (
+        ()
+        if effective >= plan.spec.min_dpi * (1 - DPI_EPSILON_RATIO)
+        else _resolution(plan, effective)
+    )
     return out, "png", {"dpi": (WEB_EXPORT_DPI, WEB_EXPORT_DPI)}, perts
 
 
