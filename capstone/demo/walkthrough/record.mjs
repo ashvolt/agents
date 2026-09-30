@@ -18,6 +18,12 @@ const BASE = process.argv[2] || "http://localhost:8000";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "out");
 const SIZE = { width: 1440, height: 900 };
+// Use a browser that is already on the machine when the installed Playwright expects a
+// different build than the one on disk - CI images and sandboxes usually pin one, and
+// Playwright then asks for a download that is neither wanted nor always possible. Unset,
+// Playwright uses its own, which is what a normal dev machine wants.
+//   PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium node record.mjs
+const CHROMIUM = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 
 async function caption(page, text, ms = 3500) {
   await page.evaluate((t) => {
@@ -50,7 +56,7 @@ async function sample(page, title, text) {
 async function main() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {});
   const context = await browser.newContext({
     viewport: SIZE,
     recordVideo: { dir: OUT, size: SIZE },
@@ -64,7 +70,17 @@ async function main() {
   await caption(page, "No vision model. Computer vision measures the file; a small decider approves, asks for a fix, or asks a person.", 5000);
 
   await sample(page, "Print-ready file", "A careful designer's print-ready file: approved in seconds, at $0 model cost.");
-  await sample(page, "Screenshot", "A screenshot: too few pixels for the ordered size. The customer gets a plain message saying exactly what to fix.");
+  await sample(page, "Screenshot", "A screenshot: too few pixels for the ordered size. Caught, and the form shows the order it was checked against.");
+
+  // The two registers. This is the whole customer-message design, and it is only visible
+  // on a finding that carries advice - the screenshot's LOW_RESOLUTION does.
+  await page.locator("ul.issues .advice").first().scrollIntoViewIfNeeded();
+  await caption(page, "Every finding is written twice, because two people read it.", 4000);
+  await caption(page, "The line above is the production artist's: exact and technical, 137.9 DPI against 150.", 5000);
+  await caption(page, "Below it is what the customer is told - what will happen to their print, then what to do, in pixels they can act on: 724 wide, we need 788.", 6500);
+  await caption(page, "And the line that protects the press. Setting the file to 150 DPI would satisfy this check and still print soft, so the message says not to.", 7000);
+  await page.locator("pre.message").first().scrollIntoViewIfNeeded();
+  await caption(page, "The drafted message keeps the measurement, last and labelled. An artist approves it before it is sent.", 5500);
   await sample(page, "Exported without bleed", "Exported at the ordered size with no bleed, the default in most design tools. Caught, with the cut line drawn on the preview.");
   await sample(page, "Background remover", "Background removed on a product printed on opaque stock: transparency flagged before it becomes a white patch in print.");
   await sample(page, "Re-saved as JPEG", "A clean design saved as JPEG a few times: still approved. RGB is converted, with a note to the customer.");

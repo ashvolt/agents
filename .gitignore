@@ -62,3 +62,8 @@ capstone/data/ai_art_v2/
 # Builder A/B rebuild of ai_art_v1 with --clean-edges --drawn-stroke-labels: a diagnostic, not a sealed set
 capstone/data/ai_art_v1_ab/
 capstone/data/ai_art_v1_ab.jsonl
+
+# The walkthrough recorder (capstone/demo/walkthrough/record.mjs) needs Playwright,
+# so running it installs a node_modules at the repo root. Build artefact, never committed.
+node_modules/
+package-lock.json
