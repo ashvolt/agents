@@ -5,11 +5,11 @@
     "title": "Print-ready file",
     "description": "A careful designer's CMYK TIFF with bleed. The control.",
     "order": {
-      "order_id": "ORD-00253",
+      "order_id": "ORD-00328",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
-      "quantity": 250
+      "quantity": 500
     }
   },
   {
@@ -18,8 +18,8 @@
     "title": "Screenshot",
     "description": "Copied from a browser or preview: screen pixels, no DPI.",
     "order": {
-      "order_id": "ORD-00251",
-      "product_id": "die-cut-sticker",
+      "order_id": "ORD-00187",
+      "product_id": "kiss-cut-sheet",
       "width_in": 5.0,
       "height_in": 3.0,
       "quantity": 50
@@ -31,11 +31,24 @@
     "title": "Sent over a chat app",
     "description": "Long side capped at 1600 px, recompressed, metadata stripped.",
     "order": {
-      "order_id": "ORD-00348",
+      "order_id": "ORD-00078",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
-      "quantity": 500
+      "quantity": 100
+    }
+  },
+  {
+    "file": "web_export.png",
+    "thumb": "web_export-thumb.jpg",
+    "title": "Exported for the web",
+    "description": "Full pixel dimensions with a 72 DPI tag. The header is wrong, not the artwork.",
+    "order": {
+      "order_id": "ORD-00024",
+      "product_id": "vinyl-banner",
+      "width_in": 2.5,
+      "height_in": 3.5,
+      "quantity": 250
     }
   },
   {
@@ -44,11 +57,11 @@
     "title": "Re-saved as JPEG",
     "description": "Opened and saved as JPEG a few times. Should still pass.",
     "order": {
-      "order_id": "ORD-00043",
+      "order_id": "ORD-00068",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
-      "quantity": 1000
+      "quantity": 50
     }
   },
   {
@@ -57,7 +70,7 @@
     "title": "Through a GIF tool",
     "description": "Reduced to a small dithered palette, exported to PNG.",
     "order": {
-      "order_id": "ORD-00438",
+      "order_id": "ORD-00308",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
@@ -70,11 +83,11 @@
     "title": "Uploaded as .gif",
     "description": "Not a print format.",
     "order": {
-      "order_id": "ORD-00298",
+      "order_id": "ORD-00243",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
-      "quantity": 100
+      "quantity": 250
     }
   },
   {
@@ -83,7 +96,7 @@
     "title": "Background remover",
     "description": "Background made transparent, soft haloed edge.",
     "order": {
-      "order_id": "ORD-00338",
+      "order_id": "ORD-00448",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
@@ -96,11 +109,11 @@
     "title": "Exported without bleed",
     "description": "Design-tool default: the ordered size, no bleed.",
     "order": {
-      "order_id": "ORD-00133",
+      "order_id": "ORD-00138",
       "product_id": "roll-label",
       "width_in": 5.0,
       "height_in": 3.0,
-      "quantity": 500
+      "quantity": 1000
     }
   }
 ]
