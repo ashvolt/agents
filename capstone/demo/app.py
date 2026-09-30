@@ -31,6 +31,10 @@ from capstone.src.product_specs import UnknownProductError, all_specs
 
 HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
+# Recorded by walkthrough/record.mjs, gitignored like every other build artefact: a 12 MB
+# binary in the history would drift from the product on every demo change, which is the
+# problem re-recording exists to avoid. Served when it is there, hidden when it is not.
+WALKTHROUGH = HERE / "walkthrough" / "out" / "walkthrough.webm"
 
 app = FastAPI(title="Artwork preflight demo")
 
@@ -136,6 +140,26 @@ def lettering_image(name: str) -> FileResponse:
     if path.parent != folder or not path.exists():
         raise HTTPException(status_code=404)
     return FileResponse(path)
+
+
+@app.get("/api/walkthrough")
+def walkthrough_status() -> dict[str, object]:
+    """Whether a recording exists, so the page can hide the section rather than show a
+    broken player on a fresh clone."""
+    return {"available": WALKTHROUGH.exists()}
+
+
+@app.get("/walkthrough.webm")
+def walkthrough_video() -> FileResponse:
+    if not WALKTHROUGH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "no recording yet. Run: node capstone/demo/walkthrough/record.mjs "
+                "http://localhost:8000"
+            ),
+        )
+    return FileResponse(WALKTHROUGH, media_type="video/webm")
 
 
 @app.get("/lettering")

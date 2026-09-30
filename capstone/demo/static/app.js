@@ -185,6 +185,19 @@ $("drop").addEventListener("drop", (e) => {
 $("go").addEventListener("click", runUpload);
 $("gen").addEventListener("click", runGenerate);
 
+async function loadWalkthrough() {
+  // Same shape as loadGenerator: the section stays hidden unless the artefact is there,
+  // so a fresh clone shows no broken player.
+  try {
+    const { available } = await (await fetch("/api/walkthrough")).json();
+    if (!available) return;
+    $("walkthrough").hidden = false;
+    $("navwalk").hidden = false;
+  } catch {
+    /* no recording, no section */
+  }
+}
+
 async function loadStats() {
   const data = await (await fetch("/static/reports.json")).json();
   $("stats").innerHTML = data.headline
@@ -196,3 +209,4 @@ loadProducts();
 loadSamples();
 loadStats();
 loadGenerator();
+loadWalkthrough();
