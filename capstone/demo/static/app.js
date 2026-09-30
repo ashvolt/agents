@@ -28,7 +28,8 @@ async function loadSamples() {
   const samples = await (await fetch("/api/samples")).json();
   $("samples").innerHTML = samples
     .map(
-      (s) => `<button class="sample" data-file="${escapeHtml(s.file)}" title="${escapeHtml(s.description)}">
+      (s) => `<button class="sample" data-file="${escapeHtml(s.file)}" title="${escapeHtml(s.description)}"
+        data-product="${escapeHtml(s.order.product_id)}" data-w="${s.order.width_in}" data-h="${s.order.height_in}">
         <img src="/samples/${encodeURIComponent(s.thumb || s.file)}" alt="" loading="lazy">
         <span>${escapeHtml(s.title)}</span></button>`
     )
@@ -38,6 +39,17 @@ async function loadSamples() {
   );
 }
 
+function syncForm(productId, widthIn, heightIn) {
+  const select = $("product");
+  // loadProducts() fills the options; if it has not resolved yet, leave the select alone
+  // rather than blanking it.
+  if (productId && [...select.options].some((o) => o.value === productId)) {
+    select.value = productId;
+  }
+  if (widthIn) $("w").value = widthIn;
+  if (heightIn) $("h").value = heightIn;
+}
+
 function busy(text) {
   $("result").innerHTML = `<div class="empty"><span class="spinner"></span> ${escapeHtml(text)}</div>`;
 }
@@ -45,6 +57,10 @@ function busy(text) {
 async function runSample(el) {
   document.querySelectorAll(".sample").forEach((s) => s.classList.remove("active"));
   el.classList.add("active");
+  // A sample is checked against its own order, not the form's. Show that order in the
+  // form, or the page reports "Die-cut sticker, 5x3 in" while the controls still read
+  // "Custom magnet, 3x3" - which looks like the checker used the wrong spec.
+  syncForm(el.dataset.product, el.dataset.w, el.dataset.h);
   busy("Checking sample…");
   const res = await fetch(`/api/samples/${encodeURIComponent(el.dataset.file)}/check`);
   render(await res.json());
@@ -169,6 +185,19 @@ $("drop").addEventListener("drop", (e) => {
 $("go").addEventListener("click", runUpload);
 $("gen").addEventListener("click", runGenerate);
 
+async function loadWalkthrough() {
+  // Same shape as loadGenerator: the section stays hidden unless the artefact is there,
+  // so a fresh clone shows no broken player.
+  try {
+    const { available } = await (await fetch("/api/walkthrough")).json();
+    if (!available) return;
+    $("walkthrough").hidden = false;
+    $("navwalk").hidden = false;
+  } catch {
+    /* no recording, no section */
+  }
+}
+
 async function loadStats() {
   const data = await (await fetch("/static/reports.json")).json();
   $("stats").innerHTML = data.headline
@@ -180,3 +209,4 @@ loadProducts();
 loadSamples();
 loadStats();
 loadGenerator();
+loadWalkthrough();

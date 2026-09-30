@@ -300,3 +300,61 @@ different population.** Letting detail shorter than 2 mm pass as not-a-stroke bu
 auto-approve, and sub-minimum detail and lettering keep blocking. Whether AI-drawn lettering is
 "real text" did not survive a repeat labelling (9 of 15 answers the same; rule-loop.md
 round 1b), so it is left to people until real uploads and reviewer decisions exist.
+
+## 17. A wrong DPI tag is a false reject, and no dataset could show it — added 2026-09-29
+
+`effective_dpi` prefers the file's declared DPI over its pixel count. So a file whose
+header claims a print size far larger than the order is rejected as `LOW_RESOLUTION`
+however much detail it actually carries — a 3000x1857 px upload tagged 72 DPI on a 5x3 in
+order resolves at **571 DPI** at that size, nearly 4x the 150 minimum, and still comes back
+`REQUEST_FIX` with `measured 72.01, required 150`.
+
+**No set this project can generate contains one.** `generate.py` renders at `dpi`, sizes
+pixels as `canvas_in x dpi` and saves that same value, so tag and pixels always agree.
+Every process in `mistakes.py` either wrote the correct DPI (`print_ready`,
+`jpeg_resaves`, `via_gif`, `background_removed`, `trim_size_export`) or stripped the
+metadata entirely (`screenshot`, `messaging_app`, `gif_upload`). The sets simulated
+metadata being *missing*; none simulated it being *wrong*. On the 400 committed cases all
+20 `LOW_RESOLUTION` findings come from files whose tag is honest and whose pixels really
+are short.
+
+That is the gap, and it mattered more than the rule: with zero instances anywhere, the
+question "is this a false reject?" could not be scored, and taking it through the rule
+loop would have sealed a set containing none of the thing under test and come back "no
+change".
+
+`mistakes.web_export` closes it: full pixel dimensions with a 72 DPI tag, which is what
+"Save for Web" and most browser-based design tools write. Its label is derived from the
+pixels that survive rather than asserted — untouched pixels above the minimum at the
+ordered size are clean, per this module's existing rule that a process changing nothing a
+spec measures is clean (the same basis as `jpeg_resaves`); a long-side cap that bites hard
+enough is a genuine defect.
+
+**Measured on the 400 committed cases** (`census_web_export`, bucket 1 only — the declared
+tag decides `check_resolution` with no pixel analysis consulted, and `measure` returns
+REQUEST_FIX on any blocking issue):
+
+| | |
+|---|---|
+| clean cases put through `web_export` | 120 |
+| labelled clean (pixels ample at the ordered size) | 109 |
+| of those, **falsely rejected** | **85 (78%)** |
+| correctly accepted | 24 — all `vinyl-banner`, the only product whose `min_dpi` is 72 |
+| labelled `LOW_RESOLUTION` (a cap bit) | 11 |
+| of those, caught | 11 (the rule is right when the loss is real) |
+
+For every product with `min_dpi` above 72 the rate is **100%**: magnet (200), sticker and
+kiss-cut sheet (150), roll label (300). The synthetic cases render at exactly `min_dpi`,
+so these files clear the threshold with no headroom to spare; a real Save-for-Web export
+from a 300 DPI original would clear it by more, not less.
+
+**Not fixed here.** Changing `effective_dpi` to prefer pixels when they are sufficient
+moves eval numbers, so it belongs in the rule loop (rule-loop.md) — which can now score it,
+because a set can now contain the case. Two things to settle there: whether a file whose
+aspect matches the order but whose tag does not should be approved outright or escalated
+for a person to rescale, and what that does to the false-approve bound, since preferring
+pixels also accepts a file that genuinely means to print large.
+
+Adding a ninth process changes `names[i % len(names)]` in `mistakes.build`, so rebuilding
+`mistakes_v1` or `v2` from their original seeds now yields different files. The committed
+manifests are the record and published results stand; build the next set under a new name.

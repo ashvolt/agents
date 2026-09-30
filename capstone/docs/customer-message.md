@@ -105,6 +105,14 @@ Branches 1 and 3 carry the anti-resample warning; branch 2 carries its own varia
   reject. Changing it moves eval numbers, so it belongs in the rule loop (rule-loop.md),
   not in a text change. The advice is written truthfully for the current behaviour.
 
+  **Measured since, 2026-09-29 (limits.md §17).** It is a false reject, and it was
+  unmeasurable: no generator in this project could produce the case, because every one
+  either wrote the correct DPI or stripped it. `mistakes.web_export` closes that gap, and
+  on the 400 committed cases **85 of 109 clean web exports (78%) are rejected** — 100% for
+  every product whose `min_dpi` is above 72. So branch 2 is not a hypothetical corner: it
+  is the majority outcome for a file type customers upload constantly. The rule still goes
+  through the loop, which can now score it.
+
   **And it must not be papered over in the letter.** The first draft of branch 2 ended
   "reply and we will rescale it for you". That crosses §11's first non-goal — *"Not fixing
   the artwork. Detect and explain."* — by committing an artist to work the pipeline does

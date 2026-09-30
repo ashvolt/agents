@@ -865,89 +865,100 @@
       "process": "print_ready",
       "title": "Print-ready file",
       "what": "A careful designer's CMYK TIFF with bleed. The control.",
-      "n": 60,
-      "approved": 55,
-      "fix": 1,
-      "review": 4,
+      "n": 54,
+      "approved": 52,
+      "fix": 2,
+      "review": 0,
       "example": "print_ready-thumb.jpg",
-      "verdict_text": "55 of 60 decided as the label says."
+      "verdict_text": "52 of 54 decided as the label says."
     },
     {
       "process": "screenshot",
       "title": "Screenshot",
       "what": "Copied from a browser or preview: screen pixels, no DPI.",
-      "n": 60,
+      "n": 54,
       "approved": 6,
-      "fix": 50,
-      "review": 4,
+      "fix": 43,
+      "review": 5,
       "example": "screenshot-thumb.jpg",
-      "verdict_text": "55 of 60 decided as the label says."
+      "verdict_text": "49 of 54 decided as the label says."
     },
     {
       "process": "messaging_app",
       "title": "Sent over a chat app",
       "what": "Long side capped at 1600 px, recompressed, metadata stripped.",
-      "n": 60,
-      "approved": 54,
-      "fix": 6,
-      "review": 0,
+      "n": 54,
+      "approved": 44,
+      "fix": 7,
+      "review": 3,
       "example": "messaging_app-thumb.jpg",
-      "verdict_text": "54 of 60 decided as the label says."
+      "verdict_text": "44 of 54 decided as the label says."
+    },
+    {
+      "process": "web_export",
+      "title": "Exported for the web",
+      "what": "Full pixel dimensions with a 72 DPI tag. The header is wrong, not the artwork.",
+      "n": 53,
+      "approved": 2,
+      "fix": 50,
+      "review": 1,
+      "example": "web_export-thumb.jpg",
+      "verdict_text": "2 of 53 decided as the label says."
     },
     {
       "process": "jpeg_resaves",
       "title": "Re-saved as JPEG",
       "what": "Opened and saved as JPEG a few times. Should still pass.",
-      "n": 60,
-      "approved": 48,
-      "fix": 5,
-      "review": 7,
+      "n": 53,
+      "approved": 42,
+      "fix": 7,
+      "review": 4,
       "example": "jpeg_resaves-thumb.jpg",
-      "verdict_text": "48 of 60 decided as the label says."
+      "verdict_text": "42 of 53 decided as the label says."
     },
     {
       "process": "via_gif",
       "title": "Through a GIF tool",
       "what": "Reduced to a small dithered palette, exported to PNG.",
-      "n": 60,
-      "approved": 52,
-      "fix": 6,
+      "n": 53,
+      "approved": 46,
+      "fix": 5,
       "review": 2,
       "example": "via_gif-thumb.jpg",
-      "verdict_text": "52 of 60 decided as the label says."
+      "verdict_text": "46 of 53 decided as the label says."
     },
     {
       "process": "gif_upload",
       "title": "Uploaded as .gif",
       "what": "Not a print format.",
-      "n": 60,
+      "n": 53,
       "approved": 0,
       "fix": 0,
-      "review": 60,
+      "review": 53,
       "example": "gif_upload-thumb.jpg",
-      "verdict_text": "60 of 60 decided as the label says."
+      "verdict_text": "53 of 53 decided as the label says."
     },
     {
       "process": "background_removed",
       "title": "Background remover",
       "what": "Background made transparent, soft haloed edge.",
-      "n": 60,
-      "approved": 25,
-      "fix": 35,
+      "n": 53,
+      "approved": 22,
+      "fix": 31,
       "review": 0,
       "example": "background_removed-thumb.jpg",
-      "verdict_text": "60 of 60 decided as the label says."
+      "verdict_text": "52 of 53 decided as the label says."
     },
     {
       "process": "trim_size_export",
       "title": "Exported without bleed",
       "what": "Design-tool default: the ordered size, no bleed.",
-      "n": 60,
+      "n": 53,
       "approved": 0,
-      "fix": 60,
+      "fix": 53,
       "review": 0,
       "example": "trim_size_export-thumb.jpg",
-      "verdict_text": "60 of 60 decided as the label says."
+      "verdict_text": "53 of 53 decided as the label says."
     }
   ],
   "cost": {
