@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artwork Preflight — cards</title>
+<style>
+  :root{
+    --ink:#181a1f; --muted:#68707e; --bg:#f7f7f5; --line:#e2e2de;
+    --accent:#d2303a; --good:#1b7f4b; --warn:#b26a00; --surface:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);
+    font:400 22px/1.45 "Segoe UI",system-ui,sans-serif;overflow:hidden}
+  .rule{position:fixed;inset:0 0 auto 0;height:8px;background:var(--accent);z-index:9}
+  .chrome{position:fixed;top:26px;left:56px;right:56px;display:flex;justify-content:space-between;
+    font-size:17px;color:var(--muted);font-weight:600;letter-spacing:.2px}
+  .chrome .right{font-weight:400}
+  .card{display:none;position:absolute;inset:86px 72px 48px 72px;flex-direction:column;justify-content:center}
+  .card.on{display:flex;animation:in .5s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  h1{font-size:58px;line-height:1.08;margin:0 0 14px;letter-spacing:-.5px}
+  h1.big{font-size:74px}
+  .sub{font-size:28px;color:var(--accent);margin:0 0 28px;font-weight:600}
+  .sub.plain{color:var(--muted);font-weight:400}
+  ul{margin:0;padding:0;list-style:none}
+  li{position:relative;padding:0 0 18px 40px;font-size:26px;max-width:1580px}
+  li::before{content:"";position:absolute;left:4px;top:12px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+  li .m{color:var(--muted);font-size:22px;display:block;margin-top:2px}
+  .foot{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line);
+    padding-top:16px;color:var(--muted);font-size:19px}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:6px}
+  .cols.four{grid-template-columns:repeat(4,1fr)}
+  .box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px}
+  .box h3{margin:0 0 8px;font-size:23px}
+  .box .tag{display:inline-block;font-size:15px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:#fff;background:var(--ink);border-radius:999px;padding:3px 11px;margin-bottom:10px}
+  .box.b3 .tag{background:var(--accent)}
+  .box p{margin:0;font-size:20px;color:var(--muted)}
+  .box code{font:600 19px/1.5 Consolas,monospace;color:var(--ink)}
+  .flow{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:4px 0 24px;font-size:23px}
+  .flow span{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 16px}
+  .flow span.hot{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .flow i{color:var(--muted);font-style:normal}
+  table{border-collapse:collapse;width:100%;max-width:1520px;font-size:23px;margin-top:4px}
+  th{text-align:left;font-size:17px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;padding:0 18px 10px 0;border-bottom:1px solid var(--line)}
+  td{padding:13px 18px 13px 0;border-bottom:1px solid var(--line)}
+  td.n{font-variant-numeric:tabular-nums;font-weight:700}
+  .good{color:var(--good)} .bad{color:var(--accent)} .warn{color:var(--warn)}
+  .verd{display:flex;gap:18px;margin-top:8px}
+  .verd div{flex:1;border-radius:14px;padding:20px 22px;background:var(--surface);border:1px solid var(--line)}
+  .verd .k{font-weight:700;font-size:24px;margin-bottom:6px}
+  .big2{font-size:34px;line-height:1.3;margin-top:22px;max-width:1500px}
+</style>
+</head>
+<body>
+<div class="rule"></div>
+<div class="chrome"><span>Artwork Preflight</span>
+  <span class="right">product walkthrough · unofficial demo, not affiliated with Sticker Mule</span></div>
+
+<section class="card" id="title">
+  <h1 class="big">Artwork Preflight</h1>
+  <p class="sub">Automated print-readiness checking for custom print orders</p>
+  <div class="big2">Every uploaded file is measured against the product it was ordered on, in about a second,
+    for no marginal cost — and cleared, returned to the customer with an explanation, or handed to a person
+    with the findings attached.</div>
+  <div class="foot">Unofficial demonstration project. Not affiliated with, endorsed by, or connected to Sticker Mule.
+    No Sticker Mule data, systems or assets are used. Volume and cost figures are labelled assumptions.</div>
+</section>
+
+<section class="card" id="problem">
+  <h1>The problem it solves</h1>
+  <div class="flow">
+    <span>customer uploads art</span><i>→</i><span class="hot">human reviews &amp; fixes</span>
+    <i>→</i><span>proof sent</span><i>→</i><span>customer approves</span><i>→</i><span>printed next day</span>
+  </div>
+  <ul>
+    <li>Free human proofing protects the print, and it is the largest variable cost in the pipeline — it scales one-for-one with orders.</li>
+    <li>Most files are already fine. Reviewer time goes mostly into confirming that nothing is wrong.<span class="m">Assumed: 4,000 files/day · 25% defective · 40 s to clear a clean file · $28/hr loaded</span></li>
+    <li>3,000 clean files × 40 s = <b>33 reviewer-hours a day</b> — about <b>$340,000 a year</b> of expert attention spent on files that needed none.</li>
+    <li><b>The goal is not to replace the reviewer.</b> It is to stop the clean files reaching them, and to give the broken ones a head start.</li>
+  </ul>
+  <div class="foot">Every figure here is a labelled assumption for modelling, not a claim about any real business.</div>
+</section>
+
+<section class="card" id="metric">
+  <h1>What “good” has to mean here</h1>
+  <p class="sub">Auto-approval rate, subject to a false-approve rate at or below 1%</p>
+  <ul>
+    <li>A file wrongly cleared becomes a bad print: reprint, reship, a support ticket, and a customer who stops trusting the proof. Call it <b>$18 all-in.</b></li>
+    <li>At 1% of 2,100 daily auto-approvals that is <b>$378/day</b> — over half the saving. At 5%, the system destroys more value than it creates.</li>
+    <li>So accuracy is the wrong target. The product is tuned to <b>clear as many files as possible under a hard ceiling on wrong clearances</b>, and the release gate fails any build that trades the ceiling for coverage.</li>
+  </ul>
+  <div class="foot">Failure ranking behind the design: wrong clearance &gt; wrong fix request &gt; unnecessary fix request &gt;
+    over-escalation &gt; silent crash. Asymmetric costs, so: quick to escalate, slow to approve.</div>
+</section>
+
+<section class="card" id="buckets">
+  <h1>How it decides: three kinds of check</h1>
+  <p class="sub">Use code where code is exact. Spend a model only where code cannot go.</p>
+  <div class="cols">
+    <div class="box"><span class="tag">1 · file metadata</span><h3>Exact arithmetic</h3>
+      <p><code>LOW_RESOLUTION · MISSING_BLEED · WRONG_COLOR_MODE · ASPECT_MISMATCH · UNREADABLE_FILE</code><br><br>
+      Pixel dimensions against ordered size, geometry against the product spec. Same answer every time, microseconds, no cost.</p></div>
+    <div class="box"><span class="tag">2 · pixel analysis</span><h3>Measured, not guessed</h3>
+      <p><code>THIN_LINES · LOW_CONTRAST · UNINTENDED_TRANSPARENCY · TEXT_TOO_SMALL</code><br><br>
+      Morphology, colour distance, alpha analysis and a CPU text detector. Costs compute, not tokens.</p></div>
+    <div class="box b3"><span class="tag">3 · judgement</span><h3>Genuinely ambiguous</h3>
+      <p>Is ink inside the cut margin a logo about to lose its top third, or a background bleeding off the edge on purpose?<br><br>
+      The measurement is trivial; the question is not.</p></div>
+  </div>
+  <div class="foot">Sorting checks into the right bucket is the core design work: an early draft had five checks in bucket 3,
+    and four turned out to be measurement problems in disguise.</div>
+</section>
+
+<section class="card" id="verdicts">
+  <h1>Three outcomes. Only one is automatic.</h1>
+  <div class="verd">
+    <div><div class="k good">APPROVE</div>Straight to production, nobody acts.
+      <span class="m">Only when no blocking issue fired and every check that ran is one the system is trusted to make alone.</span></div>
+    <div><div class="k warn">REQUEST_FIX</div>Customer acts, from a drafted message.
+      <span class="m">Only off a deterministic check with a concrete, citable measurement. A reviewer approves the message in one click.</span></div>
+    <div><div class="k bad">ESCALATE</div>A person acts, with findings attached.
+      <span class="m">Low confidence, conflicting signals, an unsupported file, a detector that returned nothing, or a blown budget.</span></div>
+  </div>
+  <ul style="margin-top:22px">
+    <li><b>It can never silently clear a file.</b> Every non-approval carries its evidence into the queue, so a reviewer starts from a diagnosis rather than a blank screen.</li>
+    <li><b>It never edits the artwork and never contacts the customer by itself.</b> Detect, measure, explain — a person keeps the final say on anything that leaves the building.</li>
+  </ul>
+  <div class="foot">Uploaded files are treated strictly as data. Text rendered inside an image is described, never followed as an instruction.</div>
+</section>
+
+<section class="card" id="evaluation">
+  <h1>How the product was validated</h1>
+  <p class="sub">Sealed sets, scored once, reproducible from a manifest and a seed</p>
+  <table>
+    <tr><th>Question asked of the build</th><th>What the runs returned</th></tr>
+    <tr><td>Does it clear enough clean work, safely?</td><td class="n good">78.7% auto-approved · 0 wrong clearances in 500 · exact 95% bound 0.6%</td></tr>
+    <tr><td>Does it hold up on files customers have mangled?</td><td class="n good">87.0% auto-approved on 480 stress files · 0 wrong clearances in 240</td></tr>
+    <tr><td>Does a vision model improve the verdict?</td><td class="n">It changed <b>1 check of 10</b>, and only reduced hand-offs by 3.4 points</td></tr>
+    <tr><td>Does letting the model pick its own tools help?</td><td class="n bad">No — removing that cut wrong clearances from 33% to 18% at 1.75× less cost</td></tr>
+    <tr><td>Was the early “perfect” result real?</td><td class="n bad">No — it passed at n=88 and breached the ceiling at n=600. Small-sample luck.</td></tr>
+  </table>
+  <div class="foot">The shipped decider is therefore computer vision plus a small logistic model — no model call at inference.
+    Measurement decided that, not preference, and the rounds that went backwards are still published in the product.</div>
+</section>
+
+<section class="card" id="value">
+  <h1>What it is worth</h1>
+  <table>
+    <tr><th>Path</th><th>Per file</th><th>Per day @ 4,000</th><th>Per year</th></tr>
+    <tr><td><b>Shipped checker</b> — CPU only, ~1 s, no model call</td><td class="n good">$0.0000</td><td class="n good">$0</td><td class="n good">$0</td></tr>
+    <tr><td>Vision model, single call <span class="m">measured on this project's own runs</span></td><td class="n">$0.0066</td><td class="n">$26</td><td class="n">$9,636</td></tr>
+    <tr><td>Vision model, tool loop</td><td class="n">$0.0117</td><td class="n">$47</td><td class="n">$17,082</td></tr>
+  </table>
+  <ul style="margin-top:20px">
+    <li>Value comes from <b>clearing clean files</b>. Broken ones still reach a person — with the diagnosis and the draft already written, which is where the rest of the time goes.</li>
+    <li>The optional model bought a <b>3.4 point drop in hand-offs</b>: ≈$190/day of reviewer time for $26/day of tokens, measured across only three cases. Treated as an experiment to run on live traffic, not a committed dependency.</li>
+  </ul>
+  <div class="foot">Volume is an assumption. Compute and hosting are excluded on both sides.</div>
+</section>
+
+<section class="card" id="integration">
+  <h1>How it fits into an operation</h1>
+  <div class="cols four">
+    <div class="box"><span class="tag">service</span><h3>HTTP API</h3>
+      <p>One call per file: artwork plus order context in, structured verdict out —
+      <code>verdict · issues[] · evidence · customer_message · confidence</code>.</p></div>
+    <div class="box"><span class="tag">review ui</span><h3>Queue front end</h3>
+      <p>The page in this walkthrough. Drop a file, see the verdict, the measurements, the marked-up artwork and the draft reply.</p></div>
+    <div class="box"><span class="tag">agents</span><h3>MCP server</h3>
+      <p>The same checker exposed as a tool, so an existing support or ops agent can call it directly.</p></div>
+    <div class="box"><span class="tag">hosting</span><h3>Runs anywhere</h3>
+      <p>CPU only, no GPU, no key at inference. Also packaged for free hosting, with a runbook and a reproducible report build.</p></div>
+  </div>
+  <ul style="margin-top:24px">
+    <li>Product rules — minimum DPI, bleed, safe zone, minimum text size — live in a spec table per product, so adding a product is configuration, not code.</li>
+    <li>Nothing is stored: an uploaded file lives in a temporary directory for the length of one request.</li>
+  </ul>
+  <div class="foot">Logged per check: inputs, measurements, verdict, latency and cost — the inputs to a queue-depth and false-clearance dashboard.</div>
+</section>
+
+<section class="card" id="limits">
+  <h1>What it does not do yet</h1>
+  <p class="sub plain">Stated here because a tool that hides its blind spots gets trusted in exactly the places it should not be.</p>
+  <ul>
+    <li><b>Not tested on real customer uploads.</b> Real files carry colour profiles, layers, vector-raster mixes and fonts that do not render as expected.</li>
+    <li><b>Known misses:</b> grey artwork the text detector reads as text, near-white art on white stock, a hairline sitting inside thick ink, and low-resolution art upscaled to look sharp.</li>
+    <li><b>Cost per file is unproven at production image sizes</b> — demo artwork is roughly a quarter the pixels of a real upload.</li>
+    <li><b>Zero wrong clearances in 500 is not a zero rate.</b> The exact 95% upper bound is 0.6% — inside the 1% ceiling, but not zero.</li>
+    <li><b>No adversarial test suite yet</b>, so injection resistance is designed for and unmeasured.</li>
+    <li><b>Out of scope on purpose:</b> fixing artwork, generating proofs, IP and content screening, pricing, and anything downstream of approval.</li>
+  </ul>
+  <div class="foot">All of this is published inside the product, on the results page, beside the numbers it qualifies.</div>
+</section>
+
+<section class="card" id="close">
+  <h1>Where it goes next</h1>
+  <ul>
+    <li><b>Run it in shadow mode</b> beside the existing queue: same files, no automatic clearance, and compare verdicts against what reviewers decided.</li>
+    <li><b>Measure the false-clearance rate on real uploads</b> — the one number the ceiling depends on, and the one this dataset cannot settle.</li>
+    <li><b>Build the adversarial suite</b>, then turn automatic clearance on for the product types where the measured rate supports it.</li>
+    <li><b>Re-test the optional model</b> on live traffic, and keep it only if the reduction in hand-offs reproduces at scale.</li>
+  </ul>
+  <div class="big2">Clean work clears itself. Broken work arrives explained. People spend their judgement
+    on the files that actually need it.</div>
+  <div class="foot">Unofficial demonstration project. Not affiliated with, endorsed by, or connected to Sticker Mule.</div>
+</section>
+
+<script>
+  function show(id){
+    document.querySelectorAll(".card").forEach(c=>c.classList.remove("on"));
+    const el=document.getElementById(id); if(el) el.classList.add("on");
+  }
+  window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+  show(location.hash.slice(1)||"title");
+</script>
+</body>
+</html>
