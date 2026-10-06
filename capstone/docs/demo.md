@@ -103,7 +103,7 @@ Deploy (once):
 
 1. Sign in at share.streamlit.io with the GitHub account that can see this repo, and
    allow access to it.
-2. **Create app** → deploy from GitHub. Repository `ashvolt/agents`, branch `main`, main
+2. **Create app** → deploy from GitHub. Repository `ashvolt/artwork-preflight-agent`, branch `main`, main
    file path `capstone/demo/streamlit_app.py`.
 3. **Advanced settings** → Python **3.13**. No secrets. Save, then **Deploy**.
 4. The first build installs `capstone/demo/requirements.txt` and the apt packages in the
