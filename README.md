@@ -1,95 +1,237 @@
-# Agents: Level 0 to Pro
+# Artwork Preflight
 
-Learning agent engineering by building. Six taught levels, then one production-ready agent
-that solves a real operations problem.
+**Automated print-readiness checking for custom print orders.** Every uploaded file is
+measured against the product it was ordered on, in about a second, on CPU, with no model call
+— and comes back cleared for production, returned to the customer with an explanation, or
+escalated to a person with the findings attached.
 
-**Plan:** [PLAN.md](PLAN.md) — schedule, capstone criteria, budget, what "production-ready"
-has to mean here.
-
-> **Unofficial project.** This repository is not affiliated with, endorsed by, or connected
-> to Sticker Mule. It uses no Sticker Mule data, systems, or assets. Every dataset here is
-> synthetic and generated locally. The company is named only to describe the class of
-> operations problem the capstone addresses.
+> **Unofficial project.** Not affiliated with, endorsed by, or connected to Sticker Mule. It
+> uses no Sticker Mule data, systems or assets. Every dataset here is synthetic or built from
+> openly licensed artwork. The company is named only to describe the class of operations
+> problem this addresses. Volume and cost figures are labelled assumptions.
 
 ---
 
-## Setup
+## The problem
+
+A custom print shop takes uploaded artwork and prints it on a physical product. Before
+anything reaches a press, a person has to confirm the file will actually print: enough
+resolution at the size ordered, bleed where the blade cuts, the right colour mode, no text
+small enough to turn to mud, nothing important sitting in the trim margin.
+
+That review protects the print and scales one-for-one with orders, which makes it the largest
+variable cost in the pipeline. Most files are already fine, so most of that time is spent
+confirming nothing is wrong.
+
+```
+customer uploads art ──▶ human reviews & fixes ──▶ proof ──▶ approval ──▶ printed ──▶ shipped
+                              ▲
+                              └── most of this time is spent on files that were already fine
+```
+
+On the modelling assumptions in [brief.md](capstone/docs/brief.md) — 4,000 files/day, 25%
+defective, 40 s to clear a clean file, $28/hr loaded — clean files alone consume **33
+reviewer-hours a day, around $340,000 a year**.
+
+**The goal is not to replace the reviewer.** It is to stop the clean files reaching them, and
+to make the broken ones arrive already diagnosed.
+
+## What "good" has to mean
+
+Accuracy is the wrong target, because the two ways of being wrong cost very different amounts.
+A file wrongly cleared becomes a bad print: reprint, reship, a support ticket, and a customer
+who stops trusting the proof — roughly $18 every time. At a 1% rate that eats over half the
+saving; at 5% the system destroys more value than it creates.
+
+> **The metric: auto-approval rate, subject to a false-approve rate at or below 1%.**
+
+The release gate fails any build that buys coverage by raising that ceiling. Quick to
+escalate, slow to approve.
+
+## Measured results
+
+Sealed sets, scored once, reproducible from a manifest and a seed. Full detail in
+[results.md](capstone/docs/results.md) and [real-art.md](capstone/docs/real-art.md).
+
+| Sealed set | Auto-approve | Wrong clearances | Exact 95% bound |
+|---|---|---|---|
+| 1,000 unseen real illustrations | **78.7%** | **0 of 500** | 0.6% |
+| 480 files damaged by real customer processes | **87.0%** | **0 of 240** | 1.2% |
+| 1,000 AI-generated sticker images (DiffusionDB) | 57.1% | 0 of 354 | 0.8% |
+
+Cost per file at inference: **$0.0000** — the shipped decider is computer vision plus a small
+logistic model, with no model call. A vision model on every file was measured at $0.0066
+(single call) or $0.0117 (tool loop), and is not used; see
+[decider.md](capstone/docs/decider.md) for why that changed.
+
+## How it decides
+
+Checks fall into three kinds, and sorting them correctly is the core of the design.
+
+| Kind | Checks | Cost |
+|---|---|---|
+| **1 · file metadata** — exact arithmetic | `LOW_RESOLUTION` `MISSING_BLEED` `WRONG_COLOR_MODE` `ASPECT_MISMATCH` `UNREADABLE_FILE` | microseconds, $0 |
+| **2 · pixel analysis** — measured, not guessed | `THIN_LINES` `LOW_CONTRAST` `UNINTENDED_TRANSPARENCY` `TEXT_TOO_SMALL` | CPU, $0 |
+| **3 · judgement** — genuinely ambiguous | ink inside the cut margin: deliberate bleed, or a logo losing its top third? | the only place a model was ever justified |
+
+Three outcomes, of which **only one is automatic**:
+
+| Verdict | Who acts | When |
+|---|---|---|
+| `APPROVE` | Nobody — straight to production | No blocking issue, and every check that ran is one the system is trusted to make alone |
+| `REQUEST_FIX` | Customer, from a drafted message a reviewer approves in one click | A deterministic check failed with a concrete, citable measurement |
+| `ESCALATE` | A person, with the findings attached | Low confidence, conflicting signals, unsupported file, a detector that returned nothing, or a blown budget |
+
+Operating boundaries: it never edits artwork, never contacts a customer on its own, and never
+silently clears a file. Uploaded files are treated strictly as data — text rendered inside an
+image is described, never followed as an instruction.
+
+## Diagrams and technical detail
+
+- [architecture.md](capstone/docs/architecture.md) — the as-built engineering picture, with
+  sequence and component diagrams, and the designs that measurement killed
+- [architecture.excalidraw](capstone/docs/architecture.excalidraw) — editable source; open at
+  [excalidraw.com](https://excalidraw.com) via *Open → load from file*
+- [specs/001-artwork-preflight-triage/](specs/001-artwork-preflight-triage/) — spec, plan,
+  research, data model and task breakdown
+
+## Quickstart
 
 ```bash
 python -m venv .venv
-source .venv/Scripts/activate      # Windows (Git Bash); use .venv/bin/activate on macOS/Linux
-pip install -e ".[dev]"
+source .venv/Scripts/activate      # Windows (Git Bash); .venv/bin/activate on macOS/Linux
+pip install -e ".[demo]"
 
-cp .env.example .env               # then put your real key in .env
+python -m uvicorn capstone.demo.app:app --port 8000
+# open http://localhost:8000
 ```
 
-`.env` is gitignored. Never commit a key, never paste one into source or a notebook cell.
-A leaked `sk-ant-...` in public git history is live until you rotate it — rewriting history
-does not un-leak it.
+Drop in artwork, pick the product and the ordered size, and the page shows the verdict, every
+issue with its measurement, the drafted customer message, and the artwork with the cut line,
+safe zone and problem regions drawn on it. Nothing is stored: an upload lives in a temporary
+directory for the length of one request.
 
-## Running
+No API key is needed to run the checker. `.env` is only required for the optional model
+experiments and the AI-art generator; it is gitignored, and a leaked key must be rotated
+rather than rebased away.
+
+### As a library
+
+```python
+from pathlib import Path
+from capstone.demo.pipeline import check_file
+
+result = check_file(Path("artwork.png"), "die-cut-sticker", width_in=3, height_in=3)
+result["verdict"]            # APPROVE | REQUEST_FIX | ESCALATE
+result["issues"]             # each with code, severity, message, evidence
+result["customer_message"]   # drafted reply, or None
+```
+
+### As an MCP tool
 
 ```bash
-pytest -m "not integration"        # free: pure logic only, no API calls
-pytest                             # includes integration tests, costs money
+pip install -e ".[mcp]"
+PREFLIGHT_MCP_ROOT=/path/to/artwork python -m capstone.mcp_server   # stdio
+```
+
+Five read-only tools — `list_products`, `get_product_spec`, `check_artwork`, `inspect_file`,
+`analyse_pixels` — so an existing support or operations agent can call the same checker.
+Details and client config in [mcp.md](capstone/docs/mcp.md).
+
+### Hosted page
+
+`capstone/demo/streamlit_app.py` is the same check as a Streamlit page for free hosting, and
+calls the same function as the web app, so a file gets the same verdict either way. Deployment
+notes in [demo.md](capstone/docs/demo.md).
+
+## Product configuration
+
+Requirements — minimum DPI, bleed, safe zone, minimum text size, whether transparency is
+allowed — live per product in `capstone/src/product_specs.py`. Adding a product is a row in
+that table, not new code. The same file passes on one product and fails on another; that is
+the point, and the video walkthrough shows it.
+
+## Video walkthrough
+
+A 13-minute narrated product walkthrough, recorded against the running app: the three
+outcomes, cited measurements, the drafted customer reply, the marked-up artwork, and the same
+file re-checked as a large banner. Build it with
+[capstone/demo/video/](capstone/demo/video/README.md) — the voice is synthesised locally, so
+it needs no API key and no network.
+
+The web app also serves a silent captioned walkthrough at `/walkthrough.webm` when one has
+been recorded into `capstone/demo/walkthrough/out/`. Both recordings are gitignored build
+artefacts and rebuild from a checkout.
+
+## Repository layout
+
+```
+capstone/
+  src/          pipeline, deciders, schemas, product specs, prompts
+  tools/        bucket 1 (metadata) and bucket 2 (pixel) checks
+  data/         dataset builders: synthetic art, real illustrations, customer mistakes, AI art
+  evals/        harness, gates, baselines, red-team and decider training
+  demo/         FastAPI app, Streamlit page, report builders, video walkthrough
+  ops/          budgets, pricing, review queue, tracing
+  docs/         everything below
+  mcp_server.py MCP tools over the shipped pipeline
+specs/          spec-kit documents for the build
+```
+
+## Tests
+
+```bash
+pytest -m "not integration"   # free: pure logic only, no API calls
+pytest                        # includes integration tests, which cost money
 ruff check .
 ```
 
-Integration tests are marked and deselected by default. Run them deliberately.
+Anything that hits a real API is marked `integration` and deselected by default. Logic that
+matters is testable without the network.
 
----
+## Documentation
 
-## Levels
-
-| Level | Topic | Status |
-|-------|-------|--------|
-| [L0](levels/L0_raw_api/) | Raw API: messages, params, stop reasons, token accounting, cost | in progress |
-| L1-L8 | Tool loops, structured output, state, patterns, evals, MCP, production | folded into the capstone |
-| [Capstone](capstone/docs/brief.md) | Artwork preflight triage — auto-approve clean files, escalate the rest | **[RESULTS](capstone/docs/results.md)** — both criteria met on a held-out split |
-
-Each level folder holds `README.md` (the concept), `exercise.py` (stubs I fill in),
-`test_exercise.py` (the bar), and `NOTES.md` (what I got wrong, in my own words).
-
-## Capstone documents
-
-| Document | What it is |
+| Document | What it covers |
 |---|---|
-| [results.md](capstone/docs/results.md) | **Start here.** What was measured, on what, and what it means |
-| [decider.md](capstone/docs/decider.md) | **Update.** The vision model removed: OpenCV features + a logistic decider, validated on 1,000 fresh cases |
-| [scene-narration.md](capstone/docs/scene-narration.md) | **Parked (out of scope, brief §11).** Engine describes the image, verifies the description by redrawing it, auto-fixes and re-checks proofs; a small model only narrates, and every number it writes is checked |
-| [real-art.md](capstone/docs/real-art.md) | **Reality check.** Real illustrations as sticker uploads: four sealed rounds, 6.2% → 1.4% → 0.4% → **0 of 500 wrong approvals (exact bound 0.6%)** on 1,000 unseen files |
-| [ai-art.md](capstone/docs/ai-art.md) | **AI art.** Two sealed sets of 1,000 Stable Diffusion sticker images (DiffusionDB): **0 wrong approvals (bounds 0.9%, 0.8%)** but 54.3% → 57.1% auto-approve, under target; the rest is the images' own detail. The painted-checkerboard check no longer false-fires (0 of 1,000 fresh) but misses real AI checkerboards (0 of 3) |
-| [rule-loop.md](capstone/docs/rule-loop.md) | **How rules change.** A model proposes, a person supplies ground truth and decides, a fresh sealed set judges. Round 1 (AI lettering) stopped at its consistency gate |
-| [mcp.md](capstone/docs/mcp.md) | **MCP server.** The checker's tools for any MCP client: the shipped verdict and the exact measurements, read-only, files confined to one root |
-| [demo.md](capstone/docs/demo.md) | **The demo.** Local web app over the shipped pipeline, results page, customer-mistake gallery, scripted video walkthrough |
-| [brief.md](capstone/docs/brief.md) | The business case: problem, ROI, failure costs, HITL policy |
-| [architecture.md](capstone/docs/architecture.md) | As-built engineering picture, with the designs that measurement killed |
+| [results.md](capstone/docs/results.md) | What was measured, on what, and what it means |
+| [decider.md](capstone/docs/decider.md) | The shipped decider: OpenCV features plus a logistic model, validated on 1,000 fresh cases |
+| [real-art.md](capstone/docs/real-art.md) | Real illustrations as uploads: four sealed rounds, 6.2% → 0 of 500 wrong clearances |
+| [ai-art.md](capstone/docs/ai-art.md) | AI-generated artwork: two sealed sets, 0 wrong clearances, auto-approve under target |
+| [rule-loop.md](capstone/docs/rule-loop.md) | How rules change: a model proposes, a person decides, a fresh sealed set judges |
+| [brief.md](capstone/docs/brief.md) | The business case: problem, ROI model, failure costs, human-in-the-loop policy |
+| [architecture.md](capstone/docs/architecture.md) | As-built engineering picture and diagrams |
+| [mcp.md](capstone/docs/mcp.md) | The MCP server and its tools |
+| [demo.md](capstone/docs/demo.md) | The web app, results page, mistake gallery and hosting |
 | [limits.md](capstone/docs/limits.md) | Sixteen things this system cannot do, most found by measuring |
-| [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, what pages you |
-| [learn.md](capstone/docs/learn.md) | Study guide from zero: business logic, HLD, LLD, build stages, decisions, diagrams |
-| [walkthrough.md](capstone/docs/walkthrough.md) | Reading order and question bank |
-| [specs/001-…](specs/001-artwork-preflight-triage/) | Spec-kit: constitution, spec, plan, research, data model, tasks |
+| [runbook.md](capstone/docs/runbook.md) | How to run it, what breaks, and what pages you |
+| [scene-narration.md](capstone/docs/scene-narration.md) | Parked spike: describing and auto-fixing artwork, and why it is out of scope |
 
-**Headline:** on a held-out split scored once — 82.0% auto-approve, 0 false approves in 41
-approvals, both criteria met. The deterministic pipeline passes *without* the model; the
-model's entire measured contribution is a 3.4 pp reduction in escalation rate. Total API
-spend for the project: ~$4.30.
+## Limits
 
-## Learning log
+Named here rather than buried, because a checking tool that hides its blind spots gets trusted
+exactly where it should not be. Full list in [limits.md](capstone/docs/limits.md).
 
-| Date | Entry |
-|------|-------|
-| 2026-09-20 | Plan written, repo scaffolded, L0 started |
-| 2026-09-20 | Ladder abandoned for the deadline. L1-L8 now learned inside the capstone, driven by evals. |
-| 2026-09-20 | Capstone picked: artwork preflight triage. Brief written, gate cleared. |
-| 2026-09-21 | Architecture doc + editable excalidraw diagram written. Local env set up; L0 in progress. |
-| 2026-09-22 | Spec-kit docs, schemas, generator, deterministic checks, eval harness, agent. First baselines. |
-| 2026-09-23 | **Holdout scored once: 82.0% auto-approve, 0 false approves, both arms.** Tool loop measured as worse AND costlier than a single call. Model contributes one extra detection per 312 files. See [results.md](capstone/docs/results.md). |
-| 2026-09-23 | **Vision model removed.** OpenCV margin features + a 5-feature logistic decider: 84.4% / 0.0% and 84.6% / 0.5% on two fresh sealed sets, $0/file. The model-free rules breach SC-002 at n=600 (2.4%) — the earlier pass was luck. See [decider.md](capstone/docs/decider.md). |
-| 2026-09-23 | **Scene documents + verified fixes (spike).** Redraw-from-text fidelity 0.975 median; 23-31% of rejected files become print-ready proofs with no human; every proof re-verified and structure-checked; narration claim-checked. Live model run blocked: no API key here. See [scene-narration.md](capstone/docs/scene-narration.md). |
-| 2026-09-24 | **Real artwork.** OpenMoji/Twemoji/Noto as sticker uploads; the synthetic results did not transfer (7.8% false-approve). DBNet text detection, line-level contrast, stroke-mask fixes and a cut-line guard: synthetic holdout 86.7% / 0.0%, unseen real art 78.1% / 6.2%. Local-model narration via Ollama built and tested; blocked here by network policy. See [real-art.md](capstone/docs/real-art.md). |
-| 2026-09-24 | **Round 4 and the demo.** RGB converted (product decision); JPEG false rejects fixed; customer-mistake simulator (real processes on real art). Sealed: real art 78.7% / 0 of 500 (bound 0.6%), customer mistakes 87.0% / 0 of 240. Web demo, results page and recorded walkthrough. See [demo.md](capstone/docs/demo.md). |
-| 2026-09-25 | **AI-generated art.** DiffusionDB range-read fetcher working; `ai_art_v1` sealed (1,000 Stable Diffusion sticker images) and scored once: 54.3% / 0 of 339 (bound 0.9%), under the 60% approve target; rules alone breach again (4.2%). Lost approvals are mostly the images' own fine detail and garbled lettering. FAKE_TRANSPARENCY false-fires on 1.5% of raw AI images. RapidOCR pinned <1.3 after a fresh install broke the detector. See [ai-art.md](capstone/docs/ai-art.md). |
-| 2026-09-25 | **FAKE_TRANSPARENCY fixed and ai_art_v2.** Pre-registered fix validated once on unseen images: false alarms 8 → 0 of 1,000, but real AI checkerboards caught 0 of 3 before and after (SD's grids are irregular). Builder fixes (drawn-width stroke labels, matted cut-outs): +3.4 points on the same images; sealed ai_art_v2 57.1% / 0 of 354 (bound 0.8%). See [ai-art.md](capstone/docs/ai-art.md) §5a, §8. |
-| 2026-09-26 | **Rule loop, round 1: no rule, by design.** A model proposes rules, a person labels and decides, a sealed set judges ([rule-loop.md](capstone/docs/rule-loop.md)). Live FLUX generation working; two provider bugs fixed. The garbled-lettering labels passed their controls (20/20) but not the repeat test (9/15), so no rule was built on them. Decision: keep blocking; AI art quoted at ~57%, 0 wrong approvals. |
-| 2026-09-27 | **MCP server** (plan day 8). Five read-only tools over the shipped pipeline (`check_artwork`, measurements, product specs); files confined to one root; tested through a real MCP client, in-process and over stdio. `main` brought up to date. See [mcp.md](capstone/docs/mcp.md). |
+- **Not tested on real customer uploads.** Real files carry colour profiles, layers,
+  vector-raster mixes and fonts that do not render as expected.
+- **Known misses:** grey artwork the text detector reads as text, near-white art on white
+  stock, a hairline inside thick ink, low-resolution art upscaled to look sharp.
+- **Cost per file is unproven at production image sizes** — demo artwork is roughly a quarter
+  the pixels of a real upload.
+- **Zero wrong clearances in 500 is not a zero rate.** The exact 95% upper bound is 0.6% —
+  inside the ceiling, but not zero.
+- **No adversarial test suite yet**, so injection resistance is designed for and unmeasured.
+- **Out of scope on purpose:** fixing artwork, generating proofs, IP and content screening,
+  pricing, and anything downstream of approval.
+
+## Roadmap
+
+1. Run it in shadow mode beside a live queue — same files, no automatic clearance — and
+   compare verdicts against what reviewers decided.
+2. Measure the false-clearance rate on real uploads: the one number the ceiling depends on,
+   and the one the current datasets cannot settle.
+3. Build the adversarial suite.
+4. Switch automatic clearance on per product type, where the measured rate supports it.
+
+## License
+
+[MIT](LICENSE).
