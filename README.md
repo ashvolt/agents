@@ -5,6 +5,13 @@ measured against the product it was ordered on, in about a second, on CPU, with 
 — and comes back cleared for production, returned to the customer with an explanation, or
 escalated to a person with the findings attached.
 
+[![Watch the demo](https://img.youtube.com/vi/BVe4IF1gxEo/maxresdefault.jpg)](https://youtu.be/BVe4IF1gxEo)
+
+**▶ [Watch the 13-minute product walkthrough](https://youtu.be/BVe4IF1gxEo)** — recorded
+against the running app: the three verdicts, cited measurements, the drafted customer reply,
+the marked-up artwork, and the same file re-checked as a large banner.
+**Or [try it live](https://artwork-preflight.streamlit.app/)** with your own artwork.
+
 > **Unofficial project.** Not affiliated with, endorsed by, or connected to Sticker Mule. It
 > uses no Sticker Mule data, systems or assets. Every dataset here is synthetic or built from
 > openly licensed artwork. The company is named only to describe the class of operations
@@ -140,9 +147,11 @@ Details and client config in [mcp.md](capstone/docs/mcp.md).
 
 ### Hosted page
 
-`capstone/demo/streamlit_app.py` is the same check as a Streamlit page for free hosting, and
-calls the same function as the web app, so a file gets the same verdict either way. Deployment
-notes in [demo.md](capstone/docs/demo.md).
+**[artwork-preflight.streamlit.app](https://artwork-preflight.streamlit.app/)** — try it
+without installing anything. `capstone/demo/streamlit_app.py` calls the same function as the
+web app, so a file gets the same verdict either way. The free tier sleeps when idle, so the
+first visit after a quiet spell takes about a minute to wake. Deployment notes in
+[demo.md](capstone/docs/demo.md).
 
 ## Product configuration
 
@@ -153,11 +162,15 @@ the point, and the video walkthrough shows it.
 
 ## Video walkthrough
 
-A 13-minute narrated product walkthrough, recorded against the running app: the three
-outcomes, cited measurements, the drafted customer reply, the marked-up artwork, and the same
-file re-checked as a large banner. Build it with
-[capstone/demo/video/](capstone/demo/video/README.md) — the voice is synthesised locally, so
-it needs no API key and no network.
+**▶ [Watch it on YouTube](https://youtu.be/BVe4IF1gxEo)** (13 min)
+
+A narrated product walkthrough recorded against the running app: the three outcomes, cited
+measurements, the drafted customer reply, the marked-up artwork, and the same file re-checked
+as a large banner. It is one continuous screen recording — Playwright drives the real app and
+waits for genuine verdicts, so the video cannot drift from the product.
+
+Rebuild it from a checkout with [capstone/demo/video/](capstone/demo/video/README.md). The
+voice is synthesised locally with Kokoro-82M on CPU, so it needs no API key and no network.
 
 The web app also serves a silent captioned walkthrough at `/walkthrough.webm` when one has
 been recorded into `capstone/demo/walkthrough/out/`. Both recordings are gitignored build

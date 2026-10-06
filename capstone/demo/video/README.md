@@ -1,5 +1,9 @@
 # Product walkthrough video
 
+**▶ [Watch the published recording](https://youtu.be/BVe4IF1gxEo)** — "I Built an AI Agent for
+Automated Artwork Preflight".
+
+
 **Date:** 2026-10-06 · **Output:** `out/stickermule-preflight-demo.mp4` (13:10, 1920×1080,
 h264 + AAC) with `out/stickermule-preflight-demo.srt` · **API spend:** $0.00 · **Network:**
 none at build time.
